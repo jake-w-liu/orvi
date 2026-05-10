@@ -3,3 +3,4 @@ dist/
 coverage/
 examples/*.html
 *.log
+*.vsix

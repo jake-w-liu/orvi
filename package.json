@@ -63,7 +63,9 @@
     "check": "tsc --noEmit",
     "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser lux examples/welcome.lux --check",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
-    "verify": "npm run check && npm test && npm run build && npm run format:check"
+    "playground:test": "node --test playground/playground.test.mjs",
+    "verify": "npm run check && npm test && npm run playground:test && npm run build && npm run format:check",
+    "vscode:package": "npm --prefix vscode/lux run package"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

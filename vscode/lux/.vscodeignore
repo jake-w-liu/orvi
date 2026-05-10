@@ -1,0 +1,6 @@
+.DS_Store
+.vscode/**
+.vscode-test/**
+node_modules/**
+npm-debug.log
+*.vsix

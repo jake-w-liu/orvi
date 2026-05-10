@@ -1,15 +1,33 @@
 {
   "name": "lux-language",
   "displayName": "Lux Language",
-  "description": "Syntax highlighting and snippets for Lux markup.",
+  "description": "Language support, diagnostics, completions, and preview for Lux markup.",
   "version": "0.1.0",
   "publisher": "lux-lang",
+  "license": "MIT",
+  "preview": true,
   "main": "./extension.js",
   "engines": {
     "vscode": "^1.92.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jake-w-liu/lux.git",
+    "directory": "vscode/lux"
+  },
+  "bugs": {
+    "url": "https://github.com/jake-w-liu/lux/issues"
+  },
+  "homepage": "https://github.com/jake-w-liu/lux#readme",
+  "keywords": [
+    "lux",
+    "markup",
+    "language",
+    "preview",
+    "syntax"
+  ],
   "activationEvents": ["onLanguage:lux", "onCommand:lux.preview"],
-  "categories": ["Programming Languages"],
+  "categories": ["Programming Languages", "Other"],
   "scripts": {
     "package": "vsce package"
   },

@@ -26,15 +26,16 @@ implementation companion and avoid drifting from the guide roadmap.
 | React component | Done: `@lux-lang/lux/react` |
 | VS Code syntax highlighting/snippets/config | Done |
 | VS Code diagnostics | Done: extension runs `lux check --json` |
-| VS Code package script | Done: extension `npm run package` |
+| VS Code package/release prep | Done: extension `npm run package`, package metadata, README, changelog, license, package lock, `.vscodeignore` |
 | VS Code autocomplete/live preview | Done |
+| CI | Done: GitHub Actions runs root verify and VS Code package check |
 | Prettier plugin | Bridge done with basic Prettier CLI coverage |
 | Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari WebDriver harness done, local Safari automation pending |
 | ESM package build | Done: `dist/esm` import exports |
 | React fixture app | Done: fixture app + Chrome/browser smoke coverage |
 | Obsidian/GitHub/AI artifact integrations | Not started |
-| Playground | Not started |
-| AI corpus/benchmarks | Not started |
+| Playground | Done: static editor + preview split; deployment pending |
+| AI corpus/benchmarks | Done: small deterministic corpus + token-ish efficiency tests; large corpus/results pending |
 
 ## Near-Term Milestones
 
@@ -54,7 +55,9 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add VS Code completions for components, modifiers, semantic prefixes, and metadata.
    - Done: add VS Code preview panel using `lux build`.
    - Done: add packaged `.vsix` build script.
+   - Done: prepare VS Code release metadata, README, changelog, license, package lock, and `.vscodeignore`.
    - Done: add Prettier integration test using the real Prettier CLI.
+   - Done: add GitHub Actions CI for `npm run verify` and VS Code package smoke.
 
 3. Add browser-facing package
    - Done: add ESM build.
@@ -62,12 +65,17 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add Firefox headless launch smoke test for generated HTML.
    - Done: add Chrome headless DOM render smoke test.
    - Done: add Safari WebDriver render smoke harness.
-   - Run Safari WebDriver DOM render smoke with Safari remote automation enabled.
+   - Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine.
 
 4. Build playground
-   - Editor + preview split view.
+   - Done: editor + preview split view.
    - Example gallery.
    - Shareable encoded document state.
+
+5. Benchmark corpus
+   - Done: add small deterministic Lux corpus.
+   - Done: pin byte/character efficiency ratio against rendered HTML.
+   - Add larger corpus and published results.
 
 ## Acceptance Gate
 

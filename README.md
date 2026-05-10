@@ -77,17 +77,52 @@ Prettier:
 prettier --plugin @lux-lang/lux/prettier-plugin --write "**/*.lux"
 ```
 
+## Playground
+
+The static playground lives in `playground/` and uses the built ESM renderer.
+
+```sh
+npm run build
+python3 -m http.server 4173
+open http://127.0.0.1:4173/playground/
+```
+
+Run its focused tests with:
+
+```sh
+npm run playground:test
+```
+
 ## VS Code
 
-Extension scaffold lives in `vscode/lux`. It provides syntax highlighting,
+Extension package source lives in `vscode/lux`. It provides syntax highlighting,
 snippets, completions, diagnostics through `lux check --json`, and a preview
 panel through `lux build`.
 
 ```sh
 cd vscode/lux
-npm install -g @vscode/vsce
-vsce package
+npm ci
+npm run package
 ```
+
+The packaged `.vsix` can be installed with:
+
+```sh
+code --install-extension vscode/lux/lux-language-0.1.0.vsix
+```
+
+Safari WebDriver smoke coverage is included, but macOS must allow Safari remote
+automation before the test can create a real Safari session.
+
+## Benchmarks
+
+The benchmark corpus pins Lux-vs-rendered-HTML character and byte measurements.
+
+```sh
+npm test -- --runTestsByPath __tests__/benchmark-corpus.test.ts
+```
+
+Current pinned corpus ratio: rendered HTML is `2.357x` the Lux source size.
 
 ## Verification
 
@@ -95,6 +130,7 @@ vsce package
 
 - TypeScript strict check
 - Jest tests
+- Playground tests
 - Package build
 
 Tests include parser/renderer/formatter behavior, React export behavior, VS Code

@@ -350,7 +350,7 @@ marking the parent complete.
 - [x] Test generated HTML launch in Firefox headless
 - [x] Test generated HTML DOM in Chrome headless
 - [x] Add Safari WebDriver render smoke harness with clean skip when remote automation is disabled
-- [ ] Run Safari WebDriver DOM render smoke with Safari remote automation enabled
+- [ ] Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine
 
 **Output:** `@lux-lang/lux/renderer` export
 
@@ -360,7 +360,7 @@ marking the parent complete.
 - [x] **CLI check/format:** `lux check` and `lux format`
 - [x] **Machine-readable diagnostics:** `lux check --json` and `lux format --check --json`
 - [x] **Live preview server:** `lux serve` with hot reload
-- [ ] **VS Code extension:**
+- [x] **VS Code extension:**
   - [x] Syntax highlighting scaffold
   - [x] Snippets scaffold
   - [x] Language configuration scaffold
@@ -368,8 +368,11 @@ marking the parent complete.
   - [x] Packaging script for `.vsix`
   - [x] Autocomplete for components and modifiers
   - [x] Live preview panel
+  - [x] Release prep metadata, README, changelog, license, package lock, and `.vscodeignore`
+- [ ] Publish the VS Code extension to the Marketplace
 - [x] **Prettier plugin bridge** for auto-formatting `.lux` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
+- [x] Add GitHub Actions CI for `npm run verify`
 
 ### Phase 4 — Ecosystem
 
@@ -379,13 +382,15 @@ marking the parent complete.
 - [ ] **Obsidian plugin** — render `.lux` notes natively
 - [ ] **AI artifact/render-surface support** — native Lux output type
 - [ ] **GitHub rendering** — `.lux` files rendered in repos (like `.md`)
-- [ ] Online **Lux Playground** at `lux-lang.dev`
+- [x] Static **Lux Playground** with editor + preview split
+- [ ] Publish online **Lux Playground** at `lux-lang.dev`
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 
+- [x] Add a small deterministic benchmark corpus of valid Lux documents
 - [ ] Generate a large corpus of valid Lux documents
 - [ ] Fine-tune or prompt-engineer AI models to write idiomatic Lux
-- [ ] Measure token efficiency vs HTML for equivalent visual output
+- [x] Measure token-ish byte/character efficiency vs rendered HTML for equivalent visual output
 - [ ] Publish benchmark results
 
 ---

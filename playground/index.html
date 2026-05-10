@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lux Playground</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="playground-shell">
+      <section class="pane editor-pane" aria-labelledby="editor-title">
+        <header class="pane-header">
+          <div>
+            <p class="eyebrow">Lux</p>
+            <h1 id="editor-title">Playground</h1>
+          </div>
+          <button class="tool-button" type="button" id="reset-source">Reset</button>
+        </header>
+        <textarea
+          id="lux-source"
+          spellcheck="false"
+          aria-label="Lux source editor"
+        ></textarea>
+      </section>
+
+      <section class="pane preview-pane" aria-labelledby="preview-title">
+        <header class="pane-header">
+          <div>
+            <p class="eyebrow">Rendered</p>
+            <h2 id="preview-title">Preview</h2>
+          </div>
+          <p class="status" id="preview-status" role="status">Loading renderer...</p>
+        </header>
+        <div id="diagnostics" class="diagnostics" aria-live="polite"></div>
+        <div id="preview" class="preview-surface"></div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>
