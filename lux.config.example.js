@@ -1,5 +1,8 @@
 module.exports = {
   title: "Lux Preview",
+  lang: "en",
+  dir: "ltr",
+  colorScheme: "light",
   theme: {
     colors: {
       blue: "#0f766e",

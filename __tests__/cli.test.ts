@@ -101,4 +101,42 @@ describe("Lux CLI", () => {
       ])
     );
   });
+
+  it("passes lux.config.js language, direction, and color scheme into builds", () => {
+    const inputPath = join(workspace, "configured.lux");
+    const outputPath = join(workspace, "configured.html");
+    writeFileSync(inputPath, "# Configured\n");
+    writeFileSync(
+      join(workspace, "lux.config.js"),
+      `module.exports = { title: "Configured", lang: "ar", dir: "rtl", colorScheme: "dark" };\n`
+    );
+
+    const result = runLux(["build", inputPath, "-o", outputPath]);
+    const html = readFileSync(outputPath, "utf8");
+
+    expect(result.status).toBe(0);
+    expect(html).toContain('<html lang="ar" dir="rtl" class="lux-theme-dark">');
+    expect(html).toContain("<title>Configured</title>");
+  });
+
+  it("uses document metadata before filename fallback for build titles", () => {
+    const inputPath = join(workspace, "metadata-title.lux");
+    const outputPath = join(workspace, "metadata-title.html");
+    writeFileSync(
+      inputPath,
+      `---
+lux: 0.1
+title: Metadata Title
+---
+
+# Body
+`
+    );
+
+    const result = runLux(["build", inputPath, "-o", outputPath]);
+    const html = readFileSync(outputPath, "utf8");
+
+    expect(result.status).toBe(0);
+    expect(html).toContain("<title>Metadata Title</title>");
+  });
 });

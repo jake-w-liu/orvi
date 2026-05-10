@@ -3,6 +3,7 @@ import {
   ComponentName,
   ComponentNode,
   ComponentOptions,
+  DocumentMetadata,
   DocumentNode,
   InlineModifier,
   InlineNode,
@@ -11,6 +12,11 @@ import {
   SourceLocation,
   TableNode
 } from "./ast";
+
+export interface ParserOptions {
+  maxNestingDepth?: number;
+  supportedVersion?: string;
+}
 
 interface SourceLine {
   text: string;
@@ -55,39 +61,108 @@ const COLOR_NAMES = new Set([
 const SIZE_NAMES = new Set(["xs", "sm", "md", "lg", "xl", "2xl"]);
 const WEIGHT_NAMES = new Set(["light", "regular", "medium", "bold"]);
 const CALLOUT_TYPES = new Set(["info", "warning", "success", "error"]);
+const DEFAULT_MAX_NESTING_DEPTH = 8;
+const DEFAULT_SUPPORTED_VERSION = "0.1";
+const METADATA_KEYS = new Set(["lux", "title", "lang", "dir"]);
 
-export function parseLux(source: string): DocumentNode {
-  const parser = LuxParser.fromSource(source);
+export function parseLux(source: string, options: ParserOptions = {}): DocumentNode {
+  const parser = LuxParser.fromSource(source, options);
   return parser.parseDocument();
 }
 
 export class LuxParser {
   private index = 0;
+  private readonly options: Required<ParserOptions>;
 
-  static fromSource(source: string): LuxParser {
+  static fromSource(source: string, options: ParserOptions = {}): LuxParser {
     const lines = source.replace(/\r\n?/g, "\n").split("\n");
     return new LuxParser(
       lines.map((text, index) => ({ text, line: index + 1 })),
-      []
+      [],
+      normalizeOptions(options)
     );
   }
 
   constructor(
     private readonly lines: SourceLine[],
-    private readonly diagnostics: LuxDiagnostic[]
-  ) {}
+    private readonly diagnostics: LuxDiagnostic[],
+    options: Required<ParserOptions>
+  ) {
+    this.options = options;
+  }
 
   parseDocument(): DocumentNode {
+    const metadata = this.parseMetadata();
     const result = this.parseBlocks();
     return {
       type: "document",
       loc: { line: 1, column: 1 },
+      metadata,
       children: result.children,
       diagnostics: this.diagnostics
     };
   }
 
-  private parseBlocks(stopTag?: ComponentName): BlockResult {
+  private parseMetadata(): DocumentMetadata {
+    if (!this.isMetadataStart()) {
+      return {};
+    }
+
+    const start = this.current();
+    this.index += 1;
+    const metadata: DocumentMetadata = {};
+
+    while (!this.isEnd()) {
+      const line = this.current();
+      const trimmed = line.text.trim();
+      if (trimmed === "---") {
+        this.index += 1;
+        this.validateMetadata(metadata, start);
+        return metadata;
+      }
+
+      if (trimmed === "" || trimmed.startsWith("//")) {
+        this.index += 1;
+        continue;
+      }
+
+      const match = /^([a-z][a-z0-9-]*):\s*(.*)$/i.exec(trimmed);
+      if (!match) {
+        this.error("LUX_INVALID_METADATA", "Metadata entries must use `key: value` syntax.", line);
+        this.index += 1;
+        continue;
+      }
+
+      const key = match[1];
+      const value = match[2].trim();
+      if (!METADATA_KEYS.has(key)) {
+        this.warning("LUX_UNKNOWN_METADATA", `Unknown metadata key '${key}'.`, line);
+      } else if (key === "dir") {
+        if (value === "ltr" || value === "rtl" || value === "auto") {
+          metadata.dir = value;
+        } else {
+          this.error("LUX_INVALID_METADATA", "dir metadata must be ltr, rtl, or auto.", line);
+        }
+      } else if (key === "lux") {
+        metadata.lux = value;
+      } else if (key === "title") {
+        metadata.title = value;
+      } else if (key === "lang") {
+        if (/^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$/.test(value)) {
+          metadata.lang = value;
+        } else {
+          this.error("LUX_INVALID_METADATA", "lang metadata must be a valid BCP 47-style tag.", line);
+        }
+      }
+
+      this.index += 1;
+    }
+
+    this.error("LUX_UNCLOSED_METADATA", "Unclosed metadata block.", start);
+    return metadata;
+  }
+
+  private parseBlocks(stopTag?: ComponentName, depth = 0): BlockResult {
     const children: BlockNode[] = [];
 
     while (!this.isEnd()) {
@@ -127,7 +202,7 @@ export class LuxParser {
           this.index += 1;
           continue;
         }
-        children.push(this.parseComponent(open, line, stopTag));
+        children.push(this.parseComponent(open, line, stopTag, depth));
         continue;
       }
 
@@ -166,7 +241,7 @@ export class LuxParser {
     return { children, closed: stopTag === undefined };
   }
 
-  private parseComponent(open: OpenTag, line: SourceLine, parent?: ComponentName): ComponentNode {
+  private parseComponent(open: OpenTag, line: SourceLine, parent: ComponentName | undefined, depth: number): ComponentNode {
     const { args, options } = tokenizeOptions(open.rawArgs);
     const node: ComponentNode = {
       type: "component",
@@ -178,10 +253,17 @@ export class LuxParser {
     };
 
     this.validateComponentOpen(node, line, parent);
+    if (depth >= this.options.maxNestingDepth) {
+      this.error(
+        "LUX_MAX_NESTING_DEPTH",
+        `Component nesting exceeds max depth ${this.options.maxNestingDepth}.`,
+        line
+      );
+    }
     this.index += 1;
 
     if (node.name === "grid") {
-      const { columns, closed } = this.parseGridColumns(line);
+      const { columns, closed } = this.parseGridColumns(line, depth);
       node.columns = columns;
       if (!closed) {
         this.error("LUX_UNCLOSED_BLOCK", "Unclosed [grid] block.", line);
@@ -190,7 +272,7 @@ export class LuxParser {
       return node;
     }
 
-    const result = this.parseBlocks(node.name);
+    const result = this.parseBlocks(node.name, depth + 1);
     node.children = result.children;
     if (!result.closed) {
       this.error("LUX_UNCLOSED_BLOCK", `Unclosed [${node.name}] block.`, line);
@@ -199,9 +281,9 @@ export class LuxParser {
     return node;
   }
 
-  private parseGridColumns(openingLine: SourceLine): { columns: BlockNode[][]; closed: boolean } {
+  private parseGridColumns(openingLine: SourceLine, depth: number): { columns: BlockNode[][]; closed: boolean } {
     const sections: SourceLine[][] = [[]];
-    let depth = 0;
+    let separatorDepth = 0;
     let inFence = false;
 
     while (!this.isEnd()) {
@@ -218,15 +300,15 @@ export class LuxParser {
       if (!inFence) {
         const close = parseCloseTag(trimmed);
         if (close) {
-          if (close.name === "grid" && depth === 0) {
+          if (close.name === "grid" && separatorDepth === 0) {
             this.index += 1;
             return {
-              columns: sections.map((section) => this.parseNestedLines(section)),
+              columns: sections.map((section) => this.parseNestedLines(section, depth + 1)),
               closed: true
             };
           }
-          if (depth > 0) {
-            depth -= 1;
+          if (separatorDepth > 0) {
+            separatorDepth -= 1;
           }
           sections[sections.length - 1].push(line);
           this.index += 1;
@@ -236,7 +318,7 @@ export class LuxParser {
         const open = parseOpenTag(trimmed);
         if (open) {
           if (isComponentName(open.name)) {
-            depth += 1;
+            separatorDepth += 1;
           } else {
             this.error("LUX_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
           }
@@ -245,7 +327,7 @@ export class LuxParser {
           continue;
         }
 
-        if (trimmed === "---" && depth === 0) {
+        if (trimmed === "---" && separatorDepth === 0) {
           sections.push([]);
           this.index += 1;
           continue;
@@ -258,14 +340,14 @@ export class LuxParser {
 
     this.error("LUX_UNCLOSED_BLOCK", "Unclosed [grid] block.", openingLine);
     return {
-      columns: sections.map((section) => this.parseNestedLines(section)),
+      columns: sections.map((section) => this.parseNestedLines(section, depth + 1)),
       closed: false
     };
   }
 
-  private parseNestedLines(lines: SourceLine[]): BlockNode[] {
-    const parser = new LuxParser(lines, this.diagnostics);
-    return parser.parseBlocks().children;
+  private parseNestedLines(lines: SourceLine[], depth: number): BlockNode[] {
+    const parser = new LuxParser(lines, this.diagnostics, this.options);
+    return parser.parseBlocks(undefined, depth).children;
   }
 
   private parseCodeBlock(): BlockNode {
@@ -445,9 +527,13 @@ export class LuxParser {
     };
   }
 
-  private parseInline(value: string, line: number, column: number): InlineNode[] {
+  private parseInline(value: string, line: number, column: number, validateDynamic = true): InlineNode[] {
     const nodes: InlineNode[] = [];
     let index = 0;
+
+    if (validateDynamic) {
+      this.validateDynamicContent(value, line, column);
+    }
 
     const pushText = (text: string, offset: number): void => {
       if (text.length > 0) {
@@ -462,7 +548,7 @@ export class LuxParser {
           nodes.push({
             type: "strong",
             loc: { line, column: column + index },
-            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2)
+            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false)
           });
           index = close + 2;
           continue;
@@ -475,7 +561,7 @@ export class LuxParser {
           nodes.push({
             type: "strike",
             loc: { line, column: column + index },
-            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2)
+            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false)
           });
           index = close + 2;
           continue;
@@ -488,7 +574,7 @@ export class LuxParser {
           nodes.push({
             type: "emphasis",
             loc: { line, column: column + index },
-            children: this.parseInline(value.slice(index + 1, close), line, column + index + 1)
+            children: this.parseInline(value.slice(index + 1, close), line, column + index + 1, false)
           });
           index = close + 1;
           continue;
@@ -507,7 +593,7 @@ export class LuxParser {
                 type: "scope",
                 loc: { line, column: column + index },
                 modifiers,
-                children: this.parseInline(value.slice(bracketClose + 1, scopeClose), line, column + bracketClose + 1)
+                children: this.parseInline(value.slice(bracketClose + 1, scopeClose), line, column + bracketClose + 1, false)
               });
               index = scopeClose + 2;
               continue;
@@ -666,6 +752,29 @@ export class LuxParser {
     }
   }
 
+  private validateMetadata(metadata: DocumentMetadata, line: SourceLine): void {
+    if (!metadata.lux) return;
+    if (metadata.lux !== this.options.supportedVersion) {
+      this.error(
+        "LUX_UNSUPPORTED_VERSION",
+        `Unsupported Lux version '${metadata.lux}'; expected '${this.options.supportedVersion}'.`,
+        line
+      );
+    }
+  }
+
+  private validateDynamicContent(value: string, line: number, column: number): void {
+    const dynamicPattern = /\{[A-Za-z_][A-Za-z0-9_.-]*\}/g;
+    for (const match of value.matchAll(dynamicPattern)) {
+      this.errorAt(
+        "LUX_DYNAMIC_CONTENT_UNSUPPORTED",
+        "Dynamic expressions are not supported in Lux v0.1.",
+        line,
+        column + (match.index ?? 0)
+      );
+    }
+  }
+
   private isTableStart(): boolean {
     if (this.index + 1 >= this.lines.length) return false;
     const current = this.current().text.trim();
@@ -693,8 +802,26 @@ export class LuxParser {
     return this.index >= this.lines.length;
   }
 
+  private isMetadataStart(): boolean {
+    if (this.index !== 0 || this.lines.length < 3) return false;
+    if (this.lines[0].text.trim() !== "---") return false;
+    const closeIndex = this.lines.findIndex((line, index) => index > 0 && line.text.trim() === "---");
+    if (closeIndex < 0) return false;
+    return this.lines.slice(1, closeIndex).some((line) => /^([a-z][a-z0-9-]*):\s*(.*)$/i.test(line.text.trim()));
+  }
+
   private error(code: string, message: string, line: SourceLine): void {
     this.errorAt(code, message, line.line, firstContentColumn(line.text));
+  }
+
+  private warning(code: string, message: string, line: SourceLine): void {
+    this.diagnostics.push({
+      severity: "warning",
+      code,
+      message,
+      line: line.line,
+      column: firstContentColumn(line.text)
+    });
   }
 
   private errorAt(code: string, message: string, line: number, column: number): void {
@@ -706,6 +833,13 @@ export class LuxParser {
       column
     });
   }
+}
+
+function normalizeOptions(options: ParserOptions): Required<ParserOptions> {
+  return {
+    maxNestingDepth: options.maxNestingDepth ?? DEFAULT_MAX_NESTING_DEPTH,
+    supportedVersion: options.supportedVersion ?? DEFAULT_SUPPORTED_VERSION
+  };
 }
 
 function parseOpenTag(trimmed: string): OpenTag | undefined {

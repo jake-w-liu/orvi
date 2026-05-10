@@ -5,13 +5,23 @@ This is the first executable Lux specification. It formalizes the syntax used by
 
 ## Document Model
 
-A Lux document is a sequence of block nodes. Blank lines separate paragraphs.
-Line comments begin with `//` after optional indentation and are not rendered.
+A Lux document is an optional top-level metadata block followed by a sequence
+of block nodes. Blank lines separate paragraphs. Line comments begin with `//`
+after optional indentation and are not rendered.
+
+Metadata is not rendered as content. v0.1 supports `lux: 0.1`,
+`title: <text>`, `lang: <language-tag>`, and `dir: ltr|rtl|auto`.
 
 ## Grammar
 
 ```ebnf
-document        = { blank | comment | block } ;
+document        = [ metadata_block ] { blank | comment | block } ;
+metadata_block  = "---" newline { blank | comment | metadata_entry } "---" newline ;
+metadata_entry  = metadata_key ":" whitespace metadata_value newline ;
+metadata_key    = "lux" | "title" | "lang" | "dir" ;
+metadata_value  = "0.1" | title_text | language_tag | "ltr" | "rtl" | "auto" ;
+title_text      = bare_token { whitespace bare_token } ;
+language_tag    = bare_token ;
 block           = heading | thematic_break | code_block | table | list
                 | component | semantic | paragraph ;
 
@@ -64,6 +74,11 @@ modifier        = color | size | weight | "bg=" color ;
 | `tabs` | `[tabs]...[/tabs]` | child `tab` blocks | none |
 | `tab` | `[tab label=Name]...[/tab]` | `label` | none |
 
+Component nesting defaults to a maximum depth of `8`.
+
+Tabs are declarative. Lux v0.1 does not define user-script syntax; conforming
+renderers provide tab behavior with generated HTML and CSS.
+
 ## Built-In Semantic Elements
 
 | Element | Syntax | Required |
@@ -76,6 +91,8 @@ modifier        = color | size | weight | "bg=" color ;
 
 `btn` accepts either `->` or the Unicode arrow shown in the guide.
 
+`img` requires alt text. Missing alt text is a parser diagnostic.
+
 ## Built-In Modifiers
 
 Colors: `red`, `blue`, `green`, `gray`, `muted`, `yellow`, `purple`, `orange`,
@@ -87,8 +104,31 @@ Weights: `light`, `regular`, `medium`, `bold`.
 
 Backgrounds use `bg=<color>`.
 
+## Renderer Requirements
+
+The HTML renderer emits semantic HTML with scoped CSS classes.
+
+Accessibility requirements:
+
+- `img` output includes the required alt text.
+- `callout` output includes an appropriate role and accessible label.
+- `tabs` output includes ARIA attributes that connect tab controls and panels.
+- Headings, lists, tables, thematic breaks, and semantic elements use native
+  HTML elements where available.
+
+Dark mode is a renderer/theme concern. It is selected with the renderer option
+`colorScheme: "dark"` or equivalent theme configuration; Lux v0.1 has no
+document-level dark-mode syntax.
+
 ## Error Rules
 
 The parser never throws for syntax errors. It returns diagnostics with source
 line and column. Invalid documents can still produce a partial AST, but the CLI
 fails builds when any error diagnostic exists.
+
+Dynamic content and expressions such as `{name}` are unsupported in v0.1 and
+produce diagnostics outside fenced code blocks.
+
+Unknown metadata keys, unsupported Lux versions, invalid metadata values,
+component nesting deeper than the configured limit, and invalid `dir` values
+produce diagnostics.

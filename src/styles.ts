@@ -5,6 +5,10 @@ export const defaultCss = `:root {
   --lux-border: #d1d5db;
   --lux-surface: #ffffff;
   --lux-soft: #f3f4f6;
+  --lux-callout-info-bg: #eff6ff;
+  --lux-callout-warning-bg: #fffbeb;
+  --lux-callout-success-bg: #f0fdf4;
+  --lux-callout-error-bg: #fef2f2;
   --lux-red: #dc2626;
   --lux-blue: #2563eb;
   --lux-green: #16a34a;
@@ -19,7 +23,25 @@ export const defaultCss = `:root {
   --lux-max-width: 72rem;
 }
 
+.lux-theme-dark {
+  color-scheme: dark;
+  --lux-fg: #e5e7eb;
+  --lux-muted: #9ca3af;
+  --lux-border: #374151;
+  --lux-surface: #111827;
+  --lux-soft: #1f2937;
+  --lux-callout-info-bg: #172554;
+  --lux-callout-warning-bg: #422006;
+  --lux-callout-success-bg: #052e16;
+  --lux-callout-error-bg: #450a0a;
+}
+
+.lux-theme-dark body {
+  background: var(--lux-surface);
+}
+
 .lux-document {
+  background: var(--lux-surface);
   color: var(--lux-fg);
   font-family: var(--lux-font);
   line-height: 1.65;
@@ -116,25 +138,25 @@ export const defaultCss = `:root {
 }
 
 .lux-callout {
-  border-left: 0.25rem solid var(--lux-blue);
-  background: #eff6ff;
+  border-inline-start: 0.25rem solid var(--lux-blue);
+  background: var(--lux-callout-info-bg);
   border-radius: var(--lux-radius);
   padding: 1rem;
 }
 
 .lux-callout-warning {
-  background: #fffbeb;
-  border-left-color: var(--lux-yellow);
+  background: var(--lux-callout-warning-bg);
+  border-inline-start-color: var(--lux-yellow);
 }
 
 .lux-callout-success {
-  background: #f0fdf4;
-  border-left-color: var(--lux-green);
+  background: var(--lux-callout-success-bg);
+  border-inline-start-color: var(--lux-green);
 }
 
 .lux-callout-error {
-  background: #fef2f2;
-  border-left-color: var(--lux-red);
+  background: var(--lux-callout-error-bg);
+  border-inline-start-color: var(--lux-red);
 }
 
 .lux-btn {

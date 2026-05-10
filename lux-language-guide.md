@@ -13,7 +13,7 @@
 5. [Implementation Roadmap](#implementation-roadmap)
 6. [Tooling & Ecosystem](#tooling--ecosystem)
 7. [AI Integration](#ai-integration)
-8. [Open Questions](#open-questions)
+8. [Settled v0.1 Decisions](#settled-v01-decisions)
 
 ---
 
@@ -127,6 +127,28 @@ Regular paragraph text.
 **bold**, _italic_, ~~strikethrough~~
 ```
 
+### 4.1.1 Top-Level Metadata
+
+A document may begin with an optional metadata block. It is not rendered.
+
+```text
+---
+lux: 0.1
+title: Document Title
+lang: en
+dir: ltr
+---
+
+# Document Title
+```
+
+Supported metadata keys in v0.1:
+
+- `lux`: optional spec version marker; use `0.1`
+- `title`: optional full-document HTML title
+- `lang`: optional document language metadata
+- `dir`: optional text direction; one of `ltr`, `rtl`, or `auto`
+
 ### 4.2 Inline Visual Scope
 
 Use `[modifier]` syntax to open a visual scope and `[]` to close it:
@@ -201,6 +223,9 @@ Block components use a `[component options]` open tag and `[/component]` close t
 [/tabs]
 ```
 
+Tabs are declarative. The v0.1 renderer provides tab behavior with generated
+HTML and CSS; Lux documents do not contain user script.
+
 ### 4.4 Semantic Elements
 
 Single-line semantic components use a `keyword:` prefix syntax:
@@ -242,9 +267,20 @@ Same as Markdown GFM tables:
 // This is a comment — not rendered
 ```
 
-### 4.8 Full Example Document
+### 4.8 Unsupported Dynamic Content
+
+Lux v0.1 is static markup. Dynamic content and expressions such as `{name}` are
+unsupported outside fenced code blocks and produce parser diagnostics.
+
+### 4.9 Full Example Document
 
 ```lux
+---
+lux: 0.1
+lang: en
+dir: ltr
+---
+
 # Welcome to Lux
 
 [blue bold] A new way to write beautiful documents. []
@@ -297,6 +333,7 @@ marking the parent complete.
 - [x] Write parser unit tests against the Phase 0 language surface
 - [x] Handle parser errors with diagnostics instead of throwing on bad input
 - [x] Validate core edge cases: unknown components/options, grid column counts, ragged tables, and tabs structure
+- [x] Enforce v0.1 language decisions: maximum component nesting depth, unsupported dynamic expressions, metadata keys, and `img` alt text
 
 **Output:** `@lux-lang/lux/parser` export
 
@@ -306,6 +343,9 @@ marking the parent complete.
 - [x] Create a default stylesheet (`lux-base.css`)
   - Defines color tokens, grid system, card styles, callout variants, badges, tabs, tables, code, and inline modifiers
 - [x] Support a theming API (`lux.config.js`)
+- [x] Support renderer/theme color scheme selection with `colorScheme: "dark"`
+- [x] Render declarative CSS tabs with ARIA attributes
+- [x] Render callouts, images, tabs, and document structure with v0.1 accessibility guarantees
 - [ ] Test rendering in Chrome, Firefox, Safari
 
 **Output:** `@lux-lang/lux/renderer` export
@@ -400,18 +440,18 @@ A long-term goal is for Claude artifacts to support `.lux` as a first-class rend
 
 ---
 
-## 8. Open Questions
+## 8. Settled v0.1 Decisions
 
-These are design decisions that require community input or further research:
+The original open questions below now have v0.1 answers:
 
-1. **Nesting depth** — How deeply can components nest? Should there be a limit?
-2. **Dynamic content** — Should Lux support variables or expressions? (e.g., `{name}`)
-3. **Interactivity** — Should buttons/tabs have behavior hints, or remain purely presentational?
-4. **Dark mode** — Should the spec define dark mode semantics, or leave it to themes?
-5. **Accessibility** — How do we enforce alt text, ARIA roles, semantic structure?
-6. **Internationalization** — RTL language support from day one?
-7. **Versioning** — How do breaking spec changes get handled?
-8. **Governance** — Who owns the spec? Open foundation, single org, or BDFL model?
+1. **Nesting depth** — Component nesting defaults to a maximum depth of `8`.
+2. **Dynamic content** — Variables and expressions such as `{name}` are not supported in v0.1. They produce diagnostics outside fenced code blocks.
+3. **Interactivity** — Interactivity remains declarative. Lux has no user-script syntax; tabs are rendered with generated HTML and CSS.
+4. **Dark mode** — Dark mode is a renderer/theme color scheme selected with `colorScheme: "dark"`, not arbitrary Lux syntax.
+5. **Accessibility** — Accessibility is enforced by the parser and renderer: images require alt text, callouts receive roles and labels, tabs receive ARIA wiring, and output uses semantic HTML.
+6. **Internationalization** — Documents support top-level `lang` and `dir` metadata from day one. `dir` may be `ltr`, `rtl`, or `auto`.
+7. **Versioning** — Documents may declare an optional top-level metadata block with `lux: 0.1`; `title` metadata feeds full-document HTML titles.
+8. **Governance** — Governance remains project-owner led for now; a public issue can revisit this when the project needs a broader process.
 
 ---
 

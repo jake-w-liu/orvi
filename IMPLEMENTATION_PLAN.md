@@ -15,6 +15,10 @@ implementation companion and avoid drifting from the guide roadmap.
 | HTML renderer | Done: `src/renderer.ts`, `@lux-lang/lux/renderer` |
 | Default stylesheet | Done: `src/lux-base.css` |
 | Theming API | Done: `lux.config.js` support |
+| Renderer color scheme | Done: `colorScheme: "dark"` |
+| Top-level metadata | Done: optional `lux`, `title`, `lang`, and `dir` metadata |
+| v0.1 parser decisions | Done: nesting limit, unsupported dynamic expression diagnostics, metadata validation, `img` alt requirement |
+| Accessibility guarantees | Done: semantic HTML, image alt validation, callout roles/labels, tabs ARIA |
 | CLI build/check/format | Done |
 | CLI JSON diagnostics | Done: `lux check --json`, `lux format --check --json` |
 | CLI live preview server | Done: `lux serve` with hot reload |
@@ -31,10 +35,13 @@ implementation companion and avoid drifting from the guide roadmap.
 ## Near-Term Milestones
 
 1. Harden v0.1 parser
-   - Add malformed nesting fixtures.
+   - Done: add malformed nesting coverage and enforce the default maximum component nesting depth of 8.
    - Done: add table width mismatch diagnostics.
    - Done: add tabs-only-child validation for `[tabs]`.
    - Done: reject unknown components, unsupported options, and unsupported positional arguments.
+   - Done: reject unsupported dynamic expressions outside fenced code blocks.
+   - Done: validate optional top-level metadata: `lux: 0.1`, `title`, `lang`, and `dir: ltr|rtl|auto`.
+   - Done: require `img` alt text.
    - Add source ranges for editor diagnostics.
 
 2. Improve developer tooling

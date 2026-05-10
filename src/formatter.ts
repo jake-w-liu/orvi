@@ -2,6 +2,7 @@ import {
   BlockNode,
   ComponentNode,
   ComponentOptions,
+  DocumentMetadata,
   DocumentNode,
   InlineModifier,
   InlineNode,
@@ -24,7 +25,8 @@ export interface FormatResult {
 export function formatLux(source: string, options: FormatOptions = {}): FormatResult {
   const ast = parseLux(source);
   const indent = options.indent ?? "  ";
-  const body = formatBlocks(ast.children, 0, indent).trimEnd();
+  const metadata = formatMetadata(ast.metadata);
+  const body = [metadata, formatBlocks(ast.children, 0, indent).trimEnd()].filter(Boolean).join("\n\n");
   const formatted = options.finalNewline === false ? body : `${body}\n`;
 
   return {
@@ -32,6 +34,16 @@ export function formatLux(source: string, options: FormatOptions = {}): FormatRe
     ast,
     diagnostics: ast.diagnostics
   };
+}
+
+function formatMetadata(metadata: DocumentMetadata): string {
+  const entries: string[] = [];
+  if (metadata.lux) entries.push(`lux: ${metadata.lux}`);
+  if (metadata.title) entries.push(`title: ${metadata.title}`);
+  if (metadata.lang) entries.push(`lang: ${metadata.lang}`);
+  if (metadata.dir) entries.push(`dir: ${metadata.dir}`);
+
+  return entries.length ? ["---", ...entries, "---"].join("\n") : "";
 }
 
 function formatBlocks(blocks: BlockNode[], depth: number, indent: string): string {

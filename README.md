@@ -7,6 +7,21 @@ elements.
 This repo implements the v0.1 prototype from `lux-language-guide.md`.
 Implementation progress is tracked in the roadmap section of that guide.
 
+Lux documents may start with optional top-level metadata:
+
+```lux
+---
+lux: 0.1
+title: Example
+lang: en
+dir: ltr
+---
+```
+
+`title` feeds full HTML document titles, `lang` is document language metadata,
+and `dir` may be `ltr`, `rtl`, or `auto`. Dynamic expressions such as `{name}`
+are not part of v0.1 and produce diagnostics outside fenced code blocks.
+
 ## Install
 
 ```sh
@@ -36,6 +51,10 @@ import { formatLux, parseLux, renderLux } from "@lux-lang/lux";
 
 const ast = parseLux("# Hello");
 const html = renderLux("# Hello", { fullDocument: true }).html;
+const darkHtml = renderLux("# Hello", {
+  fullDocument: true,
+  colorScheme: "dark",
+}).html;
 const formatted = formatLux("[blue] Hi []").formatted;
 ```
 

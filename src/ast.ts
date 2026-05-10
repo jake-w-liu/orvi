@@ -13,6 +13,15 @@ export interface LuxDiagnostic {
   column: number;
 }
 
+export type TextDirection = "ltr" | "rtl" | "auto";
+
+export interface DocumentMetadata {
+  lux?: string;
+  title?: string;
+  lang?: string;
+  dir?: TextDirection;
+}
+
 export interface BaseNode {
   type: string;
   loc: SourceLocation;
@@ -20,6 +29,7 @@ export interface BaseNode {
 
 export interface DocumentNode extends BaseNode {
   type: "document";
+  metadata: DocumentMetadata;
   children: BlockNode[];
   diagnostics: LuxDiagnostic[];
 }

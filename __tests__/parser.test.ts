@@ -129,4 +129,54 @@ right
     expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(expect.arrayContaining(["LUX_UNKNOWN_COMPONENT"]));
     expect(grid.columns).toHaveLength(2);
   });
+
+  it("parses top-level metadata and rejects unsupported versions", () => {
+    const ast = parseLux(`---
+lux: 9.9
+title: Test Doc
+lang: en-US
+dir: rtl
+unknown: keep future-proof
+---
+
+# Title`);
+
+    expect(ast.metadata).toEqual({
+      lux: "9.9",
+      title: "Test Doc",
+      lang: "en-US",
+      dir: "rtl"
+    });
+    expect(ast.children[0]).toMatchObject({ type: "heading" });
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining(["LUX_UNSUPPORTED_VERSION", "LUX_UNKNOWN_METADATA"])
+    );
+  });
+
+  it("enforces max component nesting depth", () => {
+    const ast = parseLux(
+      `[card]
+[card]
+[card]
+too deep
+[/card]
+[/card]
+[/card]`,
+      { maxNestingDepth: 2 }
+    );
+
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining(["LUX_MAX_NESTING_DEPTH"])
+    );
+  });
+
+  it("rejects dynamic content expressions outside code blocks", () => {
+    const ast = parseLux(`Hello {name}
+
+\`\`\`txt
+Hello {name}
+\`\`\``);
+
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(["LUX_DYNAMIC_CONTENT_UNSUPPORTED"]);
+  });
 });

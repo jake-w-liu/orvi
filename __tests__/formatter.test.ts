@@ -41,4 +41,25 @@ const value = 1;
     expect(result.formatted).toContain("  console.log(value);");
     expect(result.formatted).toContain("| A   | Longer |");
   });
+
+  it("preserves canonical document metadata", () => {
+    const result = formatLux(`---
+dir: rtl
+lux: 0.1
+lang: ar
+title: Arabic Doc
+---
+# RTL Title`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.formatted).toBe(`---
+lux: 0.1
+title: Arabic Doc
+lang: ar
+dir: rtl
+---
+
+# RTL Title
+`);
+  });
 });

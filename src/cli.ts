@@ -2,7 +2,7 @@
 import { createServer, ServerResponse } from "http";
 import { existsSync, readFileSync, watch, writeFileSync } from "fs";
 import { basename, dirname, extname, resolve } from "path";
-import { defaultCss, LuxTheme, renderLux } from "./renderer";
+import { defaultCss, LuxColorScheme, LuxDirection, LuxTheme, renderLux } from "./renderer";
 import { parseLux } from "./parser";
 import { LuxDiagnostic } from "./ast";
 import { formatLux } from "./formatter";
@@ -31,6 +31,9 @@ interface CheckArgs {
 
 interface LuxConfig {
   title?: string;
+  lang?: string;
+  dir?: LuxDirection;
+  colorScheme?: LuxColorScheme;
   theme?: LuxTheme;
   css?: string;
 }
@@ -63,7 +66,11 @@ function build(options: BuildArgs): void {
   const source = readFileSync(inputPath, "utf8");
   const result = renderLux(source, {
     fullDocument: true,
-    title: config.title ?? basename(inputPath),
+    title: config.title,
+    fallbackTitle: basename(inputPath),
+    lang: config.lang,
+    dir: config.dir,
+    colorScheme: config.colorScheme,
     includeCss: true,
     theme: config.theme,
     extraCss: config.css
@@ -159,7 +166,11 @@ function serve(options: ServeArgs): void {
     const source = readFileSync(inputPath, "utf8");
     const result = renderLux(source, {
       fullDocument: true,
-      title: config.title ?? basename(inputPath),
+      title: config.title,
+      fallbackTitle: basename(inputPath),
+      lang: config.lang,
+      dir: config.dir,
+      colorScheme: config.colorScheme,
       includeCss: true,
       liveReload: true,
       theme: config.theme,

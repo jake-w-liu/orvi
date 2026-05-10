@@ -13,7 +13,11 @@ export interface RenderOptions {
   fullDocument?: boolean;
   includeCss?: boolean;
   title?: string;
+  fallbackTitle?: string;
+  lang?: string;
+  dir?: LuxDirection;
   liveReload?: boolean;
+  colorScheme?: LuxColorScheme;
   theme?: LuxTheme;
   extraCss?: string;
 }
@@ -29,6 +33,9 @@ export interface LuxTheme {
   font?: string;
   maxWidth?: string;
 }
+
+export type LuxColorScheme = "light" | "dark";
+export type LuxDirection = "ltr" | "rtl" | "auto";
 
 export type ThemeColorToken =
   | "fg"
@@ -60,12 +67,18 @@ export function renderLux(source: string, options: RenderOptions = {}): RenderRe
 
 export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): string {
   const ctx: RenderContext = { tabSet: 0 };
-  const body = `<main class="lux-document">\n${ast.children.map((node) => renderBlock(node, ctx)).join("\n")}\n</main>`;
+  const documentClass = ["lux-document", themeClass(options.colorScheme)].filter(Boolean).join(" ");
+  const body = `<main class="${documentClass}">\n${ast.children.map((node) => renderBlock(node, ctx)).join("\n")}\n</main>`;
   if (!options.fullDocument) {
     return body;
   }
 
-  const title = escapeHtml(options.title ?? "Lux Document");
+  const title = escapeHtml(options.title ?? ast.metadata.title ?? options.fallbackTitle ?? "Lux Document");
+  const lang = escapeAttr(options.lang ?? ast.metadata.lang ?? "en");
+  const direction = options.dir ?? ast.metadata.dir;
+  const dir = direction ? ` dir="${direction}"` : "";
+  const htmlClass = themeClass(options.colorScheme);
+  const htmlClassAttr = htmlClass ? ` class="${htmlClass}"` : "";
   const css =
     options.includeCss === false
       ? ""
@@ -73,7 +86,7 @@ export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): st
   const reload = options.liveReload ? liveReloadScript() : "";
   return [
     "<!doctype html>",
-    '<html lang="en">',
+    `<html lang="${lang}"${dir}${htmlClassAttr}>`,
     "<head>",
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
@@ -137,7 +150,10 @@ function renderList(ordered: boolean, items: InlineNode[][]): string {
 function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   if (node.name === "callout") {
     const type = node.options.type ?? "info";
-    return `<aside class="lux-callout lux-callout-${escapeAttr(type)}">${renderChildren(node.children, ctx)}</aside>`;
+    const label = `${calloutLabel(type)} callout`;
+    return `<aside class="lux-callout lux-callout-${escapeAttr(type)}" role="note" aria-label="${escapeAttr(
+      label
+    )}">${renderChildren(node.children, ctx)}</aside>`;
   }
 
   if (node.name === "card") {
@@ -156,7 +172,7 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   if (node.name === "tabs") {
     const tabNodes = node.children.filter(isTabNode);
     const group = `lux-tabs-${ctx.tabSet++}`;
-    return `<div class="lux-tabs">${tabNodes
+    return `<div class="lux-tabs" role="tablist" aria-label="Tabs">${tabNodes
       .map((tab, index) => renderTab(tab, ctx, group, index))
       .join("")}</div>`;
   }
@@ -171,12 +187,20 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
 
 function renderTab(node: ComponentNode, ctx: RenderContext, group: string, index: number): string {
   const id = `${group}-${index}`;
+  const tabId = `${id}-tab`;
+  const panelId = `${id}-panel`;
   const label = node.options.label ?? `Tab ${index + 1}`;
   const checked = index === 0 ? " checked" : "";
+  const selected = index === 0 ? "true" : "false";
   return [
     `<input class="lux-tab-input" type="radio" name="${group}" id="${id}"${checked}>`,
-    `<label class="lux-tab-label" for="${id}">${escapeHtml(label)}</label>`,
-    `<div class="lux-tab-panel">${renderChildren(node.children, ctx)}</div>`
+    `<label class="lux-tab-label" id="${tabId}" role="tab" for="${id}" aria-selected="${selected}" aria-controls="${panelId}">${escapeHtml(
+      label
+    )}</label>`,
+    `<div class="lux-tab-panel" id="${panelId}" role="tabpanel" aria-labelledby="${tabId}">${renderChildren(
+      node.children,
+      ctx
+    )}</div>`
   ].join("");
 }
 
@@ -259,6 +283,15 @@ function safeUrl(value: string): string {
   if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return "#";
   if (trimmed.startsWith("//")) return "#";
   return trimmed;
+}
+
+function themeClass(colorScheme: LuxColorScheme | undefined): string {
+  return colorScheme === "dark" ? "lux-theme-dark" : "";
+}
+
+function calloutLabel(type: string): string {
+  if (!type) return "Info";
+  return `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
 }
 
 function liveReloadScript(): string {
