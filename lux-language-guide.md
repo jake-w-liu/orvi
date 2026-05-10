@@ -350,7 +350,7 @@ marking the parent complete.
 - [x] Test generated HTML launch in Firefox headless
 - [x] Test generated HTML DOM in Chrome headless
 - [x] Add Safari WebDriver render smoke harness with clean skip when remote automation is disabled
-- [ ] Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine
+- [x] Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine
 
 **Output:** `@lux-lang/lux/renderer` export
 

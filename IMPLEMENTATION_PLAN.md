@@ -30,7 +30,7 @@ implementation companion and avoid drifting from the guide roadmap.
 | VS Code autocomplete/live preview | Done |
 | CI | Done: GitHub Actions runs root verify and VS Code package check |
 | Prettier plugin | Bridge done with basic Prettier CLI coverage |
-| Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari WebDriver harness done, local Safari automation pending |
+| Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari WebDriver DOM smoke done |
 | ESM package build | Done: `dist/esm` import exports |
 | React fixture app | Done: fixture app + Chrome/browser smoke coverage |
 | Obsidian/GitHub/AI artifact integrations | Not started |
@@ -65,7 +65,7 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add Firefox headless launch smoke test for generated HTML.
    - Done: add Chrome headless DOM render smoke test.
    - Done: add Safari WebDriver render smoke harness.
-   - Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine.
+   - Done: run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine.
 
 4. Build playground
    - Done: editor + preview split view.

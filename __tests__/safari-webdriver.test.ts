@@ -1,9 +1,9 @@
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from "child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "fs";
-import { request } from "http";
+import { createServer as createHttpServer, request } from "http";
 import { tmpdir } from "os";
 import { join } from "path";
-import { AddressInfo, createServer } from "net";
+import { AddressInfo, createServer as createNetServer } from "net";
 import { renderLux } from "../src/renderer";
 
 const SAFARIDRIVER_CANDIDATES = [
@@ -36,6 +36,7 @@ describe("Safari WebDriver rendering smoke", () => {
     const port = await getAvailablePort();
     const driverProcess = spawn(safaridriver, ["-p", String(port)]);
     let sessionId: string | undefined;
+    let fixtureServer: ServedFixture | undefined;
 
     try {
       await waitForWebDriverStatus(driverProcess, port);
@@ -57,6 +58,7 @@ dir: ltr
         { fullDocument: true, colorScheme: "dark" }
       ).html;
       writeFileSync(htmlPath, html);
+      fixtureServer = await serveHtmlFixture(html);
 
       const session = await webDriverRequest<WebDriverSession>(
         port,
@@ -77,7 +79,7 @@ dir: ltr
       expect(sessionId).toEqual(expect.any(String));
 
       await expectOkResponse(
-        webDriverRequest(port, "POST", `/session/${sessionId}/url`, { url: `file://${htmlPath}` }),
+        webDriverRequest(port, "POST", `/session/${sessionId}/url`, { url: fixtureServer.url }),
         "navigate Safari to generated Lux HTML"
       );
 
@@ -100,6 +102,7 @@ dir: ltr
       if (sessionId) {
         await expectOkResponse(webDriverRequest(port, "DELETE", `/session/${sessionId}`), "delete Safari session");
       }
+      if (fixtureServer) await fixtureServer.close();
       await stopProcess(driverProcess);
       rmSync(workspace, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     }
@@ -121,6 +124,11 @@ type WebDriverResponse<T> = {
   body: WebDriverEnvelope<T>;
 };
 
+type ServedFixture = {
+  url: string;
+  close: () => Promise<void>;
+};
+
 function findSafaridriver(): string | undefined {
   for (const candidate of SAFARIDRIVER_CANDIDATES) {
     const result = spawnSync(candidate, ["--version"], {
@@ -135,13 +143,46 @@ function findSafaridriver(): string | undefined {
 
 function getAvailablePort(): Promise<number> {
   return new Promise((resolve, reject) => {
-    const server = createServer();
+    const server = createNetServer();
     server.once("error", reject);
     server.listen(0, "127.0.0.1", () => {
       const address = server.address() as AddressInfo;
       server.close((error) => {
         if (error) reject(error);
         else resolve(address.port);
+      });
+    });
+  });
+}
+
+function serveHtmlFixture(html: string): Promise<ServedFixture> {
+  return new Promise((resolve, reject) => {
+    const server = createHttpServer((request, response) => {
+      if (request.url !== "/fixture.html") {
+        response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+        response.end("Not found");
+        return;
+      }
+
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": Buffer.byteLength(html)
+      });
+      response.end(html);
+    });
+
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address() as AddressInfo;
+      resolve({
+        url: `http://127.0.0.1:${address.port}/fixture.html`,
+        close: () =>
+          new Promise((closeResolve, closeReject) => {
+            server.close((error) => {
+              if (error) closeReject(error);
+              else closeResolve();
+            });
+          })
       });
     });
   });
