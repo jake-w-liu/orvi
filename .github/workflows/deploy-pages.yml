@@ -45,6 +45,8 @@ jobs:
         run: npm ci
 
       - name: Build site
+        env:
+          LUX_PAGES_CNAME: ${{ vars.LUX_PAGES_CNAME }}
         run: npm run site:build
 
       - name: Upload Pages artifact

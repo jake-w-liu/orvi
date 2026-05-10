@@ -35,6 +35,20 @@ The generator reads only committed Lux surfaces:
 The generator does not run a fine-tuning job and the generated files should not
 be described as model performance results. They are preparation artifacts only.
 
+## Running a Real Fine-Tune
+
+The committed corpus is provider-neutral. A real fine-tune still requires:
+
+- provider and base-model choice
+- account/API access
+- explicit budget approval
+- provider-specific JSONL conversion if required
+- upload, job creation, and evaluation
+
+Do not start a fine-tuning job from this repo unless those external choices are
+known. After a provider is selected, keep a small evaluation set separate from
+the training data and verify generated Lux with `lux check`.
+
 ## Record Shape
 
 Each JSONL line follows this schema:

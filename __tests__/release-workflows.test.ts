@@ -12,7 +12,8 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("npm run site:build");
     expect(siteBuilder).toContain("renderLux(source");
     expect(siteBuilder).toContain("renderedLuxFiles");
-    expect(siteBuilder).toContain("lux-lang.dev");
+    expect(workflow).toContain("LUX_PAGES_CNAME");
+    expect(siteBuilder).toContain("process.env.LUX_PAGES_CNAME");
     expect(siteBuilder).toContain('join(siteDir, "CNAME")');
   });
 
@@ -38,7 +39,9 @@ describe("release and deployment workflows", () => {
     expect(releaseRunbook).toContain("jake-w-liu.lux-language");
     expect(releaseRunbook).toContain("VSCE_PAT");
     expect(releaseRunbook).toContain("lux-lang.dev");
-    expect(releaseRunbook).toContain("GitHub does not provide arbitrary repository-native renderers");
+    expect(releaseRunbook).toContain(
+      "GitHub does not provide arbitrary repository-native renderers",
+    );
   });
 });
 

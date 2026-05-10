@@ -396,8 +396,8 @@ marking the parent complete.
 - [x] Static **Lux Playground** with editor + preview split
 - [x] Add GitHub Pages deployment workflow for the Lux Playground
 - [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds
-- [x] Configure `lux-lang.dev` as the repository's GitHub Pages custom domain
-- [ ] Point `lux-lang.dev` DNS at GitHub Pages and wait for GitHub HTTPS certificate issuance
+- [x] Gate `lux-lang.dev` custom-domain deployment behind `LUX_PAGES_CNAME` so the default Pages URL stays usable
+- [ ] Point `lux-lang.dev` DNS at GitHub Pages, set `LUX_PAGES_CNAME`, configure the Pages custom domain, and wait for HTTPS certificate issuance
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 

@@ -58,12 +58,14 @@ btn: Open release checklist -> https://example.com/release
 
 ## Fine-Tuning Data Shape
 
-For future fine-tuning, store examples as JSONL:
+For future fine-tuning, use the committed deterministic corpus instead of
+hand-rolled one-off examples:
 
-```json
-{"input":"Create a two-column launch brief with a success badge.","output":"---\nlux: 0.1\ntitle: Launch Brief\nlang: en\n---\n\n# Launch Brief\n\nbadge: Ready | type=success\n"}
+```sh
+npm run finetune:corpus
 ```
 
-Keep outputs valid under `lux check`, and include a mix of simple documents,
-component-heavy layouts, invalid-to-valid repairs, and benchmark-like paired
-Lux/HTML examples.
+The corpus and schema are documented in `docs/fine-tuning-corpus.md` and written
+to `training/fine-tuning/lux-corpus.jsonl`. Keep outputs valid under
+`lux check`, and include a mix of simple documents, component-heavy layouts,
+invalid-to-valid repairs, and benchmark-like paired Lux/HTML examples.

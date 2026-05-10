@@ -3,22 +3,43 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderLux } from "../dist/esm/renderer.js";
 
-const root = dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
+const root = dirname(
+  fileURLToPath(new URL("../package.json", import.meta.url)),
+);
 const siteDir = join(root, ".site");
-const skippedDirs = new Set([".git", ".github", ".site", "dist", "node_modules"]);
+const skippedDirs = new Set([
+  ".git",
+  ".github",
+  ".site",
+  "dist",
+  "node_modules",
+]);
 
 await rm(siteDir, { force: true, recursive: true });
 await mkdir(siteDir, { recursive: true });
 
-await cp(join(root, "playground"), join(siteDir, "playground"), { recursive: true });
-await cp(join(root, "dist", "esm"), join(siteDir, "dist", "esm"), { recursive: true });
-await cp(join(root, "dist", "lux-base.css"), join(siteDir, "dist", "lux-base.css"));
+await cp(join(root, "playground"), join(siteDir, "playground"), {
+  recursive: true,
+});
+await cp(join(root, "dist", "esm"), join(siteDir, "dist", "esm"), {
+  recursive: true,
+});
+await cp(
+  join(root, "dist", "lux-base.css"),
+  join(siteDir, "dist", "lux-base.css"),
+);
 await mkdir(join(siteDir, "examples"), { recursive: true });
-await cp(join(root, "examples", "welcome.html"), join(siteDir, "examples", "welcome.html"));
+await cp(
+  join(root, "examples", "welcome.html"),
+  join(siteDir, "examples", "welcome.html"),
+);
 await cp(join(root, "schemas"), join(siteDir, "schemas"), { recursive: true });
 const renderedLuxFiles = await renderLuxFiles();
 
-const packageJson = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+const packageJson = JSON.parse(
+  await readFile(join(root, "package.json"), "utf8"),
+);
+const pagesCname = process.env.LUX_PAGES_CNAME?.trim();
 await writeFile(
   join(siteDir, "index.html"),
   `<!doctype html>
@@ -35,13 +56,15 @@ await writeFile(
     <p><a href="/rendered/">Browse rendered Lux files</a></p>
   </body>
 </html>
-`
+`,
 );
-await writeFile(join(siteDir, "CNAME"), "lux-lang.dev\n");
+if (pagesCname) {
+  await writeFile(join(siteDir, "CNAME"), `${pagesCname}\n`);
+}
 await writeFile(join(siteDir, ".nojekyll"), "");
 await writeFile(
   join(siteDir, "version.json"),
-  `${JSON.stringify({ name: packageJson.name, version: packageJson.version, renderedLuxFiles }, null, 2)}\n`
+  `${JSON.stringify({ name: packageJson.name, version: packageJson.version, renderedLuxFiles }, null, 2)}\n`,
 );
 
 async function renderLuxFiles() {
@@ -53,7 +76,7 @@ async function renderLuxFiles() {
     const source = await readFile(sourcePath, "utf8");
     const result = renderLux(source, {
       fullDocument: true,
-      fallbackTitle: relativePath
+      fallbackTitle: relativePath,
     });
 
     await mkdir(dirname(outputPath), { recursive: true });
@@ -61,7 +84,7 @@ async function renderLuxFiles() {
     rendered.push({
       source: relativePath,
       output: `/rendered/${relativePath}.html`,
-      diagnostics: result.ast.diagnostics.length
+      diagnostics: result.ast.diagnostics.length,
     });
   }
 
@@ -80,7 +103,7 @@ async function findLuxFiles(dir) {
 
       const path = join(dir, entry.name);
       return path.endsWith(".lux") ? [path] : [];
-    })
+    }),
   );
 
   return files.flat().sort();
@@ -115,12 +138,18 @@ async function writeRenderedIndex(files) {
     </main>
   </body>
 </html>
-`
+`,
   );
 }
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => {
-    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[char];
   });
 }

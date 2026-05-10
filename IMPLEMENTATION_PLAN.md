@@ -37,7 +37,7 @@ implementation companion and avoid drifting from the guide roadmap.
 | Obsidian/GitHub/AI artifact integrations    | Done: Obsidian scaffold, AI artifact, GitHub Pages rendering                                                                              |
 | AI artifact support                         | Done: `@lux-lang/lux/artifact` export + JSON schema                                                                                       |
 | GitHub rendering                            | Done: GitHub Pages renders repo `.lux` files as HTML previews; native GitHub repo preview requires platform support                       |
-| Playground                                  | Done: static editor + preview split + Pages deploy workflow; Pages custom domain configured; DNS pending                                  |
+| Playground                                  | Done: static editor + preview split + Pages deploy workflow; custom domain gated until DNS is correct                                     |
 | AI corpus/benchmarks                        | Done: larger deterministic corpus + token-ish efficiency tests + published report                                                         |
 | AI authoring guidance                       | Done: model-neutral prompt and repair workflow; fine-tune pending external model/provider                                                 |
 
@@ -77,10 +77,10 @@ implementation companion and avoid drifting from the guide roadmap.
 4. Build playground
    - Done: editor + preview split view.
    - Done: GitHub Pages deployment workflow.
-   - Done: configure `lux-lang.dev` as the repository Pages custom domain.
+   - Done: gate `lux-lang.dev` custom-domain deployment behind `LUX_PAGES_CNAME`.
    - Example gallery.
    - Shareable encoded document state.
-   - Point `lux-lang.dev` DNS to the GitHub Pages site and wait for HTTPS certificate issuance.
+   - Point `lux-lang.dev` DNS to the GitHub Pages site, enable the custom domain, and wait for HTTPS certificate issuance.
 
 5. Benchmark corpus
    - Done: add small deterministic Lux corpus.
