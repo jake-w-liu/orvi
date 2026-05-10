@@ -48,12 +48,12 @@ await writeFile(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Orvi Playground</title>
-    <meta http-equiv="refresh" content="0; url=/playground/">
-    <link rel="canonical" href="/playground/">
+    <meta http-equiv="refresh" content="0; url=playground/">
+    <link rel="canonical" href="playground/">
   </head>
   <body>
-    <p><a href="/playground/">Open Orvi Playground</a></p>
-    <p><a href="/rendered/">Browse rendered Orvi files</a></p>
+    <p><a href="playground/">Open Orvi Playground</a></p>
+    <p><a href="rendered/">Browse rendered Orvi files</a></p>
   </body>
 </html>
 `,
@@ -83,7 +83,7 @@ async function renderOrviFiles() {
     await writeFile(outputPath, result.html);
     rendered.push({
       source: relativePath,
-      output: `/rendered/${relativePath}.html`,
+      output: `rendered/${relativePath}.html`,
       diagnostics: result.ast.diagnostics.length,
     });
   }
@@ -112,7 +112,8 @@ async function findOrviFiles(dir) {
 async function writeRenderedIndex(files) {
   const rows = files
     .map((file) => {
-      return `<li><a href="${escapeHtml(file.output)}">${escapeHtml(file.source)}</a>${
+      const href = file.output.startsWith("rendered/") ? file.output.slice("rendered/".length) : file.output;
+      return `<li><a href="${escapeHtml(href)}">${escapeHtml(file.source)}</a>${
         file.diagnostics ? ` (${file.diagnostics} diagnostics)` : ""
       }</li>`;
     })
@@ -127,7 +128,7 @@ async function writeRenderedIndex(files) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Rendered Orvi Files</title>
-    <link rel="stylesheet" href="/dist/orvi-base.css">
+    <link rel="stylesheet" href="../dist/orvi-base.css">
   </head>
   <body>
     <main class="orvi-document">

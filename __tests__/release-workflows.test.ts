@@ -12,6 +12,11 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("npm run site:build");
     expect(siteBuilder).toContain("renderOrvi(source");
     expect(siteBuilder).toContain("renderedOrviFiles");
+    expect(siteBuilder).toContain('href="playground/"');
+    expect(siteBuilder).toContain('href="../dist/orvi-base.css"');
+    expect(siteBuilder).not.toContain('href="/playground/"');
+    expect(siteBuilder).not.toContain('href="/rendered/"');
+    expect(siteBuilder).not.toContain('href="/dist/orvi-base.css"');
     expect(workflow).toContain("ORVI_PAGES_CNAME");
     expect(siteBuilder).toContain("process.env.ORVI_PAGES_CNAME");
     expect(siteBuilder).toContain('join(siteDir, "CNAME")');
