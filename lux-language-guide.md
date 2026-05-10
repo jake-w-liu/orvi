@@ -315,7 +315,7 @@ Progress is tracked in this guide. Keep the checkboxes below aligned with what
 is implemented in the current repo, and split partly complete items instead of
 marking the parent complete.
 
-### Phase 0 — Specification (Weeks 1–2)
+### Phase 0 — Specification
 
 - [x] Write the formal grammar (EBNF) in `lux-spec-v0.1.md`
 - [x] Define built-in modifiers and component types
@@ -323,7 +323,7 @@ marking the parent complete.
 - [x] Create a Jest test suite covering valid and invalid Lux documents
 - [x] Publish the spec as a versioned document (`lux-spec-v0.1.md`)
 
-### Phase 1 — Parser (Weeks 3–6)
+### Phase 1 — Parser
 
 **Stack recommendation:** TypeScript (for portability — runs in browser and Node.js)
 
@@ -338,7 +338,7 @@ marking the parent complete.
 
 **Output:** `@lux-lang/lux/parser` export
 
-### Phase 2 — HTML Renderer (Weeks 7–9)
+### Phase 2 — HTML Renderer
 
 - [x] Walk the AST and emit semantic HTML + scoped CSS classes
 - [x] Create a default stylesheet (`lux-base.css`)
@@ -348,11 +348,12 @@ marking the parent complete.
 - [x] Render declarative CSS tabs with ARIA attributes
 - [x] Render callouts, images, tabs, and document structure with v0.1 accessibility guarantees
 - [x] Test generated HTML launch in Firefox headless
-- [ ] Test rendering in Chrome and Safari
+- [x] Test generated HTML DOM in Chrome headless
+- [ ] Test rendering in Safari via WebDriver
 
 **Output:** `@lux-lang/lux/renderer` export
 
-### Phase 3 — Developer Tooling (Weeks 10–14)
+### Phase 3 — Developer Tooling
 
 - [x] **CLI tool:** `lux build input.lux` → `output.html`
 - [x] **CLI check/format:** `lux check` and `lux format`
@@ -364,12 +365,12 @@ marking the parent complete.
   - [x] Language configuration scaffold
   - [x] Diagnostics via `lux check --json`
   - [x] Packaging script for `.vsix`
-  - [ ] Autocomplete for components and modifiers
-  - [ ] Live preview panel
+  - [x] Autocomplete for components and modifiers
+  - [x] Live preview panel
 - [x] **Prettier plugin bridge** for auto-formatting `.lux` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 
-### Phase 4 — Ecosystem (Weeks 15–20)
+### Phase 4 — Ecosystem
 
 - [x] **React component:** `<LuxRenderer source={luxString} />`
 - [x] **ESM package output:** importable browser-friendly module build

@@ -27,9 +27,9 @@ implementation companion and avoid drifting from the guide roadmap.
 | VS Code syntax highlighting/snippets/config | Done |
 | VS Code diagnostics | Done: extension runs `lux check --json` |
 | VS Code package script | Done: extension `npm run package` |
-| VS Code autocomplete/live preview | Not started |
+| VS Code autocomplete/live preview | Done |
 | Prettier plugin | Bridge done with basic Prettier CLI coverage |
-| Browser rendering verification | Firefox headless launch smoke done; Chrome/Safari not started |
+| Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari pending |
 | ESM package build | Done: `dist/esm` import exports |
 | Obsidian/GitHub/AI artifact integrations | Not started |
 | Playground | Not started |
@@ -50,6 +50,8 @@ implementation companion and avoid drifting from the guide roadmap.
 2. Improve developer tooling
    - Done: add CLI JSON output for editor diagnostics.
    - Done: add VS Code diagnostics using CLI JSON output.
+   - Done: add VS Code completions for components, modifiers, semantic prefixes, and metadata.
+   - Done: add VS Code preview panel using `lux build`.
    - Done: add packaged `.vsix` build script.
    - Done: add Prettier integration test using the real Prettier CLI.
 
@@ -57,7 +59,8 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add ESM build.
    - Add React fixture app.
    - Done: add Firefox headless launch smoke test for generated HTML.
-   - Add Chrome and Safari render smoke tests.
+   - Done: add Chrome headless DOM render smoke test.
+   - Add Safari WebDriver render smoke test.
 
 4. Build playground
    - Editor + preview split view.

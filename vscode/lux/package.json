@@ -8,7 +8,7 @@
   "engines": {
     "vscode": "^1.92.0"
   },
-  "activationEvents": ["onLanguage:lux"],
+  "activationEvents": ["onLanguage:lux", "onCommand:lux.preview"],
   "categories": ["Programming Languages"],
   "scripts": {
     "package": "vsce package"
@@ -38,6 +38,27 @@
         "path": "./snippets/lux.json"
       }
     ],
+    "commands": [
+      {
+        "command": "lux.preview",
+        "title": "Lux: Preview"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "lux.preview",
+          "when": "resourceLangId == lux",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "lux.preview",
+          "when": "resourceLangId == lux"
+        }
+      ]
+    },
     "configuration": {
       "title": "Lux",
       "properties": {

@@ -80,7 +80,8 @@ prettier --plugin @lux-lang/lux/prettier-plugin --write "**/*.lux"
 ## VS Code
 
 Extension scaffold lives in `vscode/lux`. It provides syntax highlighting,
-snippets, and diagnostics by running `lux check --json`.
+snippets, completions, diagnostics through `lux check --json`, and a preview
+panel through `lux build`.
 
 ```sh
 cd vscode/lux

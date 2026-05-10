@@ -1,13 +1,48 @@
 const vscode = require("vscode");
 const { execFile } = require("child_process");
+const { mkdtemp, readFile, rm, writeFile } = require("fs/promises");
+const os = require("os");
+const path = require("path");
 
 const LANGUAGE_ID = "lux";
 const DIAGNOSTIC_SOURCE = "lux";
 const CHANGE_DEBOUNCE_MS = 300;
+const COMPLETION_TRIGGER_CHARS = ["[", ":", "=", " ", "\n"];
+
+const COMPLETION_DEFINITIONS = [
+  { label: "callout", insertText: "[callout type=${1|info,warning,success,error|}]\n  $2\n[/callout]", detail: "Lux component" },
+  { label: "grid", insertText: "[grid ${1|2,3,4|}]\n  $2\n  ---\n  $3\n[/grid]", detail: "Lux component" },
+  { label: "card", insertText: "[card]\n  $1\n[/card]", detail: "Lux component" },
+  { label: "tabs", insertText: "[tabs]\n  [tab label=${1:Overview}]\n    $2\n  [/tab]\n[/tabs]", detail: "Lux component" },
+  { label: "tab", insertText: "[tab label=${1:Overview}]\n  $2\n[/tab]", detail: "Lux component" },
+  { label: "btn:", insertText: "btn: ${1:Label} -> ${2:https://example.com}", detail: "Lux semantic prefix" },
+  { label: "img:", insertText: "img: ${1:./image.jpg} | ${2:Alt text}", detail: "Lux semantic prefix" },
+  { label: "hr", insertText: "hr", detail: "Lux semantic prefix" },
+  { label: "br", insertText: "br", detail: "Lux semantic prefix" },
+  { label: "badge:", insertText: "badge: ${1:Label}", detail: "Lux semantic prefix" },
+  { label: "type=", insertText: "type=${1|info,warning,success,error|}", detail: "Lux modifier" },
+  { label: "label=", insertText: "label=${1:Overview}", detail: "Lux modifier" },
+  { label: "bg=", insertText: "bg=${1|red,blue,green,gray,muted,yellow,purple,orange,pink,cyan,white,black|}", detail: "Lux background modifier" },
+  { label: "red", insertText: "red", detail: "Lux color modifier" },
+  { label: "blue", insertText: "blue", detail: "Lux color modifier" },
+  { label: "green", insertText: "green", detail: "Lux color modifier" },
+  { label: "muted", insertText: "muted", detail: "Lux color modifier" },
+  { label: "sm", insertText: "sm", detail: "Lux size modifier" },
+  { label: "lg", insertText: "lg", detail: "Lux size modifier" },
+  { label: "xl", insertText: "xl", detail: "Lux size modifier" },
+  { label: "bold", insertText: "bold", detail: "Lux weight modifier" },
+  { label: "light", insertText: "light", detail: "Lux weight modifier" },
+  { label: "lux:", insertText: "lux: 0.1", detail: "Lux metadata key" },
+  { label: "title:", insertText: "title: ${1:Document title}", detail: "Lux metadata key" },
+  { label: "lang:", insertText: "lang: ${1|en,es,fr,de,ja,zh|}", detail: "Lux metadata key" },
+  { label: "dir:", insertText: "dir: ${1|ltr,rtl,auto|}", detail: "Lux metadata key" }
+];
 
 let diagnosticCollection;
 const pendingChecks = new Map();
 const documentVersions = new Map();
+const pendingPreviewUpdates = new Map();
+const previewPanels = new Map();
 
 function activate(context) {
   diagnosticCollection = vscode.languages.createDiagnosticCollection("lux");
@@ -15,13 +50,30 @@ function activate(context) {
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(checkDocument),
-    vscode.workspace.onDidSaveTextDocument(checkDocument),
-    vscode.workspace.onDidChangeTextDocument((event) => scheduleCheck(event.document)),
+    vscode.workspace.onDidSaveTextDocument((document) => {
+      checkDocument(document);
+      refreshPreview(document);
+    }),
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      scheduleCheck(event.document);
+      schedulePreviewUpdate(event.document);
+    }),
     vscode.workspace.onDidCloseTextDocument((document) => {
       clearPendingCheck(document);
+      clearPendingPreviewUpdate(document);
       documentVersions.delete(document.uri.toString());
       diagnosticCollection.delete(document.uri);
+      closePreview(document);
     })
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(
+      { language: LANGUAGE_ID, scheme: "file" },
+      { provideCompletionItems },
+      ...COMPLETION_TRIGGER_CHARS
+    ),
+    vscode.commands.registerCommand("lux.preview", () => previewActiveDocument())
   );
 
   vscode.workspace.textDocuments.forEach(checkDocument);
@@ -31,8 +83,16 @@ function deactivate() {
   for (const timeout of pendingChecks.values()) {
     clearTimeout(timeout);
   }
+  for (const timeout of pendingPreviewUpdates.values()) {
+    clearTimeout(timeout);
+  }
   pendingChecks.clear();
+  pendingPreviewUpdates.clear();
   documentVersions.clear();
+  for (const panel of previewPanels.values()) {
+    panel.dispose();
+  }
+  previewPanels.clear();
   if (diagnosticCollection) {
     diagnosticCollection.dispose();
   }
@@ -45,6 +105,15 @@ function scheduleCheck(document) {
   pendingChecks.set(
     document.uri.toString(),
     setTimeout(() => checkDocument(document), CHANGE_DEBOUNCE_MS)
+  );
+}
+
+function schedulePreviewUpdate(document) {
+  if (!isLuxFile(document) || !previewPanels.has(document.uri.toString())) return;
+  clearPendingPreviewUpdate(document);
+  pendingPreviewUpdates.set(
+    document.uri.toString(),
+    setTimeout(() => refreshPreview(document), CHANGE_DEBOUNCE_MS)
   );
 }
 
@@ -81,6 +150,132 @@ function runLuxCheck(document, callback) {
 
     callback([]);
   });
+}
+
+function provideCompletionItems() {
+  return COMPLETION_DEFINITIONS.map((definition) => {
+    const item = new vscode.CompletionItem(definition.label, vscode.CompletionItemKind.Snippet);
+    item.detail = definition.detail;
+    item.insertText = new vscode.SnippetString(definition.insertText);
+    return item;
+  });
+}
+
+async function previewActiveDocument() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isLuxFile(editor.document)) {
+    vscode.window.showWarningMessage("Open a Lux file to preview.");
+    return;
+  }
+
+  const document = editor.document;
+  const documentKey = document.uri.toString();
+  const existingPanel = previewPanels.get(documentKey);
+  if (existingPanel) {
+    existingPanel.reveal(vscode.ViewColumn.Beside);
+    refreshPreview(document, existingPanel);
+    return;
+  }
+
+  const panel = vscode.window.createWebviewPanel(
+    "luxPreview",
+    `Lux Preview: ${path.basename(document.uri.fsPath)}`,
+    vscode.ViewColumn.Beside,
+    { enableScripts: false }
+  );
+
+  previewPanels.set(documentKey, panel);
+  panel.onDidDispose(() => {
+    clearPendingPreviewUpdate(document);
+    previewPanels.delete(documentKey);
+  });
+
+  refreshPreview(document, panel);
+}
+
+async function refreshPreview(document, panel = previewPanels.get(document.uri.toString())) {
+  if (!panel || !isLuxFile(document)) return;
+  const documentKey = document.uri.toString();
+  clearPendingPreviewUpdate(document);
+  panel.webview.html = renderPreviewLoading();
+
+  try {
+    const html = await buildPreviewHtml(document);
+    if (previewPanels.get(documentKey) === panel) {
+      panel.webview.html = html;
+    }
+  } catch (error) {
+    if (previewPanels.get(documentKey) === panel) {
+      panel.webview.html = renderPreviewError(error);
+    }
+  }
+}
+
+async function buildPreviewHtml(document) {
+  const cliPath = vscode.workspace.getConfiguration("lux").get("cliPath", "lux");
+  const cwd = workspaceFolderPath(document);
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "lux-preview-"));
+  const outputPath = path.join(tempDir, "preview.html");
+  let inputPath = document.uri.fsPath;
+
+  try {
+    if (document.isDirty && typeof document.getText === "function") {
+      inputPath = path.join(tempDir, path.basename(document.uri.fsPath) || "preview.lux");
+      await writeFile(inputPath, document.getText(), "utf8");
+    }
+
+    await execFilePromise(cliPath, ["build", inputPath, "-o", outputPath], { cwd });
+    const html = await readFile(outputPath, "utf8");
+    return renderPreviewFrame(html);
+  } finally {
+    rm(tempDir, { force: true, recursive: true }).catch(() => {});
+  }
+}
+
+function execFilePromise(command, args, options) {
+  return new Promise((resolve, reject) => {
+    execFile(command, args, options, (error, stdout, stderr) => {
+      if (error) {
+        error.message = stderr.trim() || stdout.trim() || error.message || "Lux preview failed.";
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function renderPreviewLoading() {
+  return renderPreviewShell("<main class=\"state\">Building Lux preview...</main>");
+}
+
+function renderPreviewFrame(html) {
+  return renderPreviewShell(`<iframe title="Lux preview" sandbox srcdoc="${escapeAttribute(html)}"></iframe>`);
+}
+
+function renderPreviewError(error) {
+  const message = error && error.message ? error.message : "Lux preview failed.";
+  return renderPreviewShell(`<main class="state error"><h1>Lux preview failed</h1><pre>${escapeHtml(message)}</pre></main>`);
+}
+
+function renderPreviewShell(body) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    html, body, iframe { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--vscode-editor-background); color: var(--vscode-editor-foreground); }
+    iframe { border: 0; background: white; }
+    .state { box-sizing: border-box; padding: 24px; font: 13px/1.5 var(--vscode-font-family); }
+    .error h1 { margin: 0 0 12px; font-size: 16px; }
+    .error pre { overflow: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>${body}</body>
+</html>`;
 }
 
 function toVsCodeDiagnostics(payload, document) {
@@ -135,6 +330,16 @@ function parseJson(output) {
   }
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char];
+  });
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
+}
+
 function isLuxFile(document) {
   return document && document.languageId === LANGUAGE_ID && document.uri && document.uri.scheme === "file";
 }
@@ -145,6 +350,22 @@ function clearPendingCheck(document) {
   if (timeout) {
     clearTimeout(timeout);
     pendingChecks.delete(documentKey);
+  }
+}
+
+function clearPendingPreviewUpdate(document) {
+  const documentKey = document.uri.toString();
+  const timeout = pendingPreviewUpdates.get(documentKey);
+  if (timeout) {
+    clearTimeout(timeout);
+    pendingPreviewUpdates.delete(documentKey);
+  }
+}
+
+function closePreview(document) {
+  const panel = previewPanels.get(document.uri.toString());
+  if (panel) {
+    panel.dispose();
   }
 }
 
