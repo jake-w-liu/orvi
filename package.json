@@ -68,13 +68,15 @@
     "build:assets": "node -e \"require('fs').copyFileSync('src/lux-base.css','dist/lux-base.css')\"",
     "check": "tsc --noEmit",
     "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser lux examples/welcome.lux --check",
+    "finetune:corpus": "node scripts/build-fine-tuning-corpus.mjs",
+    "finetune:corpus:check": "node scripts/build-fine-tuning-corpus.mjs --check",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "playground:test": "node --test playground/playground.test.mjs",
     "obsidian:build": "npm run build && node integrations/obsidian-lux/build.mjs",
     "site:build": "npm run build && node dist/cli.js build examples/welcome.lux -o examples/welcome.html && node scripts/build-site.mjs",
-    "verify": "npm run check && npm test && npm run playground:test && npm run build && npm run format:check",
-    "vscode:package": "npm --prefix vscode/lux run package",
-    "vscode:publish": "npm --prefix vscode/lux run publish"
+    "verify": "npm run check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run format:check",
+    "vscode:package": "npm --prefix vscode/lux run package --",
+    "vscode:publish": "npm --prefix vscode/lux run publish --"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

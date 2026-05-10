@@ -26,21 +26,32 @@
     "preview",
     "syntax"
   ],
-  "activationEvents": ["onLanguage:lux", "onCommand:lux.preview"],
-  "categories": ["Programming Languages", "Other"],
+  "activationEvents": [
+    "onLanguage:lux",
+    "onCommand:lux.preview"
+  ],
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
   "scripts": {
     "package": "vsce package",
     "publish": "vsce publish"
   },
   "devDependencies": {
-    "@vscode/vsce": "^3.2.2"
+    "@vscode/vsce": "^3.9.1"
   },
   "contributes": {
     "languages": [
       {
         "id": "lux",
-        "aliases": ["Lux", "lux"],
-        "extensions": [".lux"],
+        "aliases": [
+          "Lux",
+          "lux"
+        ],
+        "extensions": [
+          ".lux"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],

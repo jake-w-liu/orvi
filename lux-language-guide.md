@@ -371,6 +371,7 @@ marking the parent complete.
   - [x] Release prep metadata, README, changelog, license, package lock, and `.vscodeignore`
 - [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
 - [x] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.lux-language`
+- [x] Harden Marketplace release workflow with token validation and VSIX artifact capture
 - [ ] Configure `VSCE_PAT` for repeatable automated Marketplace releases
 - [x] **Prettier plugin bridge** for auto-formatting `.lux` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
@@ -387,14 +388,16 @@ marking the parent complete.
 - [ ] **Native GitHub rendering** — `.lux` files rendered directly in repos (requires GitHub platform support)
 - [x] Static **Lux Playground** with editor + preview split
 - [x] Add GitHub Pages deployment workflow for the Lux Playground
-- [ ] Point `lux-lang.dev` DNS at the deployed GitHub Pages site
+- [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds
+- [ ] Point `lux-lang.dev` DNS at the deployed GitHub Pages site and configure it as the Pages custom domain
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 
 - [x] Add a small deterministic benchmark corpus of valid Lux documents
 - [x] Generate a larger deterministic corpus of valid Lux documents
 - [x] Prompt-engineer model-neutral guidance for AI systems to write idiomatic Lux
-- [ ] Fine-tune a model on a Lux corpus
+- [x] Prepare a provider-neutral fine-tuning JSONL corpus with deterministic validation
+- [ ] Fine-tune a model on the Lux corpus with a selected provider and budget
 - [x] Measure token-ish byte/character efficiency vs rendered HTML for equivalent visual output
 - [x] Publish benchmark results in `docs/benchmarks.md`
 

@@ -1,0 +1,22 @@
+{
+  "schema": "lux-training-corpus-manifest-v1",
+  "corpusSchema": "lux-training-example-v1",
+  "output": "training/fine-tuning/lux-corpus.jsonl",
+  "recordCount": 72,
+  "jsonlSha256": "cad18469a9c7dd59c65d1fc9654fc1900521f503bd4382a84504da9e8e5776ee",
+  "sources": {
+    "benchmarks/corpus.ts": 27,
+    "examples/welcome.lux": 1,
+    "lux-spec-v0.1.md": 44
+  },
+  "tasks": {
+    "html-to-lux": 27,
+    "prompt-to-lux": 1,
+    "spec-surface-to-lux": 44
+  },
+  "notes": [
+    "Provider-neutral JSONL with input/output records; this is not a provider-specific chat/messages format.",
+    "Generated deterministically from repository benchmark, example, and specification surfaces.",
+    "This corpus preparation step does not run or claim to run any fine-tuning job."
+  ]
+}

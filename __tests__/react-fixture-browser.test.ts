@@ -64,7 +64,8 @@ describe("React fixture browser smoke", () => {
       try {
         const devTools = await waitForDevToolsEndpoint(chromeProcess);
         const target = await pollForPageTarget(devTools.port, htmlUrl);
-        const documentState = await evaluateInTarget<{
+        const documentState = await pollForDocumentState<{
+          readyState: string;
           title: string;
           fixture: string | null;
           renderedHeading: string | null;
@@ -77,6 +78,7 @@ describe("React fixture browser smoke", () => {
         }>(
           target.webSocketDebuggerUrl,
           `({
+            readyState: document.readyState,
             title: document.title,
             fixture: document.querySelector("[data-fixture]")?.getAttribute("data-fixture") ?? null,
             renderedHeading: document.querySelector(".lux-react-root .lux-document h1")?.textContent ?? null,
@@ -86,7 +88,8 @@ describe("React fixture browser smoke", () => {
             readyText: document.querySelector(".lux-text-green.lux-font-bold")?.textContent?.trim() ?? null,
             linkHref: document.querySelector(".lux-btn")?.getAttribute("href") ?? null,
             body: document.body?.textContent ?? ""
-          })`
+          })`,
+          (state) => state.readyState === "complete" && state.title === "Lux React Fixture"
         );
 
         expect(documentState.title).toBe("Lux React Fixture");
@@ -225,6 +228,23 @@ async function pollForPageTarget(
   }
 
   throw new Error(`Timed out waiting for Chrome to load ${expectedUrl}`);
+}
+
+async function pollForDocumentState<T>(
+  webSocketDebuggerUrl: string,
+  expression: string,
+  isReady: (state: T) => boolean
+): Promise<T> {
+  const deadline = Date.now() + 10000;
+  let lastState: T | undefined;
+
+  while (Date.now() < deadline) {
+    lastState = await evaluateInTarget<T>(webSocketDebuggerUrl, expression);
+    if (isReady(lastState)) return lastState;
+    await delay(100);
+  }
+
+  throw new Error(`Timed out waiting for Chrome document state: ${JSON.stringify(lastState)}`);
 }
 
 function evaluateInTarget<T>(webSocketDebuggerUrl: string, expression: string): Promise<T> {

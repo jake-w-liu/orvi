@@ -6,13 +6,14 @@ describe("release and deployment workflows", () => {
     const workflow = read(".github/workflows/deploy-pages.yml");
     const siteBuilder = read("scripts/build-site.mjs");
 
-    expect(workflow).toContain("actions/configure-pages@v5");
-    expect(workflow).toContain("actions/upload-pages-artifact@v3");
+    expect(workflow).toContain("actions/configure-pages@v6");
+    expect(workflow).toContain("actions/upload-pages-artifact@v4");
     expect(workflow).toContain("actions/deploy-pages@v4");
     expect(workflow).toContain("npm run site:build");
     expect(siteBuilder).toContain("renderLux(source");
     expect(siteBuilder).toContain("renderedLuxFiles");
     expect(siteBuilder).toContain("lux-lang.dev");
+    expect(siteBuilder).toContain('join(siteDir, "CNAME")');
   });
 
   it("publishes the VS Code extension only through an explicit token-backed workflow", () => {
@@ -23,8 +24,21 @@ describe("release and deployment workflows", () => {
 
     expect(workflow).toContain("workflow_dispatch");
     expect(workflow).toContain("secrets.VSCE_PAT");
+    expect(workflow).toContain("Missing required repository secret: VSCE_PAT");
+    expect(workflow).toContain("npx vsce verify-pat jake-w-liu");
+    expect(workflow).toContain("actions/upload-artifact@v4");
     expect(workflow).toContain("npx vsce publish");
+    expect(workflow).toContain("--packagePath lux-language.vsix");
     expect(extensionPackage.scripts.publish).toBe("vsce publish");
+  });
+
+  it("documents the manual account steps that cannot be completed from repo code", () => {
+    const releaseRunbook = read("docs/release.md");
+
+    expect(releaseRunbook).toContain("jake-w-liu.lux-language");
+    expect(releaseRunbook).toContain("VSCE_PAT");
+    expect(releaseRunbook).toContain("lux-lang.dev");
+    expect(releaseRunbook).toContain("GitHub does not provide arbitrary repository-native renderers");
   });
 });
 

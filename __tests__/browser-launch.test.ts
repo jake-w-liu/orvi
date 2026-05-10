@@ -62,17 +62,22 @@ dir: ltr
         expect(version.Browser).toContain("Chrome");
 
         const target = await pollForPageTarget(devTools.port, `file://${htmlPath}`);
-        const documentState = await evaluateInTarget<{
+        const documentState = await pollForDocumentState<{
+          readyState: string;
+          url: string;
           title: string;
           heading: string | null;
           body: string;
         }>(
           target.webSocketDebuggerUrl,
           `({
+            readyState: document.readyState,
+            url: location.href,
             title: document.title,
             heading: document.querySelector("h1")?.textContent ?? null,
             body: document.body?.textContent ?? ""
-          })`
+          })`,
+          (state) => state.readyState === "complete" && state.title === "Chrome Fixture"
         );
         expect(documentState.title).toBe("Chrome Fixture");
         expect(documentState.heading).toBe("Chrome Smoke");
@@ -143,6 +148,23 @@ async function pollForPageTarget(
   }
 
   throw new Error(`Timed out waiting for Chrome to load ${expectedUrl}`);
+}
+
+async function pollForDocumentState<T>(
+  webSocketDebuggerUrl: string,
+  expression: string,
+  isReady: (state: T) => boolean
+): Promise<T> {
+  const deadline = Date.now() + 10000;
+  let lastState: T | undefined;
+
+  while (Date.now() < deadline) {
+    lastState = await evaluateInTarget<T>(webSocketDebuggerUrl, expression);
+    if (isReady(lastState)) return lastState;
+    await delay(100);
+  }
+
+  throw new Error(`Timed out waiting for Chrome document state: ${JSON.stringify(lastState)}`);
 }
 
 function evaluateInTarget<T>(webSocketDebuggerUrl: string, expression: string): Promise<T> {
