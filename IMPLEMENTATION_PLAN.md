@@ -5,41 +5,41 @@
 `lux-language-guide.md` is the progress ledger. Keep this file as a concise
 implementation companion and avoid drifting from the guide roadmap.
 
-| Guide item | Repo status |
-| --- | --- |
-| Formal grammar/spec | Done: `lux-spec-v0.1.md` |
-| Built-in modifiers/components | Done: parser validation + CSS classes |
-| Valid/invalid test suite | Done: Jest tests |
-| Parser package | Done: `src/parser.ts`, `@lux-lang/lux/parser` |
-| AST types | Done: `src/ast.ts` |
-| HTML renderer | Done: `src/renderer.ts`, `@lux-lang/lux/renderer` |
-| Default stylesheet | Done: `src/lux-base.css` |
-| Theming API | Done: `lux.config.js` support |
-| Renderer color scheme | Done: `colorScheme: "dark"` |
-| Top-level metadata | Done: optional `lux`, `title`, `lang`, and `dir` metadata |
-| v0.1 parser decisions | Done: nesting limit, unsupported dynamic expression diagnostics, metadata validation, `img` alt requirement |
-| Accessibility guarantees | Done: semantic HTML, image alt validation, callout roles/labels, tabs ARIA |
-| CLI build/check/format | Done |
-| CLI JSON diagnostics | Done: `lux check --json`, `lux format --check --json` |
-| CLI live preview server | Done: `lux serve` with hot reload |
-| Formatter | Done: `lux format` + Prettier plugin bridge |
-| React component | Done: `@lux-lang/lux/react` |
-| VS Code syntax highlighting/snippets/config | Done |
-| VS Code diagnostics | Done: extension runs `lux check --json` |
-| VS Code package/release prep | Done: extension `npm run package`, package metadata, README, changelog, license, package lock, `.vscodeignore` |
-| VS Code Marketplace publish | Done: token-backed publish workflow; actual publish waits on `VSCE_PAT` |
-| VS Code autocomplete/live preview | Done |
-| CI | Done: GitHub Actions runs root verify and VS Code package check |
-| Prettier plugin | Bridge done with basic Prettier CLI coverage |
-| Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari WebDriver DOM smoke done |
-| ESM package build | Done: `dist/esm` import exports |
-| React fixture app | Done: fixture app + Chrome/browser smoke coverage |
-| Obsidian/GitHub/AI artifact integrations | Done: Obsidian scaffold, AI artifact, GitHub Pages rendering |
-| AI artifact support | Done: `@lux-lang/lux/artifact` export + JSON schema |
-| GitHub rendering | Done: GitHub Pages renders repo `.lux` files as HTML previews; native GitHub repo preview requires platform support |
-| Playground | Done: static editor + preview split + Pages deploy workflow; DNS pending |
-| AI corpus/benchmarks | Done: larger deterministic corpus + token-ish efficiency tests + published report |
-| AI authoring guidance | Done: model-neutral prompt and repair workflow; fine-tune pending external model/provider |
+| Guide item                                  | Repo status                                                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Formal grammar/spec                         | Done: `lux-spec-v0.1.md`                                                                                                                  |
+| Built-in modifiers/components               | Done: parser validation + CSS classes                                                                                                     |
+| Valid/invalid test suite                    | Done: Jest tests                                                                                                                          |
+| Parser package                              | Done: `src/parser.ts`, `@lux-lang/lux/parser`                                                                                             |
+| AST types                                   | Done: `src/ast.ts`                                                                                                                        |
+| HTML renderer                               | Done: `src/renderer.ts`, `@lux-lang/lux/renderer`                                                                                         |
+| Default stylesheet                          | Done: `src/lux-base.css`                                                                                                                  |
+| Theming API                                 | Done: `lux.config.js` support                                                                                                             |
+| Renderer color scheme                       | Done: `colorScheme: "dark"`                                                                                                               |
+| Top-level metadata                          | Done: optional `lux`, `title`, `lang`, and `dir` metadata                                                                                 |
+| v0.1 parser decisions                       | Done: nesting limit, unsupported dynamic expression diagnostics, metadata validation, `img` alt requirement                               |
+| Accessibility guarantees                    | Done: semantic HTML, image alt validation, callout roles/labels, tabs ARIA                                                                |
+| CLI build/check/format                      | Done                                                                                                                                      |
+| CLI JSON diagnostics                        | Done: `lux check --json`, `lux format --check --json`                                                                                     |
+| CLI live preview server                     | Done: `lux serve` with hot reload                                                                                                         |
+| Formatter                                   | Done: `lux format` + Prettier plugin bridge                                                                                               |
+| React component                             | Done: `@lux-lang/lux/react`                                                                                                               |
+| VS Code syntax highlighting/snippets/config | Done                                                                                                                                      |
+| VS Code diagnostics                         | Done: extension runs `lux check --json`                                                                                                   |
+| VS Code package/release prep                | Done: extension `npm run package`, package metadata, README, changelog, license, package lock, `.vscodeignore`                            |
+| VS Code Marketplace publish                 | Done: live v0.1.0 release, token-backed publish workflow, and token-free VSIX package fallback; repeatable automation waits on `VSCE_PAT` |
+| VS Code autocomplete/live preview           | Done                                                                                                                                      |
+| CI                                          | Done: GitHub Actions runs root verify and VS Code package check                                                                           |
+| Prettier plugin                             | Bridge done with basic Prettier CLI coverage                                                                                              |
+| Browser rendering verification              | Firefox launch + Chrome DOM smoke done; Safari WebDriver DOM smoke done                                                                   |
+| ESM package build                           | Done: `dist/esm` import exports                                                                                                           |
+| React fixture app                           | Done: fixture app + Chrome/browser smoke coverage                                                                                         |
+| Obsidian/GitHub/AI artifact integrations    | Done: Obsidian scaffold, AI artifact, GitHub Pages rendering                                                                              |
+| AI artifact support                         | Done: `@lux-lang/lux/artifact` export + JSON schema                                                                                       |
+| GitHub rendering                            | Done: GitHub Pages renders repo `.lux` files as HTML previews; native GitHub repo preview requires platform support                       |
+| Playground                                  | Done: static editor + preview split + Pages deploy workflow; Pages custom domain configured; DNS pending                                  |
+| AI corpus/benchmarks                        | Done: larger deterministic corpus + token-ish efficiency tests + published report                                                         |
+| AI authoring guidance                       | Done: model-neutral prompt and repair workflow; fine-tune pending external model/provider                                                 |
 
 ## Near-Term Milestones
 
@@ -61,6 +61,8 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add packaged `.vsix` build script.
    - Done: prepare VS Code release metadata, README, changelog, license, package lock, and `.vscodeignore`.
    - Done: add token-backed Marketplace publish workflow.
+   - Done: add token-free VSIX package workflow for manual Marketplace/GitHub Release distribution.
+   - Done: add Open VSX publish workflow gated by `OVSX_PAT`.
    - Done: add Prettier integration test using the real Prettier CLI.
    - Done: add GitHub Actions CI for `npm run verify` and VS Code package smoke.
 
@@ -75,9 +77,10 @@ implementation companion and avoid drifting from the guide roadmap.
 4. Build playground
    - Done: editor + preview split view.
    - Done: GitHub Pages deployment workflow.
+   - Done: configure `lux-lang.dev` as the repository Pages custom domain.
    - Example gallery.
    - Shareable encoded document state.
-   - Point `lux-lang.dev` DNS to the GitHub Pages site.
+   - Point `lux-lang.dev` DNS to the GitHub Pages site and wait for HTTPS certificate issuance.
 
 5. Benchmark corpus
    - Done: add small deterministic Lux corpus.

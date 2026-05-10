@@ -66,13 +66,13 @@ The emergence of AI writing assistants changes the calculus. Previous markup lan
 
 ### Primary Goals
 
-| Goal | Description |
-|------|-------------|
-| **Human writable** | A developer or writer can learn Lux in under an hour |
-| **AI writable** | Minimal tokens, unambiguous syntax, no edge cases |
-| **Visually rich** | Supports layout, color, components, and interactivity hints |
-| **One spec** | No fragmentation; one canonical parser |
-| **No HTML fallback** | Everything expressible natively in Lux |
+| Goal                 | Description                                                 |
+| -------------------- | ----------------------------------------------------------- |
+| **Human writable**   | A developer or writer can learn Lux in under an hour        |
+| **AI writable**      | Minimal tokens, unambiguous syntax, no edge cases           |
+| **Visually rich**    | Supports layout, color, components, and interactivity hints |
+| **One spec**         | No fragmentation; one canonical parser                      |
+| **No HTML fallback** | Everything expressible natively in Lux                      |
 
 ### Non-Goals
 
@@ -162,6 +162,7 @@ Use `[modifier]` syntax to open a visual scope and `[]` to close it:
 ```
 
 Modifiers can be:
+
 - Named colors: `red`, `blue`, `green`, `gray`, `muted`, etc.
 - Text size: `sm`, `md`, `lg`, `xl`
 - Weight: `bold`, `light`
@@ -173,6 +174,7 @@ Modifiers can be:
 Block components use a `[component options]` open tag and `[/component]` close tag:
 
 **Callout / Alert Box:**
+
 ```lux
 [callout]
   This is an important note.
@@ -188,6 +190,7 @@ Block components use a `[component options]` open tag and `[/component]` close t
 ```
 
 **Grid Layout:**
+
 ```lux
 [grid 3]
   First column content here.
@@ -199,6 +202,7 @@ Block components use a `[component options]` open tag and `[/component]` close t
 ```
 
 **Card:**
+
 ```lux
 [card]
   ## Card Title
@@ -212,6 +216,7 @@ Block components use a `[component options]` open tag and `[/component]` close t
 ```
 
 **Tabs:**
+
 ```lux
 [tabs]
   [tab label=Overview]
@@ -243,12 +248,12 @@ badge: Beta | type=warning
 
 Same as Markdown with optional filename annotation:
 
-```lux
+````lux
     ```python | app.py
     def hello():
         print("Hello, Lux!")
     ```
-```
+````
 
 ### 4.6 Tables
 
@@ -372,6 +377,8 @@ marking the parent complete.
 - [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
 - [x] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.lux-language`
 - [x] Harden Marketplace release workflow with token validation and VSIX artifact capture
+- [x] Add token-free VSIX package workflow for manual Marketplace upload and GitHub Releases
+- [x] Add Open VSX publish workflow gated by `OVSX_PAT`
 - [ ] Configure `VSCE_PAT` for repeatable automated Marketplace releases
 - [x] **Prettier plugin bridge** for auto-formatting `.lux` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
@@ -389,7 +396,8 @@ marking the parent complete.
 - [x] Static **Lux Playground** with editor + preview split
 - [x] Add GitHub Pages deployment workflow for the Lux Playground
 - [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds
-- [ ] Point `lux-lang.dev` DNS at the deployed GitHub Pages site and configure it as the Pages custom domain
+- [x] Configure `lux-lang.dev` as the repository's GitHub Pages custom domain
+- [ ] Point `lux-lang.dev` DNS at GitHub Pages and wait for GitHub HTTPS certificate issuance
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 
@@ -413,22 +421,22 @@ marking the parent complete.
 
 ### Recommended Tech Stack
 
-| Layer | Technology | Reason |
-|-------|-----------|--------|
-| Parser | TypeScript | Portable, typed, runs everywhere |
-| Renderer | TypeScript + CSS | No runtime dependencies |
-| CLI | Node.js | Familiar to web developers |
-| Editor Support | VS Code API | Largest editor share |
-| Playground | React + Monaco | Interactive, embeddable |
-| Documentation | Lux itself | Dogfooding the language |
+| Layer          | Technology       | Reason                           |
+| -------------- | ---------------- | -------------------------------- |
+| Parser         | TypeScript       | Portable, typed, runs everywhere |
+| Renderer       | TypeScript + CSS | No runtime dependencies          |
+| CLI            | Node.js          | Familiar to web developers       |
+| Editor Support | VS Code API      | Largest editor share             |
+| Playground     | React + Monaco   | Interactive, embeddable          |
+| Documentation  | Lux itself       | Dogfooding the language          |
 
 ### File Conventions
 
-| File | Purpose |
-|------|---------|
-| `*.lux` | Lux source document |
+| File            | Purpose                                 |
+| --------------- | --------------------------------------- |
+| `*.lux`         | Lux source document                     |
 | `lux.config.js` | Project-level theme and renderer config |
-| `lux-spec.md` | The canonical language specification |
+| `lux-spec.md`   | The canonical language specification    |
 
 ---
 
@@ -486,5 +494,5 @@ Lux is an open idea. The best next steps are:
 
 ---
 
-*Lux v0.1 Concept — May 2026*
-*Status: v0.1 prototype in progress; this guide is the progress ledger*
+_Lux v0.1 Concept — May 2026_
+_Status: v0.1 prototype in progress; this guide is the progress ledger_

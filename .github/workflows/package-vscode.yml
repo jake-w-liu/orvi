@@ -1,0 +1,48 @@
+name: Package VS Code Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional extension version to package
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: vscode/lux/package-lock.json
+
+      - name: Install extension dependencies
+        working-directory: vscode/lux
+        run: npm ci
+
+      - name: Apply requested version
+        if: ${{ inputs.version != '' }}
+        working-directory: vscode/lux
+        run: npm version "${{ inputs.version }}" --no-git-tag-version
+
+      - name: Package extension
+        working-directory: vscode/lux
+        run: npm run package -- --out lux-language.vsix
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lux-language-vsix
+          path: vscode/lux/lux-language.vsix
+          if-no-files-found: error

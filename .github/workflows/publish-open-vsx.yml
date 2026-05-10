@@ -1,0 +1,63 @@
+name: Publish Open VSX
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional extension version to publish
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: vscode/lux/package-lock.json
+
+      - name: Install extension dependencies
+        working-directory: vscode/lux
+        run: npm ci
+
+      - name: Apply requested version
+        if: ${{ inputs.version != '' }}
+        working-directory: vscode/lux
+        run: npm version "${{ inputs.version }}" --no-git-tag-version
+
+      - name: Package extension
+        working-directory: vscode/lux
+        run: npm run package -- --out lux-language.vsix
+
+      - name: Check Open VSX token
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "Missing required repository secret: OVSX_PAT" >&2
+            exit 1
+          fi
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lux-language-open-vsx-vsix
+          path: vscode/lux/lux-language.vsix
+          if-no-files-found: error
+
+      - name: Publish to Open VSX
+        working-directory: vscode/lux
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx --yes ovsx publish lux-language.vsix -p "$OVSX_PAT"
