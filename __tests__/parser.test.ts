@@ -72,7 +72,7 @@ bad
 img: ./photo.jpg`);
 
     expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
-      expect.arrayContaining(["LUX_GRID_MISMATCH", "LUX_INVALID_MODIFIER", "LUX_INVALID_SEMANTIC"])
+      expect.arrayContaining(["LUX_GRID_MISMATCH", "LUX_UNKNOWN_COMPONENT", "LUX_INVALID_SEMANTIC"])
     );
   });
 
@@ -85,5 +85,48 @@ Missing close
     expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
       expect.arrayContaining(["LUX_UNCLOSED_BLOCK", "LUX_UNCLOSED_SCOPE"])
     );
+  });
+
+  it("validates strict table width and tabs structure", () => {
+    const ast = parseLux(`| Name | Role |
+| --- | --- |
+| Ada |
+
+[tabs]
+  Intro text.
+  [tab label=One]
+    Good.
+  [/tab]
+[/tabs]
+
+[tab label=Loose]
+  Bad.
+[/tab]`);
+
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining(["LUX_TABLE_WIDTH_MISMATCH", "LUX_INVALID_TABS_CHILD", "LUX_INVALID_TAB"])
+    );
+  });
+
+  it("rejects unknown component options and arguments", () => {
+    const ast = parseLux(`[callout loud type=warning tone=soft]
+  Bad options.
+[/callout]`);
+
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining(["LUX_UNEXPECTED_ARGUMENT", "LUX_UNKNOWN_OPTION"])
+    );
+  });
+
+  it("reports unknown components inside grids without swallowing separators", () => {
+    const ast = parseLux(`[grid 2]
+[chart]
+---
+right
+[/grid]`);
+
+    const grid = ast.children[0] as ComponentNode;
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(expect.arrayContaining(["LUX_UNKNOWN_COMPONENT"]));
+    expect(grid.columns).toHaveLength(2);
   });
 });

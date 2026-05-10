@@ -23,7 +23,7 @@ interface BlockResult {
 }
 
 interface OpenTag {
-  name: ComponentName;
+  name: string;
   rawArgs: string;
 }
 
@@ -122,7 +122,12 @@ export class LuxParser {
 
       const open = parseOpenTag(trimmed);
       if (open) {
-        children.push(this.parseComponent(open, line));
+        if (!isComponentName(open.name)) {
+          this.error("LUX_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
+          this.index += 1;
+          continue;
+        }
+        children.push(this.parseComponent(open, line, stopTag));
         continue;
       }
 
@@ -161,18 +166,18 @@ export class LuxParser {
     return { children, closed: stopTag === undefined };
   }
 
-  private parseComponent(open: OpenTag, line: SourceLine): ComponentNode {
+  private parseComponent(open: OpenTag, line: SourceLine, parent?: ComponentName): ComponentNode {
     const { args, options } = tokenizeOptions(open.rawArgs);
     const node: ComponentNode = {
       type: "component",
       loc: loc(line),
-      name: open.name,
+      name: open.name as ComponentName,
       args,
       options,
       children: []
     };
 
-    this.validateComponentOpen(node, line);
+    this.validateComponentOpen(node, line, parent);
     this.index += 1;
 
     if (node.name === "grid") {
@@ -190,6 +195,7 @@ export class LuxParser {
     if (!result.closed) {
       this.error("LUX_UNCLOSED_BLOCK", `Unclosed [${node.name}] block.`, line);
     }
+    this.validateComponentChildren(node, line);
     return node;
   }
 
@@ -229,7 +235,11 @@ export class LuxParser {
 
         const open = parseOpenTag(trimmed);
         if (open) {
-          depth += 1;
+          if (isComponentName(open.name)) {
+            depth += 1;
+          } else {
+            this.error("LUX_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
+          }
           sections[sections.length - 1].push(line);
           this.index += 1;
           continue;
@@ -297,6 +307,7 @@ export class LuxParser {
   private parseTable(): TableNode {
     const start = this.current();
     const headerCells = splitTableRow(start.text);
+    const width = headerCells.length;
     this.index += 2;
 
     const rows: InlineNode[][][] = [];
@@ -306,7 +317,15 @@ export class LuxParser {
       if (trimmed === "" || !trimmed.includes("|") || this.isBlockBoundary(line)) {
         break;
       }
-      rows.push(splitTableRow(line.text).map((cell) => this.parseInline(cell, line.line, line.text.indexOf(cell) + 1)));
+      const rowCells = splitTableRow(line.text);
+      if (rowCells.length !== width) {
+        this.error(
+          "LUX_TABLE_WIDTH_MISMATCH",
+          `Table row has ${rowCells.length} cells but header has ${width}.`,
+          line
+        );
+      }
+      rows.push(rowCells.map((cell) => this.parseInline(cell, line.line, line.text.indexOf(cell) + 1)));
       this.index += 1;
     }
 
@@ -569,7 +588,10 @@ export class LuxParser {
     return candidates.length === 0 ? value.length : Math.min(...candidates);
   }
 
-  private validateComponentOpen(node: ComponentNode, line: SourceLine): void {
+  private validateComponentOpen(node: ComponentNode, line: SourceLine, parent: ComponentName | undefined): void {
+    this.validateComponentArguments(node, line);
+    this.validateComponentOptions(node, line);
+
     if (node.name === "callout" && node.options.type && !CALLOUT_TYPES.has(node.options.type)) {
       this.error("LUX_INVALID_OPTION", `Unknown callout type '${node.options.type}'.`, line);
     }
@@ -587,6 +609,53 @@ export class LuxParser {
 
     if (node.name === "tab" && !node.options.label) {
       this.error("LUX_INVALID_TAB", "tab requires label=<text>.", line);
+    }
+
+    if (node.name === "tab" && parent !== "tabs") {
+      this.error("LUX_INVALID_TAB", "tab blocks must be direct children of [tabs].", line);
+    }
+  }
+
+  private validateComponentChildren(node: ComponentNode, line: SourceLine): void {
+    if (node.name !== "tabs") return;
+
+    const tabChildren = node.children.filter((child) => child.type === "component" && child.name === "tab");
+    if (tabChildren.length === 0) {
+      this.error("LUX_INVALID_TABS", "tabs requires at least one [tab] child.", line);
+    }
+
+    for (const child of node.children) {
+      if (child.type !== "component" || child.name !== "tab") {
+        this.errorAt(
+          "LUX_INVALID_TABS_CHILD",
+          "Only [tab] blocks may be direct children of [tabs].",
+          child.loc.line,
+          child.loc.column
+        );
+      }
+    }
+  }
+
+  private validateComponentArguments(node: ComponentNode, line: SourceLine): void {
+    if (node.name === "grid") return;
+    if (node.args.length > 0) {
+      this.error("LUX_UNEXPECTED_ARGUMENT", `[${node.name}] does not accept positional arguments.`, line);
+    }
+  }
+
+  private validateComponentOptions(node: ComponentNode, line: SourceLine): void {
+    const allowedOptions: Record<ComponentName, string[]> = {
+      callout: ["type"],
+      grid: [],
+      card: ["bg"],
+      tabs: [],
+      tab: ["label"]
+    };
+
+    for (const option of Object.keys(node.options)) {
+      if (!allowedOptions[node.name].includes(option)) {
+        this.error("LUX_UNKNOWN_OPTION", `[${node.name}] does not support option '${option}'.`, line);
+      }
     }
   }
 
@@ -641,11 +710,15 @@ export class LuxParser {
 
 function parseOpenTag(trimmed: string): OpenTag | undefined {
   const match = /^\[([a-z][a-z0-9-]*)(?:\s+([^\]]+))?\]$/i.exec(trimmed);
-  if (!match || !COMPONENT_NAMES.has(match[1])) return undefined;
+  if (!match) return undefined;
   return {
-    name: match[1] as ComponentName,
+    name: match[1],
     rawArgs: match[2] ?? ""
   };
+}
+
+function isComponentName(name: string): name is ComponentName {
+  return COMPONENT_NAMES.has(name);
 }
 
 function parseCloseTag(trimmed: string): CloseTag | undefined {

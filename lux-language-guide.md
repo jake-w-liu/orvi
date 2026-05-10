@@ -275,50 +275,60 @@ btn: Get Started → https://lux-lang.dev
 
 ## 5. Implementation Roadmap
 
+Progress is tracked in this guide. Keep the checkboxes below aligned with what
+is implemented in the current repo, and split partly complete items instead of
+marking the parent complete.
+
 ### Phase 0 — Specification (Weeks 1–2)
 
-- [ ] Write the full formal grammar (EBNF or PEG)
-- [ ] Define all built-in modifiers and component types
-- [ ] Document edge cases and conflict resolution rules
-- [ ] Create a test suite of valid/invalid Lux documents
-- [ ] Publish the spec as a versioned document (`lux-spec-v0.1.md`)
+- [x] Write the formal grammar (EBNF) in `lux-spec-v0.1.md`
+- [x] Define built-in modifiers and component types
+- [x] Document parser error rules and basic syntax conflicts
+- [x] Create a Jest test suite covering valid and invalid Lux documents
+- [x] Publish the spec as a versioned document (`lux-spec-v0.1.md`)
 
 ### Phase 1 — Parser (Weeks 3–6)
 
 **Stack recommendation:** TypeScript (for portability — runs in browser and Node.js)
 
-- [ ] Implement a tokenizer (lexer)
-  - Identify headings, blocks, inline scopes, semantic elements
-- [ ] Implement an AST (Abstract Syntax Tree) builder
-  - Nodes: `Document`, `Heading`, `Paragraph`, `Block`, `InlineScope`, `SemanticElement`
-- [ ] Write parser unit tests against the Phase 0 test suite
-- [ ] Handle error recovery gracefully (never crash on bad input)
+- [x] Implement a parser/tokenization pass that identifies headings, blocks, inline scopes, and semantic elements
+- [x] Implement an AST builder
+  - Nodes include `Document`, `Heading`, `Paragraph`, `Component`, `InlineScope`, `SemanticElement`, lists, tables, and code blocks
+- [x] Write parser unit tests against the Phase 0 language surface
+- [x] Handle parser errors with diagnostics instead of throwing on bad input
+- [x] Validate core edge cases: unknown components/options, grid column counts, ragged tables, and tabs structure
 
-**Output:** A `@lux-lang/parser` npm package
+**Output:** `@lux-lang/lux/parser` export
 
 ### Phase 2 — HTML Renderer (Weeks 7–9)
 
-- [ ] Walk the AST and emit semantic HTML + scoped CSS classes
-- [ ] Create a default stylesheet (`lux-base.css`)
-  - Define color tokens, grid system, card styles, callout variants
-- [ ] Support a theming API (`lux.config.js`)
+- [x] Walk the AST and emit semantic HTML + scoped CSS classes
+- [x] Create a default stylesheet (`lux-base.css`)
+  - Defines color tokens, grid system, card styles, callout variants, badges, tabs, tables, code, and inline modifiers
+- [x] Support a theming API (`lux.config.js`)
 - [ ] Test rendering in Chrome, Firefox, Safari
 
-**Output:** A `@lux-lang/renderer` npm package
+**Output:** `@lux-lang/lux/renderer` export
 
 ### Phase 3 — Developer Tooling (Weeks 10–14)
 
-- [ ] **CLI tool:** `lux build input.lux` → `output.html`
-- [ ] **Live preview server:** `lux serve` with hot reload
+- [x] **CLI tool:** `lux build input.lux` → `output.html`
+- [x] **CLI check/format:** `lux check` and `lux format`
+- [x] **Machine-readable diagnostics:** `lux check --json` and `lux format --check --json`
+- [x] **Live preview server:** `lux serve` with hot reload
 - [ ] **VS Code extension:**
-  - Syntax highlighting
-  - Autocomplete for components and modifiers
-  - Live preview panel
-- [ ] **Prettier plugin** for auto-formatting `.lux` files
+  - [x] Syntax highlighting scaffold
+  - [x] Snippets scaffold
+  - [x] Language configuration scaffold
+  - [ ] Autocomplete for components and modifiers
+  - [ ] Live preview panel
+- [x] **Prettier plugin bridge** for auto-formatting `.lux` files
+- [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 
 ### Phase 4 — Ecosystem (Weeks 15–20)
 
-- [ ] **React component:** `<LuxRenderer source={luxString} />`
+- [x] **React component:** `<LuxRenderer source={luxString} />`
+- [ ] Add React fixture app/browser smoke coverage
 - [ ] **Obsidian plugin** — render `.lux` notes natively
 - [ ] **Claude artifact support** — native Lux output type
 - [ ] **GitHub rendering** — `.lux` files rendered in repos (like `.md`)
@@ -417,4 +427,4 @@ Lux is an open idea. The best next steps are:
 ---
 
 *Lux v0.1 Concept — May 2026*
-*Status: Pre-specification / Community Draft*
+*Status: v0.1 prototype in progress; this guide is the progress ledger*

@@ -5,6 +5,7 @@ simple while adding native visual scopes, layout components, and semantic
 elements.
 
 This repo implements the v0.1 prototype from `lux-language-guide.md`.
+Implementation progress is tracked in the roadmap section of that guide.
 
 ## Install
 
@@ -18,7 +19,9 @@ npm run verify
 ```sh
 npm run build
 node dist/cli.js check examples/welcome.lux
+node dist/cli.js check examples/welcome.lux --json
 node dist/cli.js format examples/welcome.lux
+node dist/cli.js format examples/welcome.lux --check
 node dist/cli.js build examples/welcome.lux -o examples/welcome.html
 node dist/cli.js serve examples/welcome.lux --port 4173
 ```

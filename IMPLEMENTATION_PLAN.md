@@ -2,21 +2,28 @@
 
 ## Status
 
+`lux-language-guide.md` is the progress ledger. Keep this file as a concise
+implementation companion and avoid drifting from the guide roadmap.
+
 | Guide item | Repo status |
 | --- | --- |
 | Formal grammar/spec | Done: `lux-spec-v0.1.md` |
 | Built-in modifiers/components | Done: parser validation + CSS classes |
 | Valid/invalid test suite | Done: Jest tests |
 | Parser package | Done: `src/parser.ts`, `@lux-lang/lux/parser` |
+| AST types | Done: `src/ast.ts` |
 | HTML renderer | Done: `src/renderer.ts`, `@lux-lang/lux/renderer` |
 | Default stylesheet | Done: `src/lux-base.css` |
 | Theming API | Done: `lux.config.js` support |
-| CLI build/check | Done |
-| Live preview server | Done |
+| CLI build/check/format | Done |
+| CLI JSON diagnostics | Done: `lux check --json`, `lux format --check --json` |
+| CLI live preview server | Done: `lux serve` with hot reload |
 | Formatter | Done: `lux format` + Prettier plugin bridge |
 | React component | Done: `@lux-lang/lux/react` |
-| VS Code syntax highlighting | Scaffold done |
-| Prettier plugin | Bridge done, needs real-world Prettier fixture tests |
+| VS Code syntax highlighting/snippets/config | Scaffold done |
+| VS Code autocomplete/live preview | Not started |
+| Prettier plugin | Bridge done with basic Prettier CLI coverage |
+| Browser rendering verification | Not started |
 | Obsidian/GitHub/Claude integrations | Not started |
 | Playground | Not started |
 | AI corpus/benchmarks | Not started |
@@ -25,14 +32,16 @@
 
 1. Harden v0.1 parser
    - Add malformed nesting fixtures.
-   - Add table width mismatch diagnostics.
-   - Add tabs-only-child validation for `[tabs]`.
+   - Done: add table width mismatch diagnostics.
+   - Done: add tabs-only-child validation for `[tabs]`.
+   - Done: reject unknown components, unsupported options, and unsupported positional arguments.
    - Add source ranges for editor diagnostics.
 
 2. Improve developer tooling
-   - Add VS Code diagnostic task through CLI JSON output.
+   - Done: add CLI JSON output for editor diagnostics.
+   - Add VS Code diagnostic task using CLI JSON output.
    - Add packaged `.vsix` build script.
-   - Add Prettier integration test using the real Prettier CLI.
+   - Done: add Prettier integration test using the real Prettier CLI.
 
 3. Add browser-facing package
    - Add ESM build.

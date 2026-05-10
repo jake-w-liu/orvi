@@ -20,6 +20,13 @@ interface ServeArgs {
 interface FormatArgs {
   input: string;
   write: boolean;
+  check: boolean;
+  json: boolean;
+}
+
+interface CheckArgs {
+  input: string;
+  json: boolean;
 }
 
 interface LuxConfig {
@@ -35,7 +42,7 @@ try {
   if (command === "build") {
     build(parseBuildArgs(args.slice(1)));
   } else if (command === "check") {
-    check(args[1]);
+    check(parseCheckArgs(args.slice(1)));
   } else if (command === "format") {
     format(parseFormatArgs(args.slice(1)));
   } else if (command === "serve") {
@@ -69,11 +76,18 @@ function build(options: BuildArgs): void {
   console.log(`Built ${outputPath}`);
 }
 
-function check(input: string | undefined): void {
-  if (!input) throw new Error("Usage: lux check <input.lux>");
-  const inputPath = resolve(input);
+function check(options: CheckArgs): void {
+  const inputPath = resolve(options.input);
   assertReadable(inputPath);
   const ast = parseLux(readFileSync(inputPath, "utf8"));
+
+  if (options.json) {
+    const ok = !hasErrorDiagnostics(ast.diagnostics);
+    console.log(JSON.stringify({ ok, diagnostics: ast.diagnostics }, null, 2));
+    if (!ok) process.exit(1);
+    return;
+  }
+
   failOnErrors(ast.diagnostics);
   console.log("Lux check passed.");
 }
@@ -81,7 +95,25 @@ function check(input: string | undefined): void {
 function format(options: FormatArgs): void {
   const inputPath = resolve(options.input);
   assertReadable(inputPath);
-  const result = formatLux(readFileSync(inputPath, "utf8"));
+  const source = readFileSync(inputPath, "utf8");
+  const result = formatLux(source);
+
+  if (options.check) {
+    const ok = source === result.formatted && !hasErrorDiagnostics(result.diagnostics);
+    if (options.json) {
+      console.log(JSON.stringify({ ok, diagnostics: result.diagnostics }, null, 2));
+    } else if (ok) {
+      console.log(`${inputPath} is already formatted.`);
+    } else if (hasErrorDiagnostics(result.diagnostics)) {
+      failOnErrors(result.diagnostics);
+    } else {
+      console.log(`${inputPath} is not formatted. Run lux format ${inputPath} --write to update it.`);
+    }
+
+    if (!ok) process.exit(1);
+    return;
+  }
+
   failOnErrors(result.diagnostics);
 
   if (options.write) {
@@ -178,18 +210,30 @@ function parseServeArgs(values: string[]): ServeArgs {
   return { input, port };
 }
 
-function parseFormatArgs(values: string[]): FormatArgs {
-  const input = values[0];
-  if (!input) throw new Error("Usage: lux format <input.lux> [--write]");
+function parseCheckArgs(values: string[]): CheckArgs {
+  const input = values.find((value) => !value.startsWith("-"));
+  if (!input) throw new Error("Usage: lux check <input.lux> [--json]");
 
   return {
     input,
-    write: values.includes("--write") || values.includes("-w")
+    json: values.includes("--json")
+  };
+}
+
+function parseFormatArgs(values: string[]): FormatArgs {
+  const input = values.find((value) => !value.startsWith("-"));
+  if (!input) throw new Error("Usage: lux format <input.lux> [--write] [--check]");
+
+  return {
+    input,
+    write: values.includes("--write") || values.includes("-w"),
+    check: values.includes("--check"),
+    json: values.includes("--json")
   };
 }
 
 function failOnErrors(diagnostics: LuxDiagnostic[]): void {
-  const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  const errors = errorDiagnostics(diagnostics);
   if (errors.length === 0) return;
 
   console.error("Lux syntax errors:");
@@ -197,6 +241,14 @@ function failOnErrors(diagnostics: LuxDiagnostic[]): void {
     console.error(`${diagnostic.line}:${diagnostic.column} ${diagnostic.code} ${diagnostic.message}`);
   }
   process.exit(1);
+}
+
+function hasErrorDiagnostics(diagnostics: LuxDiagnostic[]): boolean {
+  return errorDiagnostics(diagnostics).length > 0;
+}
+
+function errorDiagnostics(diagnostics: LuxDiagnostic[]): LuxDiagnostic[] {
+  return diagnostics.filter((diagnostic) => diagnostic.severity === "error");
 }
 
 function withDiagnostics(html: string, diagnostics: LuxDiagnostic[]): string {
@@ -232,7 +284,7 @@ function help(): void {
 
 Usage:
   lux build <input.lux> [-o output.html]
-  lux check <input.lux>
-  lux format <input.lux> [--write]
+  lux check <input.lux> [--json]
+  lux format <input.lux> [--write] [--check]
   lux serve <input.lux> [--port 4173]`);
 }
