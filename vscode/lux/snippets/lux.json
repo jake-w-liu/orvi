@@ -1,0 +1,55 @@
+{
+  "Callout": {
+    "prefix": "callout",
+    "body": [
+      "[callout type=${1|info,warning,success,error|}]",
+      "  $2",
+      "[/callout]"
+    ],
+    "description": "Insert a Lux callout block"
+  },
+  "Grid": {
+    "prefix": "grid",
+    "body": [
+      "[grid ${1|2,3,4|}]",
+      "  $2",
+      "  ---",
+      "  $3",
+      "[/grid]"
+    ],
+    "description": "Insert a Lux grid block"
+  },
+  "Card": {
+    "prefix": "card",
+    "body": [
+      "[card]",
+      "  $1",
+      "[/card]"
+    ],
+    "description": "Insert a Lux card block"
+  },
+  "Tabs": {
+    "prefix": "tabs",
+    "body": [
+      "[tabs]",
+      "  [tab label=${1:Overview}]",
+      "    $2",
+      "  [/tab]",
+      "  [tab label=${3:Details}]",
+      "    $4",
+      "  [/tab]",
+      "[/tabs]"
+    ],
+    "description": "Insert a Lux tabs block"
+  },
+  "Button": {
+    "prefix": "btn",
+    "body": "btn: ${1:Label} -> ${2:https://example.com}",
+    "description": "Insert a Lux button"
+  },
+  "Image": {
+    "prefix": "img",
+    "body": "img: ${1:./image.jpg} | ${2:Alt text}",
+    "description": "Insert a Lux image"
+  }
+}

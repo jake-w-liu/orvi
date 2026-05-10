@@ -1,0 +1,72 @@
+{
+  "name": "@lux-lang/lux",
+  "version": "0.1.0",
+  "description": "Lux markup parser, HTML renderer, and CLI.",
+  "license": "MIT",
+  "keywords": [
+    "lux",
+    "markup",
+    "parser",
+    "renderer",
+    "cli"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    },
+    "./parser": {
+      "types": "./dist/parser.d.ts",
+      "require": "./dist/parser.js"
+    },
+    "./renderer": {
+      "types": "./dist/renderer.d.ts",
+      "require": "./dist/renderer.js"
+    },
+    "./formatter": {
+      "types": "./dist/formatter.d.ts",
+      "require": "./dist/formatter.js"
+    },
+    "./prettier-plugin": {
+      "types": "./dist/prettier-plugin.d.ts",
+      "require": "./dist/prettier-plugin.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "require": "./dist/react.js"
+    },
+    "./lux-base.css": "./dist/lux-base.css"
+  },
+  "bin": {
+    "lux": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src/lux-base.css",
+    "vscode/lux",
+    "lux-spec-v0.1.md",
+    "lux.config.example.js"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').copyFileSync('src/lux-base.css','dist/lux-base.css')\"",
+    "check": "tsc --noEmit",
+    "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser lux examples/welcome.lux --check",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "verify": "npm run check && npm test && npm run build && npm run format:check"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.0",
+    "@types/react": "^19.2.14",
+    "jest": "^30.0.5",
+    "prettier": "^3.8.3",
+    "react": "^19.2.6",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "react": ">=18.2.0"
+  }
+}

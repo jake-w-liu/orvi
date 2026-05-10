@@ -1,0 +1,21 @@
+# Welcome to Lux
+
+[blue bold] A new way to write beautiful documents. []
+
+---
+
+[grid 2]
+  ## Why Lux?
+
+  Simple syntax that compiles to rich HTML. No more falling back to raw tags.
+  ---
+  ## Who is it for?
+
+  Writers, developers, and AI systems that need expressive output.
+[/grid]
+
+[callout type=info]
+  Lux is currently in early development.
+[/callout]
+
+btn: Get Started -> https://lux-lang.dev

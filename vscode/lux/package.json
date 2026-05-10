@@ -1,0 +1,34 @@
+{
+  "name": "lux-language",
+  "displayName": "Lux Language",
+  "description": "Syntax highlighting and snippets for Lux markup.",
+  "version": "0.1.0",
+  "publisher": "lux-lang",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "lux",
+        "aliases": ["Lux", "lux"],
+        "extensions": [".lux"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lux",
+        "scopeName": "source.lux",
+        "path": "./syntaxes/lux.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "lux",
+        "path": "./snippets/lux.json"
+      }
+    ]
+  }
+}
