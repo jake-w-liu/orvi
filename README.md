@@ -58,6 +58,8 @@ const darkHtml = renderLux("# Hello", {
 const formatted = formatLux("[blue] Hi []").formatted;
 ```
 
+The package supports both CommonJS `require()` and ESM `import` exports.
+
 React:
 
 ```tsx
@@ -77,7 +79,8 @@ prettier --plugin @lux-lang/lux/prettier-plugin --write "**/*.lux"
 
 ## VS Code
 
-Extension scaffold lives in `vscode/lux`.
+Extension scaffold lives in `vscode/lux`. It provides syntax highlighting,
+snippets, and diagnostics by running `lux check --json`.
 
 ```sh
 cd vscode/lux

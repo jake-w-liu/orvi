@@ -179,4 +179,15 @@ Hello {name}
 
     expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(["LUX_DYNAMIC_CONTENT_UNSUPPORTED"]);
   });
+
+  it("includes editor-friendly diagnostic ranges", () => {
+    const ast = parseLux("Hello {name}");
+
+    expect(ast.diagnostics[0]).toMatchObject({
+      line: 1,
+      column: 7,
+      endLine: 1,
+      endColumn: 13
+    });
+  });
 });

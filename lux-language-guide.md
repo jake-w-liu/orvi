@@ -332,6 +332,7 @@ marking the parent complete.
   - Nodes include `Document`, `Heading`, `Paragraph`, `Component`, `InlineScope`, `SemanticElement`, lists, tables, and code blocks
 - [x] Write parser unit tests against the Phase 0 language surface
 - [x] Handle parser errors with diagnostics instead of throwing on bad input
+- [x] Include diagnostic source ranges for editor integrations
 - [x] Validate core edge cases: unknown components/options, grid column counts, ragged tables, and tabs structure
 - [x] Enforce v0.1 language decisions: maximum component nesting depth, unsupported dynamic expressions, metadata keys, and `img` alt text
 
@@ -346,7 +347,8 @@ marking the parent complete.
 - [x] Support renderer/theme color scheme selection with `colorScheme: "dark"`
 - [x] Render declarative CSS tabs with ARIA attributes
 - [x] Render callouts, images, tabs, and document structure with v0.1 accessibility guarantees
-- [ ] Test rendering in Chrome, Firefox, Safari
+- [x] Test generated HTML launch in Firefox headless
+- [ ] Test rendering in Chrome and Safari
 
 **Output:** `@lux-lang/lux/renderer` export
 
@@ -360,6 +362,8 @@ marking the parent complete.
   - [x] Syntax highlighting scaffold
   - [x] Snippets scaffold
   - [x] Language configuration scaffold
+  - [x] Diagnostics via `lux check --json`
+  - [x] Packaging script for `.vsix`
   - [ ] Autocomplete for components and modifiers
   - [ ] Live preview panel
 - [x] **Prettier plugin bridge** for auto-formatting `.lux` files
@@ -368,16 +372,17 @@ marking the parent complete.
 ### Phase 4 — Ecosystem (Weeks 15–20)
 
 - [x] **React component:** `<LuxRenderer source={luxString} />`
+- [x] **ESM package output:** importable browser-friendly module build
 - [ ] Add React fixture app/browser smoke coverage
 - [ ] **Obsidian plugin** — render `.lux` notes natively
-- [ ] **Claude artifact support** — native Lux output type
+- [ ] **AI artifact/render-surface support** — native Lux output type
 - [ ] **GitHub rendering** — `.lux` files rendered in repos (like `.md`)
 - [ ] Online **Lux Playground** at `lux-lang.dev`
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 
 - [ ] Generate a large corpus of valid Lux documents
-- [ ] Fine-tune or prompt-engineer Claude/GPT to write idiomatic Lux
+- [ ] Fine-tune or prompt-engineer AI models to write idiomatic Lux
 - [ ] Measure token efficiency vs HTML for equivalent visual output
 - [ ] Publish benchmark results
 
@@ -434,9 +439,9 @@ Use [grid], [card], [callout], and inline scopes to produce visually rich output
 Never use raw HTML. Refer to the Lux spec for syntax rules.
 ```
 
-### Claude-Native Output
+### AI-Native Output
 
-A long-term goal is for Claude artifacts to support `.lux` as a first-class render target — allowing Claude to produce rich, interactive-feeling documents without writing a single line of HTML or JSX.
+A long-term goal is for AI-enabled authoring and artifact surfaces to support `.lux` as a first-class render target — allowing models and agents to produce rich, interactive-feeling documents without writing a single line of HTML or JSX.
 
 ---
 

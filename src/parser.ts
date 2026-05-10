@@ -770,7 +770,8 @@ export class LuxParser {
         "LUX_DYNAMIC_CONTENT_UNSUPPORTED",
         "Dynamic expressions are not supported in Lux v0.1.",
         line,
-        column + (match.index ?? 0)
+        column + (match.index ?? 0),
+        match[0].length
       );
     }
   }
@@ -811,26 +812,31 @@ export class LuxParser {
   }
 
   private error(code: string, message: string, line: SourceLine): void {
-    this.errorAt(code, message, line.line, firstContentColumn(line.text));
+    this.errorAt(code, message, line.line, firstContentColumn(line.text), diagnosticLength(line.text));
   }
 
   private warning(code: string, message: string, line: SourceLine): void {
+    const column = firstContentColumn(line.text);
     this.diagnostics.push({
       severity: "warning",
       code,
       message,
       line: line.line,
-      column: firstContentColumn(line.text)
+      column,
+      endLine: line.line,
+      endColumn: column + diagnosticLength(line.text)
     });
   }
 
-  private errorAt(code: string, message: string, line: number, column: number): void {
+  private errorAt(code: string, message: string, line: number, column: number, length = 1): void {
     this.diagnostics.push({
       severity: "error",
       code,
       message,
       line,
-      column
+      column,
+      endLine: line,
+      endColumn: column + Math.max(length, 1)
     });
   }
 }
@@ -909,4 +915,9 @@ function loc(line: SourceLine): SourceLocation {
 function firstContentColumn(value: string): number {
   const match = /\S/.exec(value);
   return match ? match.index + 1 : 1;
+}
+
+function diagnosticLength(value: string): number {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.length : 1;
 }

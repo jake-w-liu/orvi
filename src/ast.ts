@@ -11,6 +11,8 @@ export interface LuxDiagnostic {
   message: string;
   line: number;
   column: number;
+  endLine: number;
+  endColumn: number;
 }
 
 export type TextDirection = "ltr" | "rtl" | "auto";

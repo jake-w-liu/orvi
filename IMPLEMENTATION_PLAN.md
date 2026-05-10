@@ -24,11 +24,14 @@ implementation companion and avoid drifting from the guide roadmap.
 | CLI live preview server | Done: `lux serve` with hot reload |
 | Formatter | Done: `lux format` + Prettier plugin bridge |
 | React component | Done: `@lux-lang/lux/react` |
-| VS Code syntax highlighting/snippets/config | Scaffold done |
+| VS Code syntax highlighting/snippets/config | Done |
+| VS Code diagnostics | Done: extension runs `lux check --json` |
+| VS Code package script | Done: extension `npm run package` |
 | VS Code autocomplete/live preview | Not started |
 | Prettier plugin | Bridge done with basic Prettier CLI coverage |
-| Browser rendering verification | Not started |
-| Obsidian/GitHub/Claude integrations | Not started |
+| Browser rendering verification | Firefox headless launch smoke done; Chrome/Safari not started |
+| ESM package build | Done: `dist/esm` import exports |
+| Obsidian/GitHub/AI artifact integrations | Not started |
 | Playground | Not started |
 | AI corpus/benchmarks | Not started |
 
@@ -42,18 +45,19 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: reject unsupported dynamic expressions outside fenced code blocks.
    - Done: validate optional top-level metadata: `lux: 0.1`, `title`, `lang`, and `dir: ltr|rtl|auto`.
    - Done: require `img` alt text.
-   - Add source ranges for editor diagnostics.
+   - Done: add source ranges for editor diagnostics.
 
 2. Improve developer tooling
    - Done: add CLI JSON output for editor diagnostics.
-   - Add VS Code diagnostic task using CLI JSON output.
-   - Add packaged `.vsix` build script.
+   - Done: add VS Code diagnostics using CLI JSON output.
+   - Done: add packaged `.vsix` build script.
    - Done: add Prettier integration test using the real Prettier CLI.
 
 3. Add browser-facing package
-   - Add ESM build.
+   - Done: add ESM build.
    - Add React fixture app.
-   - Add Playwright render smoke tests.
+   - Done: add Firefox headless launch smoke test for generated HTML.
+   - Add Chrome and Safari render smoke tests.
 
 4. Build playground
    - Editor + preview split view.

@@ -123,8 +123,8 @@ document-level dark-mode syntax.
 ## Error Rules
 
 The parser never throws for syntax errors. It returns diagnostics with source
-line and column. Invalid documents can still produce a partial AST, but the CLI
-fails builds when any error diagnostic exists.
+line, column, end line, and end column. Invalid documents can still produce a
+partial AST, but the CLI fails builds when any error diagnostic exists.
 
 Dynamic content and expressions such as `{name}` are unsupported in v0.1 and
 produce diagnostics outside fenced code blocks.

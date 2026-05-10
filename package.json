@@ -15,26 +15,32 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
       "require": "./dist/index.js"
     },
     "./parser": {
       "types": "./dist/parser.d.ts",
+      "import": "./dist/esm/parser.js",
       "require": "./dist/parser.js"
     },
     "./renderer": {
       "types": "./dist/renderer.d.ts",
+      "import": "./dist/esm/renderer.js",
       "require": "./dist/renderer.js"
     },
     "./formatter": {
       "types": "./dist/formatter.d.ts",
+      "import": "./dist/esm/formatter.js",
       "require": "./dist/formatter.js"
     },
     "./prettier-plugin": {
       "types": "./dist/prettier-plugin.d.ts",
+      "import": "./dist/esm/prettier-plugin.js",
       "require": "./dist/prettier-plugin.js"
     },
     "./react": {
       "types": "./dist/react.d.ts",
+      "import": "./dist/esm/react.js",
       "require": "./dist/react.js"
     },
     "./lux-base.css": "./dist/lux-base.css"
@@ -50,7 +56,10 @@
     "lux.config.example.js"
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').copyFileSync('src/lux-base.css','dist/lux-base.css')\"",
+    "build": "npm run build:cjs && npm run build:esm && npm run build:assets",
+    "build:cjs": "tsc",
+    "build:esm": "tsc -p tsconfig.esm.json && node scripts/prepare-esm.mjs",
+    "build:assets": "node -e \"require('fs').copyFileSync('src/lux-base.css','dist/lux-base.css')\"",
     "check": "tsc --noEmit",
     "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser lux examples/welcome.lux --check",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
