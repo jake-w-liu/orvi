@@ -349,7 +349,8 @@ marking the parent complete.
 - [x] Render callouts, images, tabs, and document structure with v0.1 accessibility guarantees
 - [x] Test generated HTML launch in Firefox headless
 - [x] Test generated HTML DOM in Chrome headless
-- [ ] Test rendering in Safari via WebDriver
+- [x] Add Safari WebDriver render smoke harness with clean skip when remote automation is disabled
+- [ ] Run Safari WebDriver DOM render smoke with Safari remote automation enabled
 
 **Output:** `@lux-lang/lux/renderer` export
 
@@ -374,7 +375,7 @@ marking the parent complete.
 
 - [x] **React component:** `<LuxRenderer source={luxString} />`
 - [x] **ESM package output:** importable browser-friendly module build
-- [ ] Add React fixture app/browser smoke coverage
+- [x] Add React fixture app/browser smoke coverage
 - [ ] **Obsidian plugin** — render `.lux` notes natively
 - [ ] **AI artifact/render-surface support** — native Lux output type
 - [ ] **GitHub rendering** — `.lux` files rendered in repos (like `.md`)

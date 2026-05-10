@@ -29,8 +29,9 @@ implementation companion and avoid drifting from the guide roadmap.
 | VS Code package script | Done: extension `npm run package` |
 | VS Code autocomplete/live preview | Done |
 | Prettier plugin | Bridge done with basic Prettier CLI coverage |
-| Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari pending |
+| Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari WebDriver harness done, local Safari automation pending |
 | ESM package build | Done: `dist/esm` import exports |
+| React fixture app | Done: fixture app + Chrome/browser smoke coverage |
 | Obsidian/GitHub/AI artifact integrations | Not started |
 | Playground | Not started |
 | AI corpus/benchmarks | Not started |
@@ -57,10 +58,11 @@ implementation companion and avoid drifting from the guide roadmap.
 
 3. Add browser-facing package
    - Done: add ESM build.
-   - Add React fixture app.
+   - Done: add React fixture app and browser smoke coverage.
    - Done: add Firefox headless launch smoke test for generated HTML.
    - Done: add Chrome headless DOM render smoke test.
-   - Add Safari WebDriver render smoke test.
+   - Done: add Safari WebDriver render smoke harness.
+   - Run Safari WebDriver DOM render smoke with Safari remote automation enabled.
 
 4. Build playground
    - Editor + preview split view.
