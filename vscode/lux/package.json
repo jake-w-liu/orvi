@@ -3,7 +3,7 @@
   "displayName": "Lux Language",
   "description": "Language support, diagnostics, completions, and preview for Lux markup.",
   "version": "0.1.0",
-  "publisher": "lux-lang",
+  "publisher": "jake-w-liu",
   "license": "MIT",
   "preview": true,
   "main": "./extension.js",
