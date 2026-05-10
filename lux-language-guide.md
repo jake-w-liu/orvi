@@ -369,7 +369,8 @@ marking the parent complete.
   - [x] Autocomplete for components and modifiers
   - [x] Live preview panel
   - [x] Release prep metadata, README, changelog, license, package lock, and `.vscodeignore`
-- [ ] Publish the VS Code extension to the Marketplace
+- [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
+- [ ] Run Marketplace publish with a configured `VSCE_PAT`
 - [x] **Prettier plugin bridge** for auto-formatting `.lux` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`
@@ -379,19 +380,22 @@ marking the parent complete.
 - [x] **React component:** `<LuxRenderer source={luxString} />`
 - [x] **ESM package output:** importable browser-friendly module build
 - [x] Add React fixture app/browser smoke coverage
-- [ ] **Obsidian plugin** — render `.lux` notes natively
-- [ ] **AI artifact/render-surface support** — native Lux output type
-- [ ] **GitHub rendering** — `.lux` files rendered in repos (like `.md`)
+- [x] **Obsidian plugin scaffold** — render Lux code blocks and `.lux` previews in Obsidian
+- [x] **AI artifact/render-surface support** — native Lux artifact JSON output type
+- [x] **GitHub Pages rendering** — render `.lux` files from the repo as HTML previews
+- [ ] **Native GitHub rendering** — `.lux` files rendered directly in repos (requires GitHub platform support)
 - [x] Static **Lux Playground** with editor + preview split
-- [ ] Publish online **Lux Playground** at `lux-lang.dev`
+- [x] Add GitHub Pages deployment workflow for the Lux Playground
+- [ ] Point `lux-lang.dev` DNS at the deployed GitHub Pages site
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 
 - [x] Add a small deterministic benchmark corpus of valid Lux documents
-- [ ] Generate a large corpus of valid Lux documents
-- [ ] Fine-tune or prompt-engineer AI models to write idiomatic Lux
+- [x] Generate a larger deterministic corpus of valid Lux documents
+- [x] Prompt-engineer model-neutral guidance for AI systems to write idiomatic Lux
+- [ ] Fine-tune a model on a Lux corpus
 - [x] Measure token-ish byte/character efficiency vs rendered HTML for equivalent visual output
-- [ ] Publish benchmark results
+- [x] Publish benchmark results in `docs/benchmarks.md`
 
 ---
 

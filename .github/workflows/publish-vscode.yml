@@ -1,0 +1,47 @@
+name: Publish VS Code Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional semver bump passed to vsce, such as patch, minor, or 0.1.1"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: vscode/lux/package-lock.json
+
+      - name: Install extension dependencies
+        working-directory: vscode/lux
+        run: npm ci
+
+      - name: Package extension
+        working-directory: vscode/lux
+        run: npm run package -- --out lux-language.vsix
+
+      - name: Publish extension
+        working-directory: vscode/lux
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            npx vsce publish "${{ inputs.version }}" --pat "$VSCE_PAT"
+          else
+            npx vsce publish --pat "$VSCE_PAT"
+          fi

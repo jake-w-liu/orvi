@@ -20,13 +20,14 @@ describe("package exports", () => {
           "const lux = require('./dist');",
           "const parser = require('./dist/parser');",
           "const renderer = require('./dist/renderer');",
-          "console.log(typeof lux.parseLux, typeof parser.parseLux, typeof renderer.renderLux);"
+          "const artifact = require('./dist/artifact');",
+          "console.log(typeof lux.parseLux, typeof parser.parseLux, typeof renderer.renderLux, typeof artifact.renderLuxArtifact);"
         ].join("")
       ],
       { cwd: packageRoot, encoding: "utf8" }
     );
 
-    expect(output.trim()).toBe("function function function");
+    expect(output.trim()).toBe("function function function function");
   });
 
   it("supports ESM entrypoints", () => {
@@ -39,12 +40,13 @@ describe("package exports", () => {
           "const lux = await import('./dist/esm/index.js');",
           "const parser = await import('./dist/esm/parser.js');",
           "const renderer = await import('./dist/esm/renderer.js');",
-          "console.log(typeof lux.parseLux, typeof parser.parseLux, typeof renderer.renderLux);"
+          "const artifact = await import('./dist/esm/artifact.js');",
+          "console.log(typeof lux.parseLux, typeof parser.parseLux, typeof renderer.renderLux, typeof artifact.renderLuxArtifact);"
         ].join("")
       ],
       { cwd: packageRoot, encoding: "utf8" }
     );
 
-    expect(output.trim()).toBe("function function function");
+    expect(output.trim()).toBe("function function function function");
   });
 });

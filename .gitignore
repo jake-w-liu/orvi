@@ -4,3 +4,4 @@ coverage/
 examples/*.html
 *.log
 *.vsix
+.site/

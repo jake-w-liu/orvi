@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lux-lang.dev/schemas/lux-artifact.schema.json",
+  "title": "Lux Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "version", "metadata", "render", "diagnostics"],
+  "properties": {
+    "type": {
+      "const": "application/vnd.lux.document+json"
+    },
+    "version": {
+      "const": "0.1"
+    },
+    "luxVersion": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lux": { "type": "string" },
+        "title": { "type": "string" },
+        "lang": { "type": "string" },
+        "dir": { "enum": ["ltr", "rtl", "auto"] }
+      }
+    },
+    "source": {
+      "type": "string"
+    },
+    "render": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["html", "fullDocument", "colorScheme"],
+      "properties": {
+        "html": { "type": "string" },
+        "fullDocument": { "type": "boolean" },
+        "colorScheme": { "enum": ["light", "dark"] }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["severity", "code", "message", "line", "column", "endLine", "endColumn"],
+        "properties": {
+          "severity": { "enum": ["error", "warning"] },
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "line": { "type": "number" },
+          "column": { "type": "number" },
+          "endLine": { "type": "number" },
+          "endColumn": { "type": "number" }
+        }
+      }
+    }
+  }
+}

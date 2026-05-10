@@ -33,6 +33,11 @@
       "import": "./dist/esm/formatter.js",
       "require": "./dist/formatter.js"
     },
+    "./artifact": {
+      "types": "./dist/artifact.d.ts",
+      "import": "./dist/esm/artifact.js",
+      "require": "./dist/artifact.js"
+    },
     "./prettier-plugin": {
       "types": "./dist/prettier-plugin.d.ts",
       "import": "./dist/esm/prettier-plugin.js",
@@ -51,6 +56,7 @@
   "files": [
     "dist",
     "src/lux-base.css",
+    "schemas",
     "vscode/lux",
     "lux-spec-v0.1.md",
     "lux.config.example.js"
@@ -64,8 +70,11 @@
     "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser lux examples/welcome.lux --check",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "playground:test": "node --test playground/playground.test.mjs",
+    "obsidian:build": "npm run build && node integrations/obsidian-lux/build.mjs",
+    "site:build": "npm run build && node dist/cli.js build examples/welcome.lux -o examples/welcome.html && node scripts/build-site.mjs",
     "verify": "npm run check && npm test && npm run playground:test && npm run build && npm run format:check",
-    "vscode:package": "npm --prefix vscode/lux run package"
+    "vscode:package": "npm --prefix vscode/lux run package",
+    "vscode:publish": "npm --prefix vscode/lux run publish"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

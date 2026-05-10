@@ -48,6 +48,7 @@ exists. See `lux.config.example.js`.
 
 ```ts
 import { formatLux, parseLux, renderLux } from "@lux-lang/lux";
+import { renderLuxArtifact } from "@lux-lang/lux/artifact";
 
 const ast = parseLux("# Hello");
 const html = renderLux("# Hello", { fullDocument: true }).html;
@@ -56,6 +57,7 @@ const darkHtml = renderLux("# Hello", {
   colorScheme: "dark",
 }).html;
 const formatted = formatLux("[blue] Hi []").formatted;
+const artifact = renderLuxArtifact("# Hello", { fullDocument: true });
 ```
 
 The package supports both CommonJS `require()` and ESM `import` exports.
@@ -93,6 +95,9 @@ Run its focused tests with:
 npm run playground:test
 ```
 
+`npm run site:build` prepares `.site/` for GitHub Pages. The Pages workflow
+deploys the playground, example render, ESM renderer, and Lux artifact schema.
+
 ## VS Code
 
 Extension package source lives in `vscode/lux`. It provides syntax highlighting,
@@ -111,8 +116,22 @@ The packaged `.vsix` can be installed with:
 code --install-extension vscode/lux/lux-language-0.1.0.vsix
 ```
 
+Marketplace publishing is wired through `.github/workflows/publish-vscode.yml`.
+Set a repository secret named `VSCE_PAT`, then run the workflow manually.
+
 Safari WebDriver smoke coverage is included, but macOS must allow Safari remote
 automation before the test can create a real Safari session.
+
+## Obsidian
+
+The Obsidian plugin scaffold lives in `integrations/obsidian-lux`.
+
+```sh
+npm run obsidian:build
+```
+
+Then copy `manifest.json`, `main.js`, `styles.css`, `versions.json`, and
+`runtime/` into a vault at `.obsidian/plugins/lux/`.
 
 ## Benchmarks
 
@@ -122,7 +141,26 @@ The benchmark corpus pins Lux-vs-rendered-HTML character and byte measurements.
 npm test -- --runTestsByPath __tests__/benchmark-corpus.test.ts
 ```
 
-Current pinned corpus ratio: rendered HTML is `2.357x` the Lux source size.
+Current pinned corpus ratio: rendered HTML is `2.259x` the Lux source size.
+Report: `docs/benchmarks.md`.
+
+## Artifact Schema
+
+AI and render-surface integrations can use the structured Lux artifact:
+
+```ts
+import { renderLuxArtifact } from "@lux-lang/lux/artifact";
+
+const artifact = renderLuxArtifact("# Hello", {
+  fullDocument: true,
+  includeSource: false,
+});
+```
+
+Schema: `schemas/lux-artifact.schema.json`.
+
+AI authoring guidance lives in `docs/ai-authoring.md`, with a baseline
+model-neutral prompt in `prompts/lux-authoring-system.md`.
 
 ## Verification
 

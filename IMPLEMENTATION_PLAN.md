@@ -27,15 +27,19 @@ implementation companion and avoid drifting from the guide roadmap.
 | VS Code syntax highlighting/snippets/config | Done |
 | VS Code diagnostics | Done: extension runs `lux check --json` |
 | VS Code package/release prep | Done: extension `npm run package`, package metadata, README, changelog, license, package lock, `.vscodeignore` |
+| VS Code Marketplace publish | Done: token-backed publish workflow; actual publish waits on `VSCE_PAT` |
 | VS Code autocomplete/live preview | Done |
 | CI | Done: GitHub Actions runs root verify and VS Code package check |
 | Prettier plugin | Bridge done with basic Prettier CLI coverage |
 | Browser rendering verification | Firefox launch + Chrome DOM smoke done; Safari WebDriver DOM smoke done |
 | ESM package build | Done: `dist/esm` import exports |
 | React fixture app | Done: fixture app + Chrome/browser smoke coverage |
-| Obsidian/GitHub/AI artifact integrations | Not started |
-| Playground | Done: static editor + preview split; deployment pending |
-| AI corpus/benchmarks | Done: small deterministic corpus + token-ish efficiency tests; large corpus/results pending |
+| Obsidian/GitHub/AI artifact integrations | Done: Obsidian scaffold, AI artifact, GitHub Pages rendering |
+| AI artifact support | Done: `@lux-lang/lux/artifact` export + JSON schema |
+| GitHub rendering | Done: GitHub Pages renders repo `.lux` files as HTML previews; native GitHub repo preview requires platform support |
+| Playground | Done: static editor + preview split + Pages deploy workflow; DNS pending |
+| AI corpus/benchmarks | Done: larger deterministic corpus + token-ish efficiency tests + published report |
+| AI authoring guidance | Done: model-neutral prompt and repair workflow; fine-tune pending external model/provider |
 
 ## Near-Term Milestones
 
@@ -56,6 +60,7 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add VS Code preview panel using `lux build`.
    - Done: add packaged `.vsix` build script.
    - Done: prepare VS Code release metadata, README, changelog, license, package lock, and `.vscodeignore`.
+   - Done: add token-backed Marketplace publish workflow.
    - Done: add Prettier integration test using the real Prettier CLI.
    - Done: add GitHub Actions CI for `npm run verify` and VS Code package smoke.
 
@@ -69,13 +74,24 @@ implementation companion and avoid drifting from the guide roadmap.
 
 4. Build playground
    - Done: editor + preview split view.
+   - Done: GitHub Pages deployment workflow.
    - Example gallery.
    - Shareable encoded document state.
+   - Point `lux-lang.dev` DNS to the GitHub Pages site.
 
 5. Benchmark corpus
    - Done: add small deterministic Lux corpus.
+   - Done: expand to a larger deterministic Lux corpus.
    - Done: pin byte/character efficiency ratio against rendered HTML.
-   - Add larger corpus and published results.
+   - Done: publish benchmark results in `docs/benchmarks.md`.
+   - Done: add model-neutral AI authoring prompt and repair guidance.
+   - Fine-tune a model on a Lux corpus when a target model/provider is chosen.
+
+6. Integrations
+   - Done: add native Lux artifact JSON output and schema for render surfaces.
+   - Done: render repo `.lux` files to HTML through GitHub Pages.
+   - Done: build Obsidian plugin scaffold.
+   - Native GitHub `.lux` rendering requires GitHub platform support.
 
 ## Acceptance Gate
 

@@ -29,7 +29,8 @@
   "activationEvents": ["onLanguage:lux", "onCommand:lux.preview"],
   "categories": ["Programming Languages", "Other"],
   "scripts": {
-    "package": "vsce package"
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.2.2"
