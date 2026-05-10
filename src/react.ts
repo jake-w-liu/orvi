@@ -1,22 +1,22 @@
 import * as React from "react";
-import { LuxDiagnostic } from "./ast";
-import { renderLux, RenderOptions } from "./renderer";
+import { OrviDiagnostic } from "./ast";
+import { renderOrvi, RenderOptions } from "./renderer";
 
-export interface LuxRendererProps
+export interface OrviRendererProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "children" | "dangerouslySetInnerHTML"> {
   source: string;
   renderOptions?: Omit<RenderOptions, "fullDocument" | "liveReload">;
-  onDiagnostics?: (diagnostics: LuxDiagnostic[]) => void;
+  onDiagnostics?: (diagnostics: OrviDiagnostic[]) => void;
 }
 
-export function LuxRenderer({
+export function OrviRenderer({
   source,
   renderOptions,
   onDiagnostics,
   className,
   ...props
-}: LuxRendererProps): React.ReactElement {
-  const result = renderLux(source, {
+}: OrviRendererProps): React.ReactElement {
+  const result = renderOrvi(source, {
     ...renderOptions,
     fullDocument: false
   });
@@ -27,10 +27,10 @@ export function LuxRenderer({
 
   return React.createElement("div", {
     ...props,
-    className: ["lux-react-root", className].filter(Boolean).join(" "),
-    "data-lux-diagnostics": result.ast.diagnostics.length,
+    className: ["orvi-react-root", className].filter(Boolean).join(" "),
+    "data-orvi-diagnostics": result.ast.diagnostics.length,
     dangerouslySetInnerHTML: { __html: result.html }
   });
 }
 
-export default LuxRenderer;
+export default OrviRenderer;

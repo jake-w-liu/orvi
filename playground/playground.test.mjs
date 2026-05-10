@@ -5,22 +5,22 @@ import { DEFAULT_SOURCE, renderPreview } from "./app.mjs";
 
 test("playground shell loads the module editor", async () => {
   const html = await readFile(new URL("./index.html", import.meta.url), "utf8");
-  assert.match(html, /id="lux-source"/);
+  assert.match(html, /id="orvi-source"/);
   assert.match(html, /id="preview"/);
   assert.match(html, /src="\.\/app\.mjs"/);
 });
 
-test("playground render wrapper uses the Lux runtime result", () => {
+test("playground render wrapper uses the Orvi runtime result", () => {
   const rendered = renderPreview(DEFAULT_SOURCE, {
-    renderLux(source) {
-      assert.match(source, /# Welcome to Lux/);
+    renderOrvi(source) {
+      assert.match(source, /# Welcome to Orvi/);
       return {
-        html: '<main class="lux-document"><h1>Welcome to Lux</h1></main>',
+        html: '<main class="orvi-document"><h1>Welcome to Orvi</h1></main>',
         ast: { diagnostics: [] }
       };
     }
   });
 
-  assert.match(rendered.html, /lux-document/);
+  assert.match(rendered.html, /orvi-document/);
   assert.deepEqual(rendered.diagnostics, []);
 });

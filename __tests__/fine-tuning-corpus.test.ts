@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { benchmarkCorpus } from "../benchmarks/corpus";
-import { parseLux } from "../src/parser";
+import { parseOrvi } from "../src/parser";
 
 interface TrainingRecord {
   schema: string;
@@ -13,17 +13,17 @@ interface TrainingRecord {
   input: string;
   output: string;
   metadata: {
-    luxVersion: string;
+    orviVersion: string;
     outputFormat: string;
     [key: string]: unknown;
   };
 }
 
 const root = resolve(__dirname, "..");
-const corpusPath = resolve(root, "training/fine-tuning/lux-corpus.jsonl");
+const corpusPath = resolve(root, "training/fine-tuning/orvi-corpus.jsonl");
 const manifestPath = resolve(
   root,
-  "training/fine-tuning/lux-corpus.manifest.json",
+  "training/fine-tuning/orvi-corpus.manifest.json",
 );
 
 describe("fine-tuning corpus", () => {
@@ -50,22 +50,22 @@ describe("fine-tuning corpus", () => {
       records.length,
     );
     expect(records[0]).toMatchObject({
-      schema: "lux-training-example-v1",
-      id: "benchmark:product-brief:html-to-lux",
+      schema: "orvi-training-example-v1",
+      id: "benchmark:product-brief:html-to-orvi",
       source: "benchmarks/corpus.ts",
-      task: "html-to-lux",
+      task: "html-to-orvi",
       metadata: {
-        luxVersion: "0.1",
-        outputFormat: "lux",
+        orviVersion: "0.1",
+        outputFormat: "orvi",
         fixture: "product-brief",
         sourceKind: "benchmark",
       },
     });
-    expect(records[0].output).toBe(benchmarkCorpus[0].lux);
+    expect(records[0].output).toBe(benchmarkCorpus[0].orvi);
     expect(records.at(-1)).toMatchObject({
       id: "spec:modifier:background:black",
-      source: "lux-spec-v0.1.md",
-      task: "spec-surface-to-lux",
+      source: "orvi-spec-v0.1.md",
+      task: "spec-surface-to-orvi",
       metadata: {
         modifierKind: "background",
         token: "bg=black",
@@ -75,13 +75,13 @@ describe("fine-tuning corpus", () => {
     expect(manifest.recordCount).toBe(records.length);
     expect(manifest.sources).toEqual({
       "benchmarks/corpus.ts": 27,
-      "examples/welcome.lux": 1,
-      "lux-spec-v0.1.md": 44,
+      "examples/welcome.ov": 1,
+      "orvi-spec-v0.1.md": 44,
     });
     expect(manifest.tasks).toEqual({
-      "html-to-lux": 27,
-      "prompt-to-lux": 1,
-      "spec-surface-to-lux": 44,
+      "html-to-orvi": 27,
+      "prompt-to-orvi": 1,
+      "spec-surface-to-orvi": 44,
     });
     expect(manifest.jsonlSha256).toBe(
       createHash("sha256").update(source).digest("hex"),
@@ -92,11 +92,11 @@ describe("fine-tuning corpus", () => {
     }
   });
 
-  it("keeps every output parseable as Lux v0.1", () => {
+  it("keeps every output parseable as Orvi v0.1", () => {
     const records = readRecords(readFileSync(corpusPath, "utf8"));
 
     for (const record of records) {
-      expect(parseLux(record.output).diagnostics).toEqual([]);
+      expect(parseOrvi(record.output).diagnostics).toEqual([]);
     }
   });
 });

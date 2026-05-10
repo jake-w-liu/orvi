@@ -1,20 +1,20 @@
 const { Plugin, Notice } = require("obsidian");
 
-const LUX_CODE_BLOCK_LANGUAGE = "lux";
-const LUX_FILE_EXTENSION = "lux";
+const ORVI_CODE_BLOCK_LANGUAGE = "orvi";
+const ORVI_FILE_EXTENSION = "ov";
 
-class LuxObsidianPlugin extends Plugin {
+class OrviObsidianPlugin extends Plugin {
   onload() {
-    this.runtime = loadLuxRuntime();
+    this.runtime = loadOrviRuntime();
 
-    this.registerMarkdownCodeBlockProcessor(LUX_CODE_BLOCK_LANGUAGE, (source, el) => {
-      renderLuxIntoElement(source, el, this.runtime);
+    this.registerMarkdownCodeBlockProcessor(ORVI_CODE_BLOCK_LANGUAGE, (source, el) => {
+      renderOrviIntoElement(source, el, this.runtime);
     });
 
-    this.registerExtensions([LUX_FILE_EXTENSION], "markdown");
+    this.registerExtensions([ORVI_FILE_EXTENSION], "markdown");
 
     this.registerMarkdownPostProcessor(async (el, ctx) => {
-      if (!ctx.sourcePath || !ctx.sourcePath.toLowerCase().endsWith(".lux")) return;
+      if (!ctx.sourcePath || !ctx.sourcePath.toLowerCase().endsWith(".ov")) return;
 
       const section = typeof ctx.getSectionInfo === "function" ? ctx.getSectionInfo(el) : null;
       if (section && section.lineStart !== 0) return;
@@ -22,12 +22,12 @@ class LuxObsidianPlugin extends Plugin {
       const source = await readSourcePath(this.app, ctx.sourcePath);
       if (source === null) return;
 
-      renderLuxIntoElement(source, el, this.runtime);
+      renderOrviIntoElement(source, el, this.runtime);
     });
   }
 }
 
-function loadLuxRuntime() {
+function loadOrviRuntime() {
   try {
     return require("./runtime/renderer");
   } catch (pluginRuntimeError) {
@@ -35,24 +35,24 @@ function loadLuxRuntime() {
       return require("../../dist/renderer");
     } catch (_repoRuntimeError) {
       throw new Error(
-        "Lux runtime is missing. Run `npm run build` from the Lux repository, then `node integrations/obsidian-lux/build.mjs` before installing the Obsidian plugin."
+        "Orvi runtime is missing. Run `npm run build` from the Orvi repository, then `node integrations/obsidian-orvi/build.mjs` before installing the Obsidian plugin."
       );
     }
   }
 }
 
-function renderLuxIntoElement(source, el, runtime) {
+function renderOrviIntoElement(source, el, runtime) {
   clearElement(el);
 
   try {
-    const result = runtime.renderLux(source);
-    const container = createElement(el, "div", "lux-obsidian-render");
+    const result = runtime.renderOrvi(source);
+    const container = createElement(el, "div", "orvi-obsidian-render");
     container.innerHTML = result.html;
 
     if (result.ast && Array.isArray(result.ast.diagnostics) && result.ast.diagnostics.length > 0) {
-      const diagnostics = createElement(container, "details", "lux-render-diagnostics");
+      const diagnostics = createElement(container, "details", "orvi-render-diagnostics");
       const summary = createElement(diagnostics, "summary");
-      summary.textContent = "Lux diagnostics";
+      summary.textContent = "Orvi diagnostics";
       const list = createElement(diagnostics, "ul");
       for (const diagnostic of result.ast.diagnostics) {
         const item = createElement(list, "li");
@@ -61,11 +61,11 @@ function renderLuxIntoElement(source, el, runtime) {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const failure = createElement(el, "pre", "lux-render-error");
-    failure.textContent = `Lux render failed: ${message}`;
+    const failure = createElement(el, "pre", "orvi-render-error");
+    failure.textContent = `Orvi render failed: ${message}`;
 
     if (typeof Notice === "function") {
-      new Notice("Lux render failed. See the preview for details.");
+      new Notice("Orvi render failed. See the preview for details.");
     }
   }
 }
@@ -109,13 +109,13 @@ function formatDiagnostic(diagnostic) {
       ? `${diagnostic.line}:${diagnostic.column}`
       : "unknown";
   const severity = diagnostic && diagnostic.severity ? diagnostic.severity : "diagnostic";
-  const message = diagnostic && diagnostic.message ? diagnostic.message : "Unknown Lux diagnostic.";
+  const message = diagnostic && diagnostic.message ? diagnostic.message : "Unknown Orvi diagnostic.";
   return `${severity} at ${location}: ${message}`;
 }
 
-module.exports = LuxObsidianPlugin;
-module.exports.LuxObsidianPlugin = LuxObsidianPlugin;
-module.exports.loadLuxRuntime = loadLuxRuntime;
-module.exports.renderLuxIntoElement = renderLuxIntoElement;
+module.exports = OrviObsidianPlugin;
+module.exports.OrviObsidianPlugin = OrviObsidianPlugin;
+module.exports.loadOrviRuntime = loadOrviRuntime;
+module.exports.renderOrviIntoElement = renderOrviIntoElement;
 module.exports.readSourcePath = readSourcePath;
 module.exports.formatDiagnostic = formatDiagnostic;

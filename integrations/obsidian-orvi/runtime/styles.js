@@ -1,4 +1,7 @@
-export const defaultCss = `:root {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.defaultCss = void 0;
+exports.defaultCss = `:root {
   color-scheme: light;
   --orvi-fg: #1f2937;
   --orvi-muted: #6b7280;

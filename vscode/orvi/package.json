@@ -1,7 +1,7 @@
 {
-  "name": "lux-language",
-  "displayName": "Lux Language",
-  "description": "Language support, diagnostics, completions, and preview for Lux markup.",
+  "name": "orvi-language",
+  "displayName": "Orvi Language",
+  "description": "Language support, diagnostics, completions, and preview for Orvi markup.",
   "version": "0.1.0",
   "publisher": "jake-w-liu",
   "license": "MIT",
@@ -12,23 +12,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jake-w-liu/lux.git",
-    "directory": "vscode/lux"
+    "url": "https://github.com/jake-w-liu/orvi.git",
+    "directory": "vscode/orvi"
   },
   "bugs": {
-    "url": "https://github.com/jake-w-liu/lux/issues"
+    "url": "https://github.com/jake-w-liu/orvi/issues"
   },
-  "homepage": "https://github.com/jake-w-liu/lux#readme",
+  "homepage": "https://github.com/jake-w-liu/orvi#readme",
   "keywords": [
-    "lux",
+    "orvi",
     "markup",
     "language",
     "preview",
     "syntax"
   ],
   "activationEvents": [
-    "onLanguage:lux",
-    "onCommand:lux.preview"
+    "onLanguage:orvi",
+    "onCommand:orvi.preview"
   ],
   "categories": [
     "Programming Languages",
@@ -44,58 +44,58 @@
   "contributes": {
     "languages": [
       {
-        "id": "lux",
+        "id": "orvi",
         "aliases": [
-          "Lux",
-          "lux"
+          "Orvi",
+          "orvi"
         ],
         "extensions": [
-          ".lux"
+          ".ov"
         ],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "lux",
-        "scopeName": "source.lux",
-        "path": "./syntaxes/lux.tmLanguage.json"
+        "language": "orvi",
+        "scopeName": "source.orvi",
+        "path": "./syntaxes/orvi.tmLanguage.json"
       }
     ],
     "snippets": [
       {
-        "language": "lux",
-        "path": "./snippets/lux.json"
+        "language": "orvi",
+        "path": "./snippets/orvi.json"
       }
     ],
     "commands": [
       {
-        "command": "lux.preview",
-        "title": "Lux: Preview"
+        "command": "orvi.preview",
+        "title": "Orvi: Preview"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "lux.preview",
-          "when": "resourceLangId == lux",
+          "command": "orvi.preview",
+          "when": "resourceLangId == orvi",
           "group": "navigation"
         }
       ],
       "commandPalette": [
         {
-          "command": "lux.preview",
-          "when": "resourceLangId == lux"
+          "command": "orvi.preview",
+          "when": "resourceLangId == orvi"
         }
       ]
     },
     "configuration": {
-      "title": "Lux",
+      "title": "Orvi",
       "properties": {
-        "lux.cliPath": {
+        "orvi.cliPath": {
           "type": "string",
-          "default": "lux",
-          "description": "Path to the Lux CLI executable used for diagnostics."
+          "default": "orvi",
+          "description": "Path to the Orvi CLI executable used for diagnostics."
         }
       }
     }

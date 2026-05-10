@@ -5,7 +5,7 @@ export interface SourceLocation {
   column: number;
 }
 
-export interface LuxDiagnostic {
+export interface OrviDiagnostic {
   severity: DiagnosticSeverity;
   code: string;
   message: string;
@@ -18,7 +18,7 @@ export interface LuxDiagnostic {
 export type TextDirection = "ltr" | "rtl" | "auto";
 
 export interface DocumentMetadata {
-  lux?: string;
+  orvi?: string;
   title?: string;
   lang?: string;
   dir?: TextDirection;
@@ -33,7 +33,7 @@ export interface DocumentNode extends BaseNode {
   type: "document";
   metadata: DocumentMetadata;
   children: BlockNode[];
-  diagnostics: LuxDiagnostic[];
+  diagnostics: OrviDiagnostic[];
 }
 
 export type BlockNode =

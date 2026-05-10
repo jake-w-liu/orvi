@@ -1,11 +1,11 @@
-# Welcome to Lux
+# Welcome to Orvi
 
 [blue bold] A new way to write beautiful documents. []
 
 ---
 
 [grid 2]
-  ## Why Lux?
+  ## Why Orvi?
 
   Simple syntax that compiles to rich HTML. No more falling back to raw tags.
   ---
@@ -15,7 +15,7 @@
 [/grid]
 
 [callout type=info]
-  Lux is currently in early development.
+  Orvi is currently in early development.
 [/callout]
 
-btn: Get Started -> https://lux-lang.dev
+btn: Get Started -> https://orvi.dev

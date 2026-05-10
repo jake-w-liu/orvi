@@ -1,4 +1,4 @@
-# Lux — Language Design & Development Guide
+# Orvi — Language Design & Development Guide
 
 > A new markup language combining the simplicity of Markdown with the visual power of HTML.
 
@@ -49,16 +49,16 @@ There is no language today that is simultaneously:
 - **Unambiguous** (one strict spec, one way to do each thing)
 - **Semantically rich** (components, not just tags)
 
-**Lux is designed to fill that gap.**
+**Orvi is designed to fill that gap.**
 
 ### Why Now?
 
 The emergence of AI writing assistants changes the calculus. Previous markup languages failed partly due to lack of adoption — authors had to learn them. With AI:
 
 - The language can be generated, not just hand-written
-- A model can be trained on the spec and produce Lux natively
+- A model can be trained on the spec and produce Orvi natively
 - The renderer can be bootstrapped by AI and iterated quickly
-- Lux can serve as a **native output format for AI-generated rich content**
+- Orvi can serve as a **native output format for AI-generated rich content**
 
 ---
 
@@ -68,26 +68,26 @@ The emergence of AI writing assistants changes the calculus. Previous markup lan
 
 | Goal                 | Description                                                 |
 | -------------------- | ----------------------------------------------------------- |
-| **Human writable**   | A developer or writer can learn Lux in under an hour        |
+| **Human writable**   | A developer or writer can learn Orvi in under an hour        |
 | **AI writable**      | Minimal tokens, unambiguous syntax, no edge cases           |
 | **Visually rich**    | Supports layout, color, components, and interactivity hints |
 | **One spec**         | No fragmentation; one canonical parser                      |
-| **No HTML fallback** | Everything expressible natively in Lux                      |
+| **No HTML fallback** | Everything expressible natively in Orvi                      |
 
 ### Non-Goals
 
-- Lux is **not** a programming language
-- Lux is **not** a replacement for full React/Vue apps
-- Lux is **not** trying to replace HTML in browsers natively
-- Lux is **not** designed for data (use JSON/YAML for that)
+- Orvi is **not** a programming language
+- Orvi is **not** a replacement for full React/Vue apps
+- Orvi is **not** trying to replace HTML in browsers natively
+- Orvi is **not** designed for data (use JSON/YAML for that)
 
 ### Design Principles
 
 1. **Minimal punctuation** — every character earns its place
-2. **Readable raw** — a `.lux` file should be understandable without rendering
+2. **Readable raw** — a `.ov` file should be understandable without rendering
 3. **Fail visibly** — syntax errors should be obvious, not silent
 4. **Progressive complexity** — simple things are simple; complex things are possible
-5. **Compile to HTML** — Lux is always rendered via a HTML/CSS layer
+5. **Compile to HTML** — Orvi is always rendered via a HTML/CSS layer
 
 ---
 
@@ -95,7 +95,7 @@ The emergence of AI writing assistants changes the calculus. Previous markup lan
 
 ### Conceptual Model
 
-Lux is structured around three layers:
+Orvi is structured around three layers:
 
 ```
 Layer 1: Text Content      (like Markdown — headings, paragraphs, lists)
@@ -107,7 +107,7 @@ Each layer builds on the previous. A document can use only Layer 1 and look like
 
 ### Core Philosophy
 
-> "If you can write it in Markdown, Lux should feel identical. When you need more, Lux gives you a clean path forward — never a wall."
+> "If you can write it in Markdown, Orvi should feel identical. When you need more, Orvi gives you a clean path forward — never a wall."
 
 ---
 
@@ -117,7 +117,7 @@ Each layer builds on the previous. A document can use only Layer 1 and look like
 
 Identical to Markdown for maximum familiarity:
 
-```lux
+```orvi
 # Heading 1
 ## Heading 2
 ### Heading 3
@@ -133,7 +133,7 @@ A document may begin with an optional metadata block. It is not rendered.
 
 ```text
 ---
-lux: 0.1
+orvi: 0.1
 title: Document Title
 lang: en
 dir: ltr
@@ -144,7 +144,7 @@ dir: ltr
 
 Supported metadata keys in v0.1:
 
-- `lux`: optional spec version marker; use `0.1`
+- `orvi`: optional spec version marker; use `0.1`
 - `title`: optional full-document HTML title
 - `lang`: optional document language metadata
 - `dir`: optional text direction; one of `ltr`, `rtl`, or `auto`
@@ -153,7 +153,7 @@ Supported metadata keys in v0.1:
 
 Use `[modifier]` syntax to open a visual scope and `[]` to close it:
 
-```lux
+```orvi
 [red] This text is red []
 [blue bold] This is blue and bold []
 [bg=yellow] Highlighted text []
@@ -175,7 +175,7 @@ Block components use a `[component options]` open tag and `[/component]` close t
 
 **Callout / Alert Box:**
 
-```lux
+```orvi
 [callout]
   This is an important note.
 [/callout]
@@ -191,7 +191,7 @@ Block components use a `[component options]` open tag and `[/component]` close t
 
 **Grid Layout:**
 
-```lux
+```orvi
 [grid 3]
   First column content here.
   ---
@@ -203,7 +203,7 @@ Block components use a `[component options]` open tag and `[/component]` close t
 
 **Card:**
 
-```lux
+```orvi
 [card]
   ## Card Title
   Card body content goes here.
@@ -217,7 +217,7 @@ Block components use a `[component options]` open tag and `[/component]` close t
 
 **Tabs:**
 
-```lux
+```orvi
 [tabs]
   [tab label=Overview]
     Overview content here.
@@ -229,13 +229,13 @@ Block components use a `[component options]` open tag and `[/component]` close t
 ```
 
 Tabs are declarative. The v0.1 renderer provides tab behavior with generated
-HTML and CSS; Lux documents do not contain user script.
+HTML and CSS; Orvi documents do not contain user script.
 
 ### 4.4 Semantic Elements
 
 Single-line semantic components use a `keyword:` prefix syntax:
 
-```lux
+```orvi
 btn: Click Me → https://example.com
 img: ./photo.jpg | A beautiful sunset
 hr:
@@ -248,10 +248,10 @@ badge: Beta | type=warning
 
 Same as Markdown with optional filename annotation:
 
-````lux
+````orvi
     ```python | app.py
     def hello():
-        print("Hello, Lux!")
+        print("Hello, Orvi!")
     ```
 ````
 
@@ -259,7 +259,7 @@ Same as Markdown with optional filename annotation:
 
 Same as Markdown GFM tables:
 
-```lux
+```orvi
 | Name  | Role    | Status  |
 |-------|---------|---------|
 | Alice | Dev     | Active  |
@@ -268,32 +268,32 @@ Same as Markdown GFM tables:
 
 ### 4.7 Comments
 
-```lux
+```orvi
 // This is a comment — not rendered
 ```
 
 ### 4.8 Unsupported Dynamic Content
 
-Lux v0.1 is static markup. Dynamic content and expressions such as `{name}` are
+Orvi v0.1 is static markup. Dynamic content and expressions such as `{name}` are
 unsupported outside fenced code blocks and produce parser diagnostics.
 
 ### 4.9 Full Example Document
 
-```lux
+```orvi
 ---
-lux: 0.1
+orvi: 0.1
 lang: en
 dir: ltr
 ---
 
-# Welcome to Lux
+# Welcome to Orvi
 
 [blue bold] A new way to write beautiful documents. []
 
 ---
 
 [grid 2]
-  ## Why Lux?
+  ## Why Orvi?
   Simple syntax that compiles to rich HTML.
   No more falling back to raw tags.
   ---
@@ -305,11 +305,11 @@ dir: ltr
 ---
 
 [callout type=info]
-  Lux is currently in early development.
+  Orvi is currently in early development.
   Contributions welcome.
 [/callout]
 
-btn: Get Started → https://lux-lang.dev
+btn: Get Started → https://orvi.dev
 ```
 
 ---
@@ -322,11 +322,11 @@ marking the parent complete.
 
 ### Phase 0 — Specification
 
-- [x] Write the formal grammar (EBNF) in `lux-spec-v0.1.md`
+- [x] Write the formal grammar (EBNF) in `orvi-spec-v0.1.md`
 - [x] Define built-in modifiers and component types
 - [x] Document parser error rules and basic syntax conflicts
-- [x] Create a Jest test suite covering valid and invalid Lux documents
-- [x] Publish the spec as a versioned document (`lux-spec-v0.1.md`)
+- [x] Create a Jest test suite covering valid and invalid Orvi documents
+- [x] Publish the spec as a versioned document (`orvi-spec-v0.1.md`)
 
 ### Phase 1 — Parser
 
@@ -341,14 +341,14 @@ marking the parent complete.
 - [x] Validate core edge cases: unknown components/options, grid column counts, ragged tables, and tabs structure
 - [x] Enforce v0.1 language decisions: maximum component nesting depth, unsupported dynamic expressions, metadata keys, and `img` alt text
 
-**Output:** `@lux-lang/lux/parser` export
+**Output:** `@orvi/orvi/parser` export
 
 ### Phase 2 — HTML Renderer
 
 - [x] Walk the AST and emit semantic HTML + scoped CSS classes
-- [x] Create a default stylesheet (`lux-base.css`)
+- [x] Create a default stylesheet (`orvi-base.css`)
   - Defines color tokens, grid system, card styles, callout variants, badges, tabs, tables, code, and inline modifiers
-- [x] Support a theming API (`lux.config.js`)
+- [x] Support a theming API (`orvi.config.js`)
 - [x] Support renderer/theme color scheme selection with `colorScheme: "dark"`
 - [x] Render declarative CSS tabs with ARIA attributes
 - [x] Render callouts, images, tabs, and document structure with v0.1 accessibility guarantees
@@ -357,55 +357,55 @@ marking the parent complete.
 - [x] Add Safari WebDriver render smoke harness with clean skip when remote automation is disabled
 - [x] Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine
 
-**Output:** `@lux-lang/lux/renderer` export
+**Output:** `@orvi/orvi/renderer` export
 
 ### Phase 3 — Developer Tooling
 
-- [x] **CLI tool:** `lux build input.lux` → `output.html`
-- [x] **CLI check/format:** `lux check` and `lux format`
-- [x] **Machine-readable diagnostics:** `lux check --json` and `lux format --check --json`
-- [x] **Live preview server:** `lux serve` with hot reload
+- [x] **CLI tool:** `orvi build input.ov` → `output.html`
+- [x] **CLI check/format:** `orvi check` and `orvi format`
+- [x] **Machine-readable diagnostics:** `orvi check --json` and `orvi format --check --json`
+- [x] **Live preview server:** `orvi serve` with hot reload
 - [x] **VS Code extension:**
   - [x] Syntax highlighting scaffold
   - [x] Snippets scaffold
   - [x] Language configuration scaffold
-  - [x] Diagnostics via `lux check --json`
+  - [x] Diagnostics via `orvi check --json`
   - [x] Packaging script for `.vsix`
   - [x] Autocomplete for components and modifiers
   - [x] Live preview panel
   - [x] Release prep metadata, README, changelog, license, package lock, and `.vscodeignore`
 - [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
-- [x] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.lux-language`
+- [ ] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.orvi-language`
 - [x] Harden Marketplace release workflow with token validation and VSIX artifact capture
 - [x] Add token-free VSIX package workflow for manual Marketplace upload and GitHub Releases
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`
 - [ ] Configure `VSCE_PAT` for repeatable automated Marketplace releases
-- [x] **Prettier plugin bridge** for auto-formatting `.lux` files
+- [x] **Prettier plugin bridge** for auto-formatting `.ov` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`
 
 ### Phase 4 — Ecosystem
 
-- [x] **React component:** `<LuxRenderer source={luxString} />`
+- [x] **React component:** `<OrviRenderer source={orviString} />`
 - [x] **ESM package output:** importable browser-friendly module build
 - [x] Add React fixture app/browser smoke coverage
-- [x] **Obsidian plugin scaffold** — render Lux code blocks and `.lux` previews in Obsidian
-- [x] **AI artifact/render-surface support** — native Lux artifact JSON output type
-- [x] **GitHub Pages rendering** — render `.lux` files from the repo as HTML previews
-- [ ] **Native GitHub rendering** — `.lux` files rendered directly in repos (requires GitHub platform support)
-- [x] Static **Lux Playground** with editor + preview split
-- [x] Add GitHub Pages deployment workflow for the Lux Playground
+- [x] **Obsidian plugin scaffold** — render Orvi code blocks and `.ov` previews in Obsidian
+- [x] **AI artifact/render-surface support** — native Orvi artifact JSON output type
+- [x] **GitHub Pages rendering** — render `.ov` files from the repo as HTML previews
+- [ ] **Native GitHub rendering** — `.ov` files rendered directly in repos (requires GitHub platform support)
+- [x] Static **Orvi Playground** with editor + preview split
+- [x] Add GitHub Pages deployment workflow for the Orvi Playground
 - [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds
-- [x] Gate `lux-lang.dev` custom-domain deployment behind `LUX_PAGES_CNAME` so the default Pages URL stays usable
-- [ ] Point `lux-lang.dev` DNS at GitHub Pages, set `LUX_PAGES_CNAME`, configure the Pages custom domain, and wait for HTTPS certificate issuance
+- [x] Gate `orvi.dev` custom-domain deployment behind `ORVI_PAGES_CNAME` so the default Pages URL stays usable
+- [ ] Register `orvi.dev`, point DNS at GitHub Pages, set `ORVI_PAGES_CNAME`, configure the Pages custom domain, and wait for HTTPS certificate issuance
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 
-- [x] Add a small deterministic benchmark corpus of valid Lux documents
-- [x] Generate a larger deterministic corpus of valid Lux documents
-- [x] Prompt-engineer model-neutral guidance for AI systems to write idiomatic Lux
+- [x] Add a small deterministic benchmark corpus of valid Orvi documents
+- [x] Generate a larger deterministic corpus of valid Orvi documents
+- [x] Prompt-engineer model-neutral guidance for AI systems to write idiomatic Orvi
 - [x] Prepare a provider-neutral fine-tuning JSONL corpus with deterministic validation
-- [ ] Fine-tune a model on the Lux corpus with a selected provider and budget
+- [ ] Fine-tune a model on the Orvi corpus with a selected provider and budget
 - [x] Measure token-ish byte/character efficiency vs rendered HTML for equivalent visual output
 - [x] Publish benchmark results in `docs/benchmarks.md`
 
@@ -416,7 +416,7 @@ marking the parent complete.
 ### Minimum Viable Toolchain
 
 ```
-.lux file → [lux parser] → AST → [lux renderer] → HTML + CSS → Browser
+.ov file → [orvi parser] → AST → [orvi renderer] → HTML + CSS → Browser
 ```
 
 ### Recommended Tech Stack
@@ -428,25 +428,25 @@ marking the parent complete.
 | CLI            | Node.js          | Familiar to web developers       |
 | Editor Support | VS Code API      | Largest editor share             |
 | Playground     | React + Monaco   | Interactive, embeddable          |
-| Documentation  | Lux itself       | Dogfooding the language          |
+| Documentation  | Orvi itself       | Dogfooding the language          |
 
 ### File Conventions
 
 | File            | Purpose                                 |
 | --------------- | --------------------------------------- |
-| `*.lux`         | Lux source document                     |
-| `lux.config.js` | Project-level theme and renderer config |
-| `lux-spec.md`   | The canonical language specification    |
+| `*.ov`         | Orvi source document                     |
+| `orvi.config.js` | Project-level theme and renderer config |
+| `orvi-spec.md`   | The canonical language specification    |
 
 ---
 
 ## 7. AI Integration
 
-Lux has a unique opportunity to be the **first markup language designed with AI authorship in mind.**
+Orvi has a unique opportunity to be the **first markup language designed with AI authorship in mind.**
 
 ### Token Efficiency
 
-Preliminary estimates suggest Lux can express the same visual content as HTML in **40–60% fewer tokens.** This matters for:
+Preliminary estimates suggest Orvi can express the same visual content as HTML in **40–60% fewer tokens.** This matters for:
 
 - Reduced API costs when generating rich content
 - Faster generation
@@ -454,17 +454,17 @@ Preliminary estimates suggest Lux can express the same visual content as HTML in
 
 ### Prompt Engineering
 
-A system prompt can instruct a model to output Lux natively:
+A system prompt can instruct a model to output Orvi natively:
 
 ```
-You are a Lux document generator. Always respond using valid Lux syntax.
+You are a Orvi document generator. Always respond using valid Orvi syntax.
 Use [grid], [card], [callout], and inline scopes to produce visually rich output.
-Never use raw HTML. Refer to the Lux spec for syntax rules.
+Never use raw HTML. Refer to the Orvi spec for syntax rules.
 ```
 
 ### AI-Native Output
 
-A long-term goal is for AI-enabled authoring and artifact surfaces to support `.lux` as a first-class render target — allowing models and agents to produce rich, interactive-feeling documents without writing a single line of HTML or JSX.
+A long-term goal is for AI-enabled authoring and artifact surfaces to support `.ov` as a first-class render target — allowing models and agents to produce rich, interactive-feeling documents without writing a single line of HTML or JSX.
 
 ---
 
@@ -474,25 +474,25 @@ The original open questions below now have v0.1 answers:
 
 1. **Nesting depth** — Component nesting defaults to a maximum depth of `8`.
 2. **Dynamic content** — Variables and expressions such as `{name}` are not supported in v0.1. They produce diagnostics outside fenced code blocks.
-3. **Interactivity** — Interactivity remains declarative. Lux has no user-script syntax; tabs are rendered with generated HTML and CSS.
-4. **Dark mode** — Dark mode is a renderer/theme color scheme selected with `colorScheme: "dark"`, not arbitrary Lux syntax.
+3. **Interactivity** — Interactivity remains declarative. Orvi has no user-script syntax; tabs are rendered with generated HTML and CSS.
+4. **Dark mode** — Dark mode is a renderer/theme color scheme selected with `colorScheme: "dark"`, not arbitrary Orvi syntax.
 5. **Accessibility** — Accessibility is enforced by the parser and renderer: images require alt text, callouts receive roles and labels, tabs receive ARIA wiring, and output uses semantic HTML.
 6. **Internationalization** — Documents support top-level `lang` and `dir` metadata from day one. `dir` may be `ltr`, `rtl`, or `auto`.
-7. **Versioning** — Documents may declare an optional top-level metadata block with `lux: 0.1`; `title` metadata feeds full-document HTML titles.
+7. **Versioning** — Documents may declare an optional top-level metadata block with `orvi: 0.1`; `title` metadata feeds full-document HTML titles.
 8. **Governance** — Governance remains project-owner led for now; a public issue can revisit this when the project needs a broader process.
 
 ---
 
 ## Contributing
 
-Lux is an open idea. The best next steps are:
+Orvi is an open idea. The best next steps are:
 
 1. Critique this spec — find the edge cases and weaknesses
 2. Build a prototype parser — even a rough one proves the concept
-3. Write documents in Lux (even manually) to test readability
+3. Write documents in Orvi (even manually) to test readability
 4. Propose missing components or syntax improvements
 
 ---
 
-_Lux v0.1 Concept — May 2026_
+_Orvi v0.1 Concept — May 2026_
 _Status: v0.1 prototype in progress; this guide is the progress ledger_

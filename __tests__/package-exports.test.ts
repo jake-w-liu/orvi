@@ -17,11 +17,11 @@ describe("package exports", () => {
       [
         "-e",
         [
-          "const lux = require('./dist');",
+          "const orvi = require('./dist');",
           "const parser = require('./dist/parser');",
           "const renderer = require('./dist/renderer');",
           "const artifact = require('./dist/artifact');",
-          "console.log(typeof lux.parseLux, typeof parser.parseLux, typeof renderer.renderLux, typeof artifact.renderLuxArtifact);"
+          "console.log(typeof orvi.parseOrvi, typeof parser.parseOrvi, typeof renderer.renderOrvi, typeof artifact.renderOrviArtifact);"
         ].join("")
       ],
       { cwd: packageRoot, encoding: "utf8" }
@@ -37,11 +37,11 @@ describe("package exports", () => {
         "--input-type=module",
         "-e",
         [
-          "const lux = await import('./dist/esm/index.js');",
+          "const orvi = await import('./dist/esm/index.js');",
           "const parser = await import('./dist/esm/parser.js');",
           "const renderer = await import('./dist/esm/renderer.js');",
           "const artifact = await import('./dist/esm/artifact.js');",
-          "console.log(typeof lux.parseLux, typeof parser.parseLux, typeof renderer.renderLux, typeof artifact.renderLuxArtifact);"
+          "console.log(typeof orvi.parseOrvi, typeof parser.parseOrvi, typeof renderer.renderOrvi, typeof artifact.renderOrviArtifact);"
         ].join("")
       ],
       { cwd: packageRoot, encoding: "utf8" }

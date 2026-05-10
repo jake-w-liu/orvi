@@ -4,7 +4,7 @@ import { createServer as createHttpServer, request } from "http";
 import { tmpdir } from "os";
 import { join } from "path";
 import { AddressInfo, createServer as createNetServer } from "net";
-import { renderLux } from "../src/renderer";
+import { renderOrvi } from "../src/renderer";
 
 const SAFARIDRIVER_CANDIDATES = [
   process.env.SAFARIDRIVER_PATH,
@@ -25,14 +25,14 @@ type WebDriverError = {
 };
 
 describe("Safari WebDriver rendering smoke", () => {
-  it("renders generated Lux HTML in Safari when WebDriver automation is enabled", async () => {
+  it("renders generated Orvi HTML in Safari when WebDriver automation is enabled", async () => {
     const safaridriver = findSafaridriver();
     if (!safaridriver) {
       console.warn("Skipping Safari WebDriver smoke test; safaridriver executable not found.");
       return;
     }
 
-    const workspace = mkdtempSync(join(tmpdir(), "lux-safari-"));
+    const workspace = mkdtempSync(join(tmpdir(), "orvi-safari-"));
     const port = await getAvailablePort();
     const driverProcess = spawn(safaridriver, ["-p", String(port)]);
     let sessionId: string | undefined;
@@ -42,9 +42,9 @@ describe("Safari WebDriver rendering smoke", () => {
       await waitForWebDriverStatus(driverProcess, port);
 
       const htmlPath = join(workspace, "fixture.html");
-      const html = renderLux(
+      const html = renderOrvi(
         `---
-lux: 0.1
+orvi: 0.1
 title: Safari Fixture
 lang: en
 dir: ltr
@@ -80,7 +80,7 @@ dir: ltr
 
       await expectOkResponse(
         webDriverRequest(port, "POST", `/session/${sessionId}/url`, { url: fixtureServer.url }),
-        "navigate Safari to generated Lux HTML"
+        "navigate Safari to generated Orvi HTML"
       );
 
       const documentState = await expectOkResponse<DocumentState>(
@@ -92,7 +92,7 @@ dir: ltr
           };`,
           args: []
         }),
-        "inspect generated Lux HTML in Safari"
+        "inspect generated Orvi HTML in Safari"
       );
 
       expect(documentState.title).toBe("Safari Fixture");

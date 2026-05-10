@@ -1,18 +1,18 @@
 {
-  "schema": "lux-training-corpus-manifest-v1",
-  "corpusSchema": "lux-training-example-v1",
-  "output": "training/fine-tuning/lux-corpus.jsonl",
+  "schema": "orvi-training-corpus-manifest-v1",
+  "corpusSchema": "orvi-training-example-v1",
+  "output": "training/fine-tuning/orvi-corpus.jsonl",
   "recordCount": 72,
-  "jsonlSha256": "cad18469a9c7dd59c65d1fc9654fc1900521f503bd4382a84504da9e8e5776ee",
+  "jsonlSha256": "78ccfdc4d8d7b67ad44bbfe5fef38a2e9d7d19d60ad8c965054977deb76e586b",
   "sources": {
     "benchmarks/corpus.ts": 27,
-    "examples/welcome.lux": 1,
-    "lux-spec-v0.1.md": 44
+    "examples/welcome.ov": 1,
+    "orvi-spec-v0.1.md": 44
   },
   "tasks": {
-    "html-to-lux": 27,
-    "prompt-to-lux": 1,
-    "spec-surface-to-lux": 44
+    "html-to-orvi": 27,
+    "prompt-to-orvi": 1,
+    "spec-surface-to-orvi": 44
   },
   "notes": [
     "Provider-neutral JSONL with input/output records; this is not a provider-specific chat/messages format.",

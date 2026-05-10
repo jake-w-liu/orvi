@@ -1,9 +1,9 @@
 import * as React from "react";
-import { LuxDiagnostic } from "../../src/ast";
-import { LuxRenderer } from "../../src/react";
+import { OrviDiagnostic } from "../../src/ast";
+import { OrviRenderer } from "../../src/react";
 
 export const fixtureSource = `---
-lux: 0.1
+orvi: 0.1
 title: React Fixture
 lang: en
 ---
@@ -11,7 +11,7 @@ lang: en
 # React Fixture
 
 [callout type=success]
-  Exported React renderer mounted this Lux document.
+  Exported React renderer mounted this Orvi document.
 [/callout]
 
 [grid 2]
@@ -25,24 +25,24 @@ lang: en
 [green bold] Ready []
 [/grid]
 
-btn: Open docs -> https://example.com/lux`;
+btn: Open docs -> https://example.com/orvi`;
 
-export interface ReactLuxFixtureAppProps {
-  onDiagnostics?: (diagnostics: LuxDiagnostic[]) => void;
+export interface ReactOrviFixtureAppProps {
+  onDiagnostics?: (diagnostics: OrviDiagnostic[]) => void;
 }
 
-export function ReactLuxFixtureApp({ onDiagnostics }: ReactLuxFixtureAppProps): React.ReactElement {
+export function ReactOrviFixtureApp({ onDiagnostics }: ReactOrviFixtureAppProps): React.ReactElement {
   return React.createElement(
     "main",
     { className: "fixture-shell", "data-fixture": "react-browser" },
     React.createElement(
       "header",
       { className: "fixture-header" },
-      React.createElement("p", { className: "fixture-eyebrow" }, "Lux React fixture"),
+      React.createElement("p", { className: "fixture-eyebrow" }, "Orvi React fixture"),
       React.createElement("h1", null, "Renderer integration")
     ),
-    React.createElement(LuxRenderer, {
-      "aria-label": "Rendered Lux fixture",
+    React.createElement(OrviRenderer, {
+      "aria-label": "Rendered Orvi fixture",
       className: "fixture-renderer",
       source: fixtureSource,
       renderOptions: {

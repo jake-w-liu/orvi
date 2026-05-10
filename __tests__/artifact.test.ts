@@ -1,12 +1,12 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import { renderLuxArtifact } from "../src/artifact";
+import { renderOrviArtifact } from "../src/artifact";
 
-describe("renderLuxArtifact", () => {
-  it("creates a stable Lux artifact with rendered HTML and metadata", () => {
-    const artifact = renderLuxArtifact(
+describe("renderOrviArtifact", () => {
+  it("creates a stable Orvi artifact with rendered HTML and metadata", () => {
+    const artifact = renderOrviArtifact(
       `---
-lux: 0.1
+orvi: 0.1
 title: Artifact Fixture
 lang: en
 ---
@@ -19,10 +19,10 @@ lang: en
       { fullDocument: true, colorScheme: "dark" }
     );
 
-    expect(artifact.type).toBe("application/vnd.lux.document+json");
+    expect(artifact.type).toBe("application/vnd.orvi.document+json");
     expect(artifact.version).toBe("0.1");
-    expect(artifact.luxVersion).toBe("0.1");
-    expect(artifact.metadata).toEqual({ lux: "0.1", title: "Artifact Fixture", lang: "en" });
+    expect(artifact.orviVersion).toBe("0.1");
+    expect(artifact.metadata).toEqual({ orvi: "0.1", title: "Artifact Fixture", lang: "en" });
     expect(artifact.render.fullDocument).toBe(true);
     expect(artifact.render.colorScheme).toBe("dark");
     expect(artifact.render.html).toContain("<title>Artifact Fixture</title>");
@@ -32,14 +32,14 @@ lang: en
   });
 
   it("can omit source for render surfaces that should not echo prompts", () => {
-    const artifact = renderLuxArtifact("# Private", { includeSource: false });
+    const artifact = renderOrviArtifact("# Private", { includeSource: false });
 
     expect(artifact.source).toBeUndefined();
     expect(artifact.render.html).toContain("<h1>Private</h1>");
   });
 
   it("ships a JSON schema for artifact consumers", () => {
-    const schemaPath = join(process.cwd(), "schemas", "lux-artifact.schema.json");
+    const schemaPath = join(process.cwd(), "schemas", "orvi-artifact.schema.json");
     const schema = JSON.parse(readFileSync(schemaPath, "utf8")) as {
       properties: Record<string, unknown>;
       required: string[];

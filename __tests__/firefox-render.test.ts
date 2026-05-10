@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { spawnSync } from "child_process";
-import { renderLux } from "../src/renderer";
+import { renderOrvi } from "../src/renderer";
 
 const FIREFOX_CANDIDATES = [
   process.env.FIREFOX_PATH,
@@ -12,19 +12,19 @@ const FIREFOX_CANDIDATES = [
 ].filter(Boolean) as string[];
 
 describe("Firefox rendering smoke", () => {
-  it("renders generated Lux HTML in headless Firefox", () => {
+  it("renders generated Orvi HTML in headless Firefox", () => {
     const firefox = findFirefox();
     if (!firefox) {
       console.warn("Skipping Firefox smoke test; Firefox executable not found.");
       return;
     }
 
-    const workspace = mkdtempSync(join(tmpdir(), "lux-firefox-"));
+    const workspace = mkdtempSync(join(tmpdir(), "orvi-firefox-"));
     try {
       const htmlPath = join(workspace, "fixture.html");
-      const html = renderLux(
+      const html = renderOrvi(
         `---
-lux: 0.1
+orvi: 0.1
 title: Firefox Fixture
 lang: en
 dir: ltr

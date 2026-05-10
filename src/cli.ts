@@ -2,10 +2,10 @@
 import { createServer, ServerResponse } from "http";
 import { existsSync, readFileSync, watch, writeFileSync } from "fs";
 import { basename, dirname, extname, resolve } from "path";
-import { defaultCss, LuxColorScheme, LuxDirection, LuxTheme, renderLux } from "./renderer";
-import { parseLux } from "./parser";
-import { LuxDiagnostic } from "./ast";
-import { formatLux } from "./formatter";
+import { defaultCss, OrviColorScheme, OrviDirection, OrviTheme, renderOrvi } from "./renderer";
+import { parseOrvi } from "./parser";
+import { OrviDiagnostic } from "./ast";
+import { formatOrvi } from "./formatter";
 
 interface BuildArgs {
   input: string;
@@ -29,12 +29,12 @@ interface CheckArgs {
   json: boolean;
 }
 
-interface LuxConfig {
+interface OrviConfig {
   title?: string;
   lang?: string;
-  dir?: LuxDirection;
-  colorScheme?: LuxColorScheme;
-  theme?: LuxTheme;
+  dir?: OrviDirection;
+  colorScheme?: OrviColorScheme;
+  theme?: OrviTheme;
   css?: string;
 }
 
@@ -64,7 +64,7 @@ function build(options: BuildArgs): void {
   assertReadable(inputPath);
   const config = loadConfig(inputPath);
   const source = readFileSync(inputPath, "utf8");
-  const result = renderLux(source, {
+  const result = renderOrvi(source, {
     fullDocument: true,
     title: config.title,
     fallbackTitle: basename(inputPath),
@@ -86,7 +86,7 @@ function build(options: BuildArgs): void {
 function check(options: CheckArgs): void {
   const inputPath = resolve(options.input);
   assertReadable(inputPath);
-  const ast = parseLux(readFileSync(inputPath, "utf8"));
+  const ast = parseOrvi(readFileSync(inputPath, "utf8"));
 
   if (options.json) {
     const ok = !hasErrorDiagnostics(ast.diagnostics);
@@ -96,14 +96,14 @@ function check(options: CheckArgs): void {
   }
 
   failOnErrors(ast.diagnostics);
-  console.log("Lux check passed.");
+  console.log("Orvi check passed.");
 }
 
 function format(options: FormatArgs): void {
   const inputPath = resolve(options.input);
   assertReadable(inputPath);
   const source = readFileSync(inputPath, "utf8");
-  const result = formatLux(source);
+  const result = formatOrvi(source);
 
   if (options.check) {
     const ok = source === result.formatted && !hasErrorDiagnostics(result.diagnostics);
@@ -114,7 +114,7 @@ function format(options: FormatArgs): void {
     } else if (hasErrorDiagnostics(result.diagnostics)) {
       failOnErrors(result.diagnostics);
     } else {
-      console.log(`${inputPath} is not formatted. Run lux format ${inputPath} --write to update it.`);
+      console.log(`${inputPath} is not formatted. Run orvi format ${inputPath} --write to update it.`);
     }
 
     if (!ok) process.exit(1);
@@ -145,7 +145,7 @@ function serve(options: ServeArgs): void {
   });
 
   const server = createServer((request, response) => {
-    if (request.url === "/__lux/events") {
+    if (request.url === "/__orvi/events") {
       response.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
@@ -157,14 +157,14 @@ function serve(options: ServeArgs): void {
       return;
     }
 
-    if (request.url === "/lux-base.css") {
+    if (request.url === "/orvi-base.css") {
       response.writeHead(200, { "Content-Type": "text/css; charset=utf-8" });
       response.end(defaultCss);
       return;
     }
 
     const source = readFileSync(inputPath, "utf8");
-    const result = renderLux(source, {
+    const result = renderOrvi(source, {
       fullDocument: true,
       title: config.title,
       fallbackTitle: basename(inputPath),
@@ -183,13 +183,13 @@ function serve(options: ServeArgs): void {
   });
 
   server.listen(options.port, () => {
-    console.log(`Lux preview http://localhost:${options.port}`);
+    console.log(`Orvi preview http://localhost:${options.port}`);
   });
 }
 
 function parseBuildArgs(values: string[]): BuildArgs {
   const input = values[0];
-  if (!input) throw new Error("Usage: lux build <input.lux> [-o output.html]");
+  if (!input) throw new Error("Usage: orvi build <input.ov> [-o output.html]");
 
   let output: string | undefined;
   for (let index = 1; index < values.length; index += 1) {
@@ -204,7 +204,7 @@ function parseBuildArgs(values: string[]): BuildArgs {
 
 function parseServeArgs(values: string[]): ServeArgs {
   const input = values[0];
-  if (!input) throw new Error("Usage: lux serve <input.lux> [--port 4173]");
+  if (!input) throw new Error("Usage: orvi serve <input.ov> [--port 4173]");
 
   let port = 4173;
   for (let index = 1; index < values.length; index += 1) {
@@ -223,7 +223,7 @@ function parseServeArgs(values: string[]): ServeArgs {
 
 function parseCheckArgs(values: string[]): CheckArgs {
   const input = values.find((value) => !value.startsWith("-"));
-  if (!input) throw new Error("Usage: lux check <input.lux> [--json]");
+  if (!input) throw new Error("Usage: orvi check <input.ov> [--json]");
 
   return {
     input,
@@ -233,7 +233,7 @@ function parseCheckArgs(values: string[]): CheckArgs {
 
 function parseFormatArgs(values: string[]): FormatArgs {
   const input = values.find((value) => !value.startsWith("-"));
-  if (!input) throw new Error("Usage: lux format <input.lux> [--write] [--check]");
+  if (!input) throw new Error("Usage: orvi format <input.ov> [--write] [--check]");
 
   return {
     input,
@@ -243,26 +243,26 @@ function parseFormatArgs(values: string[]): FormatArgs {
   };
 }
 
-function failOnErrors(diagnostics: LuxDiagnostic[]): void {
+function failOnErrors(diagnostics: OrviDiagnostic[]): void {
   const errors = errorDiagnostics(diagnostics);
   if (errors.length === 0) return;
 
-  console.error("Lux syntax errors:");
+  console.error("Orvi syntax errors:");
   for (const diagnostic of errors) {
     console.error(`${diagnostic.line}:${diagnostic.column} ${diagnostic.code} ${diagnostic.message}`);
   }
   process.exit(1);
 }
 
-function hasErrorDiagnostics(diagnostics: LuxDiagnostic[]): boolean {
+function hasErrorDiagnostics(diagnostics: OrviDiagnostic[]): boolean {
   return errorDiagnostics(diagnostics).length > 0;
 }
 
-function errorDiagnostics(diagnostics: LuxDiagnostic[]): LuxDiagnostic[] {
+function errorDiagnostics(diagnostics: OrviDiagnostic[]): OrviDiagnostic[] {
   return diagnostics.filter((diagnostic) => diagnostic.severity === "error");
 }
 
-function withDiagnostics(html: string, diagnostics: LuxDiagnostic[]): string {
+function withDiagnostics(html: string, diagnostics: OrviDiagnostic[]): string {
   if (diagnostics.length === 0) return html;
   const panel = `<pre style="background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;margin:1rem;padding:1rem;white-space:pre-wrap">${diagnostics
     .map((diagnostic) => `${diagnostic.line}:${diagnostic.column} ${diagnostic.code} ${diagnostic.message}`)
@@ -276,13 +276,13 @@ function assertReadable(path: string): void {
   }
 }
 
-function loadConfig(inputPath: string): LuxConfig {
-  const configPath = resolve(dirname(inputPath), "lux.config.js");
+function loadConfig(inputPath: string): OrviConfig {
+  const configPath = resolve(dirname(inputPath), "orvi.config.js");
   if (!existsSync(configPath)) return {};
 
-  const loaded = require(configPath) as LuxConfig | { default?: LuxConfig };
+  const loaded = require(configPath) as OrviConfig | { default?: OrviConfig };
   if ("default" in loaded && loaded.default) return loaded.default;
-  return loaded as LuxConfig;
+  return loaded as OrviConfig;
 }
 
 function defaultOutputPath(inputPath: string): string {
@@ -291,11 +291,11 @@ function defaultOutputPath(inputPath: string): string {
 }
 
 function help(): void {
-  console.log(`Lux CLI
+  console.log(`Orvi CLI
 
 Usage:
-  lux build <input.lux> [-o output.html]
-  lux check <input.lux> [--json]
-  lux format <input.lux> [--write] [--check]
-  lux serve <input.lux> [--port 4173]`);
+  orvi build <input.ov> [-o output.html]
+  orvi check <input.ov> [--json]
+  orvi format <input.ov> [--write] [--check]
+  orvi serve <input.ov> [--port 4173]`);
 }

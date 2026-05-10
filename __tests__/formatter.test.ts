@@ -1,8 +1,8 @@
-import { formatLux } from "../src/formatter";
+import { formatOrvi } from "../src/formatter";
 
-describe("formatLux", () => {
+describe("formatOrvi", () => {
   it("formats block structure and nested components canonically", () => {
-    const result = formatLux(`# Title
+    const result = formatOrvi(`# Title
 [grid 2]
 left
 ---
@@ -28,7 +28,7 @@ badge: Beta | type=warning
   });
 
   it("formats code blocks and tables without changing code content", () => {
-    const result = formatLux(`\`\`\`ts | app.ts
+    const result = formatOrvi(`\`\`\`ts | app.ts
 const value = 1;
   console.log(value);
 \`\`\`
@@ -43,9 +43,9 @@ const value = 1;
   });
 
   it("preserves canonical document metadata", () => {
-    const result = formatLux(`---
+    const result = formatOrvi(`---
 dir: rtl
-lux: 0.1
+orvi: 0.1
 lang: ar
 title: Arabic Doc
 ---
@@ -53,7 +53,7 @@ title: Arabic Doc
 
     expect(result.diagnostics).toEqual([]);
     expect(result.formatted).toBe(`---
-lux: 0.1
+orvi: 0.1
 title: Arabic Doc
 lang: ar
 dir: rtl

@@ -1,15 +1,15 @@
-import { LuxDiagnostic, DocumentMetadata } from "./ast";
-import { renderLux, RenderOptions } from "./renderer";
+import { OrviDiagnostic, DocumentMetadata } from "./ast";
+import { renderOrvi, RenderOptions } from "./renderer";
 
-export interface LuxArtifactOptions extends Omit<RenderOptions, "liveReload"> {
+export interface OrviArtifactOptions extends Omit<RenderOptions, "liveReload"> {
   includeSource?: boolean;
   artifactVersion?: "0.1";
 }
 
-export interface LuxArtifact {
-  type: "application/vnd.lux.document+json";
+export interface OrviArtifact {
+  type: "application/vnd.orvi.document+json";
   version: "0.1";
-  luxVersion?: string;
+  orviVersion?: string;
   metadata: DocumentMetadata;
   source?: string;
   render: {
@@ -17,13 +17,13 @@ export interface LuxArtifact {
     fullDocument: boolean;
     colorScheme: "light" | "dark";
   };
-  diagnostics: LuxDiagnostic[];
+  diagnostics: OrviDiagnostic[];
 }
 
-export function renderLuxArtifact(source: string, options: LuxArtifactOptions = {}): LuxArtifact {
+export function renderOrviArtifact(source: string, options: OrviArtifactOptions = {}): OrviArtifact {
   const fullDocument = options.fullDocument ?? false;
   const colorScheme = options.colorScheme ?? "light";
-  const result = renderLux(source, {
+  const result = renderOrvi(source, {
     ...options,
     fullDocument,
     colorScheme,
@@ -31,9 +31,9 @@ export function renderLuxArtifact(source: string, options: LuxArtifactOptions = 
   });
 
   return {
-    type: "application/vnd.lux.document+json",
+    type: "application/vnd.orvi.document+json",
     version: options.artifactVersion ?? "0.1",
-    luxVersion: result.ast.metadata.lux,
+    orviVersion: result.ast.metadata.orvi,
     metadata: result.ast.metadata,
     ...(options.includeSource === false ? {} : { source }),
     render: {

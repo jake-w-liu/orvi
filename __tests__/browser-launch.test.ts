@@ -3,7 +3,7 @@ import { get } from "http";
 import { tmpdir } from "os";
 import { join } from "path";
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from "child_process";
-import { renderLux } from "../src/renderer";
+import { renderOrvi } from "../src/renderer";
 
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
@@ -15,20 +15,20 @@ const CHROME_CANDIDATES = [
 ].filter(Boolean) as string[];
 
 describe("installed browser launch smoke", () => {
-  it("renders generated Lux HTML in headless Chrome when installed", async () => {
+  it("renders generated Orvi HTML in headless Chrome when installed", async () => {
     const chrome = findChrome();
     if (!chrome) {
       console.warn("Skipping Chrome smoke test; Chrome executable not found.");
       return;
     }
 
-    const workspace = mkdtempSync(join(tmpdir(), "lux-chrome-"));
+    const workspace = mkdtempSync(join(tmpdir(), "orvi-chrome-"));
     try {
       const htmlPath = join(workspace, "fixture.html");
       const profilePath = join(workspace, "profile");
-      const html = renderLux(
+      const html = renderOrvi(
         `---
-lux: 0.1
+orvi: 0.1
 title: Chrome Fixture
 lang: en
 dir: ltr

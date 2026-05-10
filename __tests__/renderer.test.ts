@@ -1,8 +1,8 @@
-import { renderLux } from "../src/renderer";
+import { renderOrvi } from "../src/renderer";
 
-describe("renderLux", () => {
-  it("renders escaped semantic HTML with Lux classes", () => {
-    const result = renderLux(`# Hi <script>
+describe("renderOrvi", () => {
+  it("renders escaped semantic HTML with Orvi classes", () => {
+    const result = renderOrvi(`# Hi <script>
 
 [red bold] Important []
 
@@ -14,14 +14,14 @@ btn: Docs -> https://example.com`);
 
     expect(result.ast.diagnostics).toEqual([]);
     expect(result.html).toContain("<h1>Hi &lt;script&gt;</h1>");
-    expect(result.html).toContain('class="lux-text-red lux-font-bold"');
-    expect(result.html).toContain('class="lux-card lux-bg-blue"');
+    expect(result.html).toContain('class="orvi-text-red orvi-font-bold"');
+    expect(result.html).toContain('class="orvi-card orvi-bg-blue"');
     expect(result.html).toContain("&lt;b&gt;bold&lt;/b&gt;");
     expect(result.html).toContain('href="https://example.com"');
   });
 
   it("renders grids and CSS-only tabs", () => {
-    const result = renderLux(`[grid 2]
+    const result = renderOrvi(`[grid 2]
 left
 ---
 right
@@ -37,13 +37,13 @@ right
 [/tabs]`);
 
     expect(result.ast.diagnostics).toEqual([]);
-    expect(result.html).toContain("lux-grid lux-grid-2");
+    expect(result.html).toContain("orvi-grid orvi-grid-2");
     expect(result.html).toContain('type="radio"');
-    expect(result.html).toContain("lux-tab-panel");
+    expect(result.html).toContain("orvi-tab-panel");
   });
 
   it("renders tabs with ARIA relationships", () => {
-    const result = renderLux(`[tabs]
+    const result = renderOrvi(`[tabs]
   [tab label=One]
     First
   [/tab]
@@ -54,46 +54,46 @@ right
 
     expect(result.html).toContain('role="tablist"');
     expect(result.html).toContain(
-      'id="lux-tabs-0-0-tab" role="tab" for="lux-tabs-0-0" aria-selected="true" aria-controls="lux-tabs-0-0-panel"'
+      'id="orvi-tabs-0-0-tab" role="tab" for="orvi-tabs-0-0" aria-selected="true" aria-controls="orvi-tabs-0-0-panel"'
     );
     expect(result.html).toContain(
-      'id="lux-tabs-0-0-panel" role="tabpanel" aria-labelledby="lux-tabs-0-0-tab"'
+      'id="orvi-tabs-0-0-panel" role="tabpanel" aria-labelledby="orvi-tabs-0-0-tab"'
     );
     expect(result.html).toContain(
-      'id="lux-tabs-0-1-tab" role="tab" for="lux-tabs-0-1" aria-selected="false" aria-controls="lux-tabs-0-1-panel"'
+      'id="orvi-tabs-0-1-tab" role="tab" for="orvi-tabs-0-1" aria-selected="false" aria-controls="orvi-tabs-0-1-panel"'
     );
   });
 
   it("renders callouts with a useful role and label", () => {
-    const result = renderLux(`[callout type=warning]
+    const result = renderOrvi(`[callout type=warning]
 Heads up
 [/callout]`);
 
-    expect(result.html).toContain('class="lux-callout lux-callout-warning"');
+    expect(result.html).toContain('class="orvi-callout orvi-callout-warning"');
     expect(result.html).toContain('role="note"');
     expect(result.html).toContain('aria-label="Warning callout"');
   });
 
   it("sanitizes unsafe URLs", () => {
-    const result = renderLux("btn: Bad -> javascript:alert(1)");
+    const result = renderOrvi("btn: Bad -> javascript:alert(1)");
     expect(result.html).toContain('href="#"');
   });
 
   it("can emit a full HTML document with base CSS", () => {
-    const result = renderLux("# Full", {
+    const result = renderOrvi("# Full", {
       fullDocument: true,
       title: "Doc",
       theme: { colors: { blue: "#0f766e" }, radius: "0.25rem" }
     });
     expect(result.html).toContain("<!doctype html>");
     expect(result.html).toContain("<title>Doc</title>");
-    expect(result.html).toContain(".lux-document");
-    expect(result.html).toContain("--lux-blue: #0f766e;");
-    expect(result.html).toContain("--lux-radius: 0.25rem;");
+    expect(result.html).toContain(".orvi-document");
+    expect(result.html).toContain("--orvi-blue: #0f766e;");
+    expect(result.html).toContain("--orvi-radius: 0.25rem;");
   });
 
   it("can emit full document language and direction attributes", () => {
-    const result = renderLux("# Bonjour", {
+    const result = renderOrvi("# Bonjour", {
       fullDocument: true,
       lang: "fr",
       dir: "rtl"
@@ -103,8 +103,8 @@ Heads up
   });
 
   it("uses document metadata for full document title, language, and direction", () => {
-    const result = renderLux(`---
-lux: 0.1
+    const result = renderOrvi(`---
+orvi: 0.1
 title: Metadata Title
 lang: ar
 dir: rtl
@@ -120,7 +120,7 @@ dir: rtl
   });
 
   it("uses fallback title only when options and metadata do not provide one", () => {
-    const result = renderLux("# Body", {
+    const result = renderOrvi("# Body", {
       fullDocument: true,
       fallbackTitle: "Fallback"
     });
@@ -129,15 +129,15 @@ dir: rtl
   });
 
   it("can emit dark mode output and CSS tokens", () => {
-    const result = renderLux("# Dark", {
+    const result = renderOrvi("# Dark", {
       fullDocument: true,
       colorScheme: "dark"
     });
 
-    expect(result.html).toContain('<html lang="en" class="lux-theme-dark">');
-    expect(result.html).toContain('<main class="lux-document lux-theme-dark">');
-    expect(result.html).toContain(".lux-theme-dark {");
+    expect(result.html).toContain('<html lang="en" class="orvi-theme-dark">');
+    expect(result.html).toContain('<main class="orvi-document orvi-theme-dark">');
+    expect(result.html).toContain(".orvi-theme-dark {");
     expect(result.html).toContain("color-scheme: dark;");
-    expect(result.html).toContain("--lux-surface: #111827;");
+    expect(result.html).toContain("--orvi-surface: #111827;");
   });
 });

@@ -1,6 +1,6 @@
-# Lux Fine-Tuning Corpus Preparation
+# Orvi Fine-Tuning Corpus Preparation
 
-Lux includes a small, deterministic JSONL corpus for future fine-tuning or
+Orvi includes a small, deterministic JSONL corpus for future fine-tuning or
 training-data experiments. The corpus is provider-neutral: each line is a plain
 `input`/`output` record with metadata, not a provider-specific chat or messages
 format.
@@ -13,8 +13,8 @@ npm run finetune:corpus
 
 This writes:
 
-- `training/fine-tuning/lux-corpus.jsonl`
-- `training/fine-tuning/lux-corpus.manifest.json`
+- `training/fine-tuning/orvi-corpus.jsonl`
+- `training/fine-tuning/orvi-corpus.manifest.json`
 
 Use the check mode in CI or release verification when you only want to confirm
 that generated files match the repository sources:
@@ -25,11 +25,11 @@ npm run finetune:corpus:check
 
 ## Sources
 
-The generator reads only committed Lux surfaces:
+The generator reads only committed Orvi surfaces:
 
-- `benchmarks/corpus.ts` for paired rendered-HTML-to-Lux examples.
-- `examples/welcome.lux` for the repository welcome example.
-- `lux-spec-v0.1.md` for built-in components, semantic elements, modifiers,
+- `benchmarks/corpus.ts` for paired rendered-HTML-to-Orvi examples.
+- `examples/welcome.ov` for the repository welcome example.
+- `orvi-spec-v0.1.md` for built-in components, semantic elements, modifiers,
   and valid snippets derived from those documented tokens.
 
 The generator does not run a fine-tuning job and the generated files should not
@@ -47,7 +47,7 @@ The committed corpus is provider-neutral. A real fine-tune still requires:
 
 Do not start a fine-tuning job from this repo unless those external choices are
 known. After a provider is selected, keep a small evaluation set separate from
-the training data and verify generated Lux with `lux check`.
+the training data and verify generated Orvi with `orvi check`.
 
 ## Record Shape
 
@@ -55,20 +55,20 @@ Each JSONL line follows this schema:
 
 ```json
 {
-  "schema": "lux-training-example-v1",
+  "schema": "orvi-training-example-v1",
   "id": "example:id",
   "source": "path/in/repo",
-  "task": "prompt-to-lux",
+  "task": "prompt-to-orvi",
   "input": "Instruction text",
-  "output": "Valid Lux source",
-  "metadata": { "luxVersion": "0.1", "outputFormat": "lux" }
+  "output": "Valid Orvi source",
+  "metadata": { "orviVersion": "0.1", "outputFormat": "orvi" }
 }
 ```
 
 Current tasks are:
 
-- `html-to-lux`
-- `prompt-to-lux`
-- `spec-surface-to-lux`
+- `html-to-orvi`
+- `prompt-to-orvi`
+- `spec-surface-to-orvi`
 
-All outputs are intended to parse cleanly as Lux v0.1.
+All outputs are intended to parse cleanly as Orvi v0.1.

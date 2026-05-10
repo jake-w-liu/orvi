@@ -1,17 +1,17 @@
-# Lux
+# Orvi
 
-Lux is a strict, human-writable markup language that keeps Markdown-like text
+Orvi is a strict, human-writable markup language that keeps Markdown-like text
 simple while adding native visual scopes, layout components, and semantic
 elements.
 
-This repo implements the v0.1 prototype from `lux-language-guide.md`.
+This repo implements the v0.1 prototype from `orvi-language-guide.md`.
 Implementation progress is tracked in the roadmap section of that guide.
 
-Lux documents may start with optional top-level metadata:
+Orvi documents may start with optional top-level metadata:
 
-```lux
+```orvi
 ---
-lux: 0.1
+orvi: 0.1
 title: Example
 lang: en
 dir: ltr
@@ -33,31 +33,31 @@ npm run verify
 
 ```sh
 npm run build
-node dist/cli.js check examples/welcome.lux
-node dist/cli.js check examples/welcome.lux --json
-node dist/cli.js format examples/welcome.lux
-node dist/cli.js format examples/welcome.lux --check
-node dist/cli.js build examples/welcome.lux -o examples/welcome.html
-node dist/cli.js serve examples/welcome.lux --port 4173
+node dist/cli.js check examples/welcome.ov
+node dist/cli.js check examples/welcome.ov --json
+node dist/cli.js format examples/welcome.ov
+node dist/cli.js format examples/welcome.ov --check
+node dist/cli.js build examples/welcome.ov -o examples/welcome.html
+node dist/cli.js serve examples/welcome.ov --port 4173
 ```
 
-`lux build` and `lux serve` read `lux.config.js` beside the input file when it
-exists. See `lux.config.example.js`.
+`orvi build` and `orvi serve` read `orvi.config.js` beside the input file when it
+exists. See `orvi.config.example.js`.
 
 ## Library
 
 ```ts
-import { formatLux, parseLux, renderLux } from "@lux-lang/lux";
-import { renderLuxArtifact } from "@lux-lang/lux/artifact";
+import { formatOrvi, parseOrvi, renderOrvi } from "@orvi/orvi";
+import { renderOrviArtifact } from "@orvi/orvi/artifact";
 
-const ast = parseLux("# Hello");
-const html = renderLux("# Hello", { fullDocument: true }).html;
-const darkHtml = renderLux("# Hello", {
+const ast = parseOrvi("# Hello");
+const html = renderOrvi("# Hello", { fullDocument: true }).html;
+const darkHtml = renderOrvi("# Hello", {
   fullDocument: true,
   colorScheme: "dark",
 }).html;
-const formatted = formatLux("[blue] Hi []").formatted;
-const artifact = renderLuxArtifact("# Hello", { fullDocument: true });
+const formatted = formatOrvi("[blue] Hi []").formatted;
+const artifact = renderOrviArtifact("# Hello", { fullDocument: true });
 ```
 
 The package supports both CommonJS `require()` and ESM `import` exports.
@@ -65,18 +65,18 @@ The package supports both CommonJS `require()` and ESM `import` exports.
 React:
 
 ```tsx
-import { LuxRenderer } from "@lux-lang/lux/react";
-import "@lux-lang/lux/lux-base.css";
+import { OrviRenderer } from "@orvi/orvi/react";
+import "@orvi/orvi/orvi-base.css";
 
 export function Page() {
-  return <LuxRenderer source="# Hello" />;
+  return <OrviRenderer source="# Hello" />;
 }
 ```
 
 Prettier:
 
 ```sh
-prettier --plugin @lux-lang/lux/prettier-plugin --write "**/*.lux"
+prettier --plugin @orvi/orvi/prettier-plugin --write "**/*.ov"
 ```
 
 ## Playground
@@ -96,16 +96,16 @@ npm run playground:test
 ```
 
 `npm run site:build` prepares `.site/` for GitHub Pages. The Pages workflow
-deploys the playground, example render, ESM renderer, and Lux artifact schema.
+deploys the playground, example render, ESM renderer, and Orvi artifact schema.
 
 ## VS Code
 
-Extension package source lives in `vscode/lux`. It provides syntax highlighting,
-snippets, completions, diagnostics through `lux check --json`, and a preview
-panel through `lux build`.
+Extension package source lives in `vscode/orvi`. It provides syntax highlighting,
+snippets, completions, diagnostics through `orvi check --json`, and a preview
+panel through `orvi build`.
 
 ```sh
-cd vscode/lux
+cd vscode/orvi
 npm ci
 npm run package
 ```
@@ -113,7 +113,7 @@ npm run package
 The packaged `.vsix` can be installed with:
 
 ```sh
-code --install-extension vscode/lux/lux-language-0.1.0.vsix
+code --install-extension vscode/orvi/orvi-language-0.1.0.vsix
 ```
 
 Marketplace publishing is wired through `.github/workflows/publish-vscode.yml`.
@@ -129,43 +129,43 @@ automation before the test can create a real Safari session.
 
 ## Obsidian
 
-The Obsidian plugin scaffold lives in `integrations/obsidian-lux`.
+The Obsidian plugin scaffold lives in `integrations/obsidian-orvi`.
 
 ```sh
 npm run obsidian:build
 ```
 
 Then copy `manifest.json`, `main.js`, `styles.css`, `versions.json`, and
-`runtime/` into a vault at `.obsidian/plugins/lux/`.
+`runtime/` into a vault at `.obsidian/plugins/orvi/`.
 
 ## Benchmarks
 
-The benchmark corpus pins Lux-vs-rendered-HTML character and byte measurements.
+The benchmark corpus pins Orvi-vs-rendered-HTML character and byte measurements.
 
 ```sh
 npm test -- --runTestsByPath __tests__/benchmark-corpus.test.ts
 ```
 
-Current pinned corpus ratio: rendered HTML is `2.259x` the Lux source size.
+Current pinned corpus ratio: rendered HTML is `2.259x` the Orvi source size.
 Report: `docs/benchmarks.md`.
 
 ## Artifact Schema
 
-AI and render-surface integrations can use the structured Lux artifact:
+AI and render-surface integrations can use the structured Orvi artifact:
 
 ```ts
-import { renderLuxArtifact } from "@lux-lang/lux/artifact";
+import { renderOrviArtifact } from "@orvi/orvi/artifact";
 
-const artifact = renderLuxArtifact("# Hello", {
+const artifact = renderOrviArtifact("# Hello", {
   fullDocument: true,
   includeSource: false,
 });
 ```
 
-Schema: `schemas/lux-artifact.schema.json`.
+Schema: `schemas/orvi-artifact.schema.json`.
 
 AI authoring guidance lives in `docs/ai-authoring.md`, with a baseline
-model-neutral prompt in `prompts/lux-authoring-system.md`.
+model-neutral prompt in `prompts/orvi-authoring-system.md`.
 
 ## Verification
 
@@ -177,4 +177,4 @@ model-neutral prompt in `prompts/lux-authoring-system.md`.
 - Package build
 
 Tests include parser/renderer/formatter behavior, React export behavior, VS Code
-extension JSON, and every fenced `lux` example in `lux-language-guide.md`.
+extension JSON, and every fenced `orvi` example in `orvi-language-guide.md`.

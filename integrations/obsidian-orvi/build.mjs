@@ -15,35 +15,35 @@ for (const file of runtimeFiles) {
   await copyFile(join(repoRoot, "dist", file), join(runtimeDir, file));
 }
 
-await copyFile(join(repoRoot, "src", "lux-base.css"), join(pluginDir, "styles.css"));
+await copyFile(join(repoRoot, "src", "orvi-base.css"), join(pluginDir, "styles.css"));
 await appendFile(
   join(pluginDir, "styles.css"),
   `
 
-.lux-obsidian-render .lux-document {
+.orvi-obsidian-render .orvi-document {
   max-width: none;
   padding: 0;
 }
 
-.lux-render-error {
+.orvi-render-error {
   border: 1px solid var(--background-modifier-error);
   color: var(--text-error);
   padding: 0.75rem;
   white-space: pre-wrap;
 }
 
-.lux-render-diagnostics {
+.orvi-render-diagnostics {
   border: 1px solid var(--background-modifier-border);
   margin-top: 1rem;
   padding: 0.5rem 0.75rem;
 }
 
 @media (max-width: 720px) {
-  .lux-obsidian-render .lux-document {
+  .orvi-obsidian-render .orvi-document {
     padding: 0;
   }
 }
 `
 );
 
-console.log("Built integrations/obsidian-lux runtime files.");
+console.log("Built integrations/obsidian-orvi runtime files.");

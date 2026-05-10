@@ -6,7 +6,7 @@
       "  $2",
       "[/callout]"
     ],
-    "description": "Insert a Lux callout block"
+    "description": "Insert a Orvi callout block"
   },
   "Grid": {
     "prefix": "grid",
@@ -17,7 +17,7 @@
       "  $3",
       "[/grid]"
     ],
-    "description": "Insert a Lux grid block"
+    "description": "Insert a Orvi grid block"
   },
   "Card": {
     "prefix": "card",
@@ -26,7 +26,7 @@
       "  $1",
       "[/card]"
     ],
-    "description": "Insert a Lux card block"
+    "description": "Insert a Orvi card block"
   },
   "Tabs": {
     "prefix": "tabs",
@@ -40,16 +40,16 @@
       "  [/tab]",
       "[/tabs]"
     ],
-    "description": "Insert a Lux tabs block"
+    "description": "Insert a Orvi tabs block"
   },
   "Button": {
     "prefix": "btn",
     "body": "btn: ${1:Label} -> ${2:https://example.com}",
-    "description": "Insert a Lux button"
+    "description": "Insert a Orvi button"
   },
   "Image": {
     "prefix": "img",
     "body": "img: ${1:./image.jpg} | ${2:Alt text}",
-    "description": "Insert a Lux image"
+    "description": "Insert a Orvi image"
   }
 }

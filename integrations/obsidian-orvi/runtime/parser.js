@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LuxParser = void 0;
-exports.parseLux = parseLux;
+exports.OrviParser = void 0;
+exports.parseOrvi = parseOrvi;
 const COMPONENT_NAMES = new Set(["callout", "grid", "card", "tabs", "tab"]);
 const SEMANTIC_NAMES = new Set(["btn", "img", "hr", "br", "badge"]);
 const COLOR_NAMES = new Set([
@@ -23,19 +23,19 @@ const WEIGHT_NAMES = new Set(["light", "regular", "medium", "bold"]);
 const CALLOUT_TYPES = new Set(["info", "warning", "success", "error"]);
 const DEFAULT_MAX_NESTING_DEPTH = 8;
 const DEFAULT_SUPPORTED_VERSION = "0.1";
-const METADATA_KEYS = new Set(["lux", "title", "lang", "dir"]);
-function parseLux(source, options = {}) {
-    const parser = LuxParser.fromSource(source, options);
+const METADATA_KEYS = new Set(["orvi", "title", "lang", "dir"]);
+function parseOrvi(source, options = {}) {
+    const parser = OrviParser.fromSource(source, options);
     return parser.parseDocument();
 }
-class LuxParser {
+class OrviParser {
     lines;
     diagnostics;
     index = 0;
     options;
     static fromSource(source, options = {}) {
         const lines = source.replace(/\r\n?/g, "\n").split("\n");
-        return new LuxParser(lines.map((text, index) => ({ text, line: index + 1 })), [], normalizeOptions(options));
+        return new OrviParser(lines.map((text, index) => ({ text, line: index + 1 })), [], normalizeOptions(options));
     }
     constructor(lines, diagnostics, options) {
         this.lines = lines;
@@ -74,25 +74,25 @@ class LuxParser {
             }
             const match = /^([a-z][a-z0-9-]*):\s*(.*)$/i.exec(trimmed);
             if (!match) {
-                this.error("LUX_INVALID_METADATA", "Metadata entries must use `key: value` syntax.", line);
+                this.error("ORVI_INVALID_METADATA", "Metadata entries must use `key: value` syntax.", line);
                 this.index += 1;
                 continue;
             }
             const key = match[1];
             const value = match[2].trim();
             if (!METADATA_KEYS.has(key)) {
-                this.warning("LUX_UNKNOWN_METADATA", `Unknown metadata key '${key}'.`, line);
+                this.warning("ORVI_UNKNOWN_METADATA", `Unknown metadata key '${key}'.`, line);
             }
             else if (key === "dir") {
                 if (value === "ltr" || value === "rtl" || value === "auto") {
                     metadata.dir = value;
                 }
                 else {
-                    this.error("LUX_INVALID_METADATA", "dir metadata must be ltr, rtl, or auto.", line);
+                    this.error("ORVI_INVALID_METADATA", "dir metadata must be ltr, rtl, or auto.", line);
                 }
             }
-            else if (key === "lux") {
-                metadata.lux = value;
+            else if (key === "orvi") {
+                metadata.orvi = value;
             }
             else if (key === "title") {
                 metadata.title = value;
@@ -102,12 +102,12 @@ class LuxParser {
                     metadata.lang = value;
                 }
                 else {
-                    this.error("LUX_INVALID_METADATA", "lang metadata must be a valid BCP 47-style tag.", line);
+                    this.error("ORVI_INVALID_METADATA", "lang metadata must be a valid BCP 47-style tag.", line);
                 }
             }
             this.index += 1;
         }
-        this.error("LUX_UNCLOSED_METADATA", "Unclosed metadata block.", start);
+        this.error("ORVI_UNCLOSED_METADATA", "Unclosed metadata block.", start);
         return metadata;
     }
     parseBlocks(stopTag, depth = 0) {
@@ -125,7 +125,7 @@ class LuxParser {
                     this.index += 1;
                     return { children, closed: true };
                 }
-                this.error("LUX_UNEXPECTED_CLOSE", `Unexpected closing tag [/${close.name}].`, line);
+                this.error("ORVI_UNEXPECTED_CLOSE", `Unexpected closing tag [/${close.name}].`, line);
                 this.index += 1;
                 continue;
             }
@@ -140,7 +140,7 @@ class LuxParser {
             const open = parseOpenTag(trimmed);
             if (open) {
                 if (!isComponentName(open.name)) {
-                    this.error("LUX_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
+                    this.error("ORVI_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
                     this.index += 1;
                     continue;
                 }
@@ -188,14 +188,14 @@ class LuxParser {
         };
         this.validateComponentOpen(node, line, parent);
         if (depth >= this.options.maxNestingDepth) {
-            this.error("LUX_MAX_NESTING_DEPTH", `Component nesting exceeds max depth ${this.options.maxNestingDepth}.`, line);
+            this.error("ORVI_MAX_NESTING_DEPTH", `Component nesting exceeds max depth ${this.options.maxNestingDepth}.`, line);
         }
         this.index += 1;
         if (node.name === "grid") {
             const { columns, closed } = this.parseGridColumns(line, depth);
             node.columns = columns;
             if (!closed) {
-                this.error("LUX_UNCLOSED_BLOCK", "Unclosed [grid] block.", line);
+                this.error("ORVI_UNCLOSED_BLOCK", "Unclosed [grid] block.", line);
             }
             this.validateGridShape(node, line);
             return node;
@@ -203,7 +203,7 @@ class LuxParser {
         const result = this.parseBlocks(node.name, depth + 1);
         node.children = result.children;
         if (!result.closed) {
-            this.error("LUX_UNCLOSED_BLOCK", `Unclosed [${node.name}] block.`, line);
+            this.error("ORVI_UNCLOSED_BLOCK", `Unclosed [${node.name}] block.`, line);
         }
         this.validateComponentChildren(node, line);
         return node;
@@ -244,7 +244,7 @@ class LuxParser {
                         separatorDepth += 1;
                     }
                     else {
-                        this.error("LUX_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
+                        this.error("ORVI_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
                     }
                     sections[sections.length - 1].push(line);
                     this.index += 1;
@@ -259,14 +259,14 @@ class LuxParser {
             sections[sections.length - 1].push(line);
             this.index += 1;
         }
-        this.error("LUX_UNCLOSED_BLOCK", "Unclosed [grid] block.", openingLine);
+        this.error("ORVI_UNCLOSED_BLOCK", "Unclosed [grid] block.", openingLine);
         return {
             columns: sections.map((section) => this.parseNestedLines(section, depth + 1)),
             closed: false
         };
     }
     parseNestedLines(lines, depth) {
-        const parser = new LuxParser(lines, this.diagnostics, this.options);
+        const parser = new OrviParser(lines, this.diagnostics, this.options);
         return parser.parseBlocks(undefined, depth).children;
     }
     parseCodeBlock() {
@@ -293,7 +293,7 @@ class LuxParser {
             body.push(line.text);
             this.index += 1;
         }
-        this.error("LUX_UNCLOSED_CODE", "Unclosed code block.", opening);
+        this.error("ORVI_UNCLOSED_CODE", "Unclosed code block.", opening);
         return {
             type: "code",
             loc: loc(opening),
@@ -316,7 +316,7 @@ class LuxParser {
             }
             const rowCells = splitTableRow(line.text);
             if (rowCells.length !== width) {
-                this.error("LUX_TABLE_WIDTH_MISMATCH", `Table row has ${rowCells.length} cells but header has ${width}.`, line);
+                this.error("ORVI_TABLE_WIDTH_MISMATCH", `Table row has ${rowCells.length} cells but header has ${width}.`, line);
             }
             rows.push(rowCells.map((cell) => this.parseInline(cell, line.line, line.text.indexOf(cell) + 1)));
             this.index += 1;
@@ -384,14 +384,14 @@ class LuxParser {
         };
         if (name === "hr" || name === "br") {
             if (payload !== "") {
-                this.error("LUX_UNEXPECTED_PAYLOAD", `${name}: does not accept content.`, line);
+                this.error("ORVI_UNEXPECTED_PAYLOAD", `${name}: does not accept content.`, line);
             }
             return base;
         }
         if (name === "btn") {
             const parts = payload.split(/\s*(?:->|→)\s*/u);
             if (parts.length < 2 || !parts[0] || !parts.slice(1).join("->")) {
-                this.error("LUX_INVALID_SEMANTIC", "btn: requires `Label -> target`.", line);
+                this.error("ORVI_INVALID_SEMANTIC", "btn: requires `Label -> target`.", line);
             }
             return {
                 ...base,
@@ -403,7 +403,7 @@ class LuxParser {
         const { options } = tokenizeOptions(optionPart ?? "");
         if (name === "img") {
             if (!valuePart || !optionPart) {
-                this.error("LUX_INVALID_SEMANTIC", "img: requires `source | alt text`.", line);
+                this.error("ORVI_INVALID_SEMANTIC", "img: requires `source | alt text`.", line);
             }
             return {
                 ...base,
@@ -412,10 +412,10 @@ class LuxParser {
             };
         }
         if (!valuePart) {
-            this.error("LUX_INVALID_SEMANTIC", "badge: requires text.", line);
+            this.error("ORVI_INVALID_SEMANTIC", "badge: requires text.", line);
         }
         if (options.type && !CALLOUT_TYPES.has(options.type)) {
-            this.error("LUX_INVALID_OPTION", `Unknown badge type '${options.type}'.`, line);
+            this.error("ORVI_INVALID_OPTION", `Unknown badge type '${options.type}'.`, line);
         }
         return {
             ...base,
@@ -488,7 +488,7 @@ class LuxParser {
                             index = scopeClose + 2;
                             continue;
                         }
-                        this.errorAt("LUX_UNCLOSED_SCOPE", "Unclosed inline scope; expected [].", line, column + index);
+                        this.errorAt("ORVI_UNCLOSED_SCOPE", "Unclosed inline scope; expected [].", line, column + index);
                     }
                 }
             }
@@ -502,7 +502,7 @@ class LuxParser {
         const tokens = raw.split(/\s+/).filter(Boolean);
         if (tokens.length === 0) {
             if (report)
-                this.errorAt("LUX_INVALID_MODIFIER", "Inline scope requires at least one modifier.", loc.line, loc.column);
+                this.errorAt("ORVI_INVALID_MODIFIER", "Inline scope requires at least one modifier.", loc.line, loc.column);
             return undefined;
         }
         const modifiers = [];
@@ -521,7 +521,7 @@ class LuxParser {
             }
             else {
                 if (report)
-                    this.errorAt("LUX_INVALID_MODIFIER", `Unknown inline modifier '${token}'.`, loc.line, loc.column);
+                    this.errorAt("ORVI_INVALID_MODIFIER", `Unknown inline modifier '${token}'.`, loc.line, loc.column);
                 return undefined;
             }
         }
@@ -563,22 +563,22 @@ class LuxParser {
         this.validateComponentArguments(node, line);
         this.validateComponentOptions(node, line);
         if (node.name === "callout" && node.options.type && !CALLOUT_TYPES.has(node.options.type)) {
-            this.error("LUX_INVALID_OPTION", `Unknown callout type '${node.options.type}'.`, line);
+            this.error("ORVI_INVALID_OPTION", `Unknown callout type '${node.options.type}'.`, line);
         }
         if (node.name === "grid") {
             const count = Number(node.args[0]);
             if (!Number.isInteger(count) || count < 1 || count > 6 || node.args.length !== 1) {
-                this.error("LUX_INVALID_GRID", "grid requires one column count from 1 to 6.", line);
+                this.error("ORVI_INVALID_GRID", "grid requires one column count from 1 to 6.", line);
             }
         }
         if (node.name === "card" && node.options.bg && !COLOR_NAMES.has(node.options.bg)) {
-            this.error("LUX_INVALID_OPTION", `Unknown card background '${node.options.bg}'.`, line);
+            this.error("ORVI_INVALID_OPTION", `Unknown card background '${node.options.bg}'.`, line);
         }
         if (node.name === "tab" && !node.options.label) {
-            this.error("LUX_INVALID_TAB", "tab requires label=<text>.", line);
+            this.error("ORVI_INVALID_TAB", "tab requires label=<text>.", line);
         }
         if (node.name === "tab" && parent !== "tabs") {
-            this.error("LUX_INVALID_TAB", "tab blocks must be direct children of [tabs].", line);
+            this.error("ORVI_INVALID_TAB", "tab blocks must be direct children of [tabs].", line);
         }
     }
     validateComponentChildren(node, line) {
@@ -586,11 +586,11 @@ class LuxParser {
             return;
         const tabChildren = node.children.filter((child) => child.type === "component" && child.name === "tab");
         if (tabChildren.length === 0) {
-            this.error("LUX_INVALID_TABS", "tabs requires at least one [tab] child.", line);
+            this.error("ORVI_INVALID_TABS", "tabs requires at least one [tab] child.", line);
         }
         for (const child of node.children) {
             if (child.type !== "component" || child.name !== "tab") {
-                this.errorAt("LUX_INVALID_TABS_CHILD", "Only [tab] blocks may be direct children of [tabs].", child.loc.line, child.loc.column);
+                this.errorAt("ORVI_INVALID_TABS_CHILD", "Only [tab] blocks may be direct children of [tabs].", child.loc.line, child.loc.column);
             }
         }
     }
@@ -598,7 +598,7 @@ class LuxParser {
         if (node.name === "grid")
             return;
         if (node.args.length > 0) {
-            this.error("LUX_UNEXPECTED_ARGUMENT", `[${node.name}] does not accept positional arguments.`, line);
+            this.error("ORVI_UNEXPECTED_ARGUMENT", `[${node.name}] does not accept positional arguments.`, line);
         }
     }
     validateComponentOptions(node, line) {
@@ -611,27 +611,27 @@ class LuxParser {
         };
         for (const option of Object.keys(node.options)) {
             if (!allowedOptions[node.name].includes(option)) {
-                this.error("LUX_UNKNOWN_OPTION", `[${node.name}] does not support option '${option}'.`, line);
+                this.error("ORVI_UNKNOWN_OPTION", `[${node.name}] does not support option '${option}'.`, line);
             }
         }
     }
     validateGridShape(node, line) {
         const declared = Number(node.args[0]);
         if (Number.isInteger(declared) && node.columns && node.columns.length !== declared) {
-            this.error("LUX_GRID_MISMATCH", `grid declared ${declared} columns but found ${node.columns.length}.`, line);
+            this.error("ORVI_GRID_MISMATCH", `grid declared ${declared} columns but found ${node.columns.length}.`, line);
         }
     }
     validateMetadata(metadata, line) {
-        if (!metadata.lux)
+        if (!metadata.orvi)
             return;
-        if (metadata.lux !== this.options.supportedVersion) {
-            this.error("LUX_UNSUPPORTED_VERSION", `Unsupported Lux version '${metadata.lux}'; expected '${this.options.supportedVersion}'.`, line);
+        if (metadata.orvi !== this.options.supportedVersion) {
+            this.error("ORVI_UNSUPPORTED_VERSION", `Unsupported Orvi version '${metadata.orvi}'; expected '${this.options.supportedVersion}'.`, line);
         }
     }
     validateDynamicContent(value, line, column) {
         const dynamicPattern = /\{[A-Za-z_][A-Za-z0-9_.-]*\}/g;
         for (const match of value.matchAll(dynamicPattern)) {
-            this.errorAt("LUX_DYNAMIC_CONTENT_UNSUPPORTED", "Dynamic expressions are not supported in Lux v0.1.", line, column + (match.index ?? 0), match[0].length);
+            this.errorAt("ORVI_DYNAMIC_CONTENT_UNSUPPORTED", "Dynamic expressions are not supported in Orvi v0.1.", line, column + (match.index ?? 0), match[0].length);
         }
     }
     isTableStart() {
@@ -702,7 +702,7 @@ class LuxParser {
         });
     }
 }
-exports.LuxParser = LuxParser;
+exports.OrviParser = OrviParser;
 function normalizeOptions(options) {
     return {
         maxNestingDepth: options.maxNestingDepth ?? DEFAULT_MAX_NESTING_DEPTH,

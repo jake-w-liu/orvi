@@ -25,10 +25,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: vscode/lux/package-lock.json
+          cache-dependency-path: vscode/orvi/package-lock.json
 
       - name: Install extension dependencies
-        working-directory: vscode/lux
+        working-directory: vscode/orvi
         run: npm ci
 
       - name: Check Marketplace token
@@ -41,29 +41,29 @@ jobs:
           fi
 
       - name: Verify Marketplace token
-        working-directory: vscode/lux
+        working-directory: vscode/orvi
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npx vsce verify-pat jake-w-liu --pat "$VSCE_PAT"
 
       - name: Package extension
-        working-directory: vscode/lux
+        working-directory: vscode/orvi
         run: |
           if [ -n "${{ inputs.version }}" ]; then
-            npx vsce package "${{ inputs.version }}" --no-git-tag-version --out lux-language.vsix
+            npx vsce package "${{ inputs.version }}" --no-git-tag-version --out orvi-language.vsix
           else
-            npx vsce package --out lux-language.vsix
+            npx vsce package --out orvi-language.vsix
           fi
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:
-          name: lux-language-vsix
-          path: vscode/lux/lux-language.vsix
+          name: orvi-language-vsix
+          path: vscode/orvi/orvi-language.vsix
           if-no-files-found: error
 
       - name: Publish extension
-        working-directory: vscode/lux
+        working-directory: vscode/orvi
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish --packagePath lux-language.vsix --pat "$VSCE_PAT" --skip-duplicate
+        run: npx vsce publish --packagePath orvi-language.vsix --pat "$VSCE_PAT" --skip-duplicate

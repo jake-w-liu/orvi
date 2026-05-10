@@ -1,43 +1,43 @@
-# Lux Benchmark Corpus Results
+# Orvi Benchmark Corpus Results
 
 Measured on 2026-05-11 from the deterministic fixtures in `benchmarks/corpus.ts`.
 
-The corpus is intentionally "large-ish" rather than synthetic at huge scale: 27 valid Lux documents covering metadata, headings, inline scopes, lists, grids, callouts, cards, tabs, tables, code fences, images, badges, and buttons. Each fixture is rendered through `renderLux` in tests and compared with its paired equivalent HTML.
+The corpus is intentionally "large-ish" rather than synthetic at huge scale: 27 valid Orvi documents covering metadata, headings, inline scopes, lists, grids, callouts, cards, tabs, tables, code fences, images, badges, and buttons. Each fixture is rendered through `renderOrvi` in tests and compared with its paired equivalent HTML.
 
 ## Summary
 
-| Fixtures | Lux chars | HTML chars | Char ratio | Lux bytes | HTML bytes | Byte ratio |
+| Fixtures | Orvi chars | HTML chars | Char ratio | Orvi bytes | HTML bytes | Byte ratio |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 27 | 25471 | 57529 | 2.259x | 25471 | 57529 | 2.259x |
+| 27 | 25496 | 58584 | 2.298x | 25496 | 58584 | 2.298x |
 
 ## Fixture Measurements
 
-| Fixture | Lux chars | HTML chars | Char ratio | Lux bytes | HTML bytes | Byte ratio |
+| Fixture | Orvi chars | HTML chars | Char ratio | Orvi bytes | HTML bytes | Byte ratio |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| product-brief | 347 | 599 | 1.726x | 347 | 599 | 1.726x |
-| release-notes | 343 | 678 | 1.977x | 343 | 678 | 1.977x |
-| support-playbook | 387 | 1261 | 3.258x | 387 | 1261 | 3.258x |
-| atlas-operating-review | 1001 | 2277 | 2.275x | 1001 | 2277 | 2.275x |
-| aurora-operating-review | 1019 | 2294 | 2.251x | 1019 | 2294 | 2.251x |
-| beacon-operating-review | 1013 | 2285 | 2.256x | 1013 | 2285 | 2.256x |
-| cinder-operating-review | 1002 | 2277 | 2.272x | 1002 | 2277 | 2.272x |
-| delta-operating-review | 1022 | 2298 | 2.249x | 1022 | 2298 | 2.249x |
-| echo-operating-review | 1007 | 2284 | 2.268x | 1007 | 2284 | 2.268x |
-| flux-operating-review | 994 | 2268 | 2.282x | 994 | 2268 | 2.282x |
-| grove-operating-review | 1011 | 2287 | 2.262x | 1011 | 2287 | 2.262x |
-| harbor-operating-review | 1022 | 2297 | 2.248x | 1022 | 2297 | 2.248x |
-| ion-operating-review | 1014 | 2292 | 2.260x | 1014 | 2292 | 2.260x |
-| juniper-operating-review | 1015 | 2286 | 2.252x | 1015 | 2286 | 2.252x |
-| kite-operating-review | 984 | 2261 | 2.298x | 984 | 2261 | 2.298x |
-| lumen-operating-review | 1019 | 2295 | 2.252x | 1019 | 2295 | 2.252x |
-| matrix-operating-review | 1019 | 2294 | 2.251x | 1019 | 2294 | 2.251x |
-| nimbus-operating-review | 1035 | 2307 | 2.229x | 1035 | 2307 | 2.229x |
-| orbit-operating-review | 1028 | 2304 | 2.241x | 1028 | 2304 | 2.241x |
-| pulse-operating-review | 1025 | 2301 | 2.245x | 1025 | 2301 | 2.245x |
-| quartz-operating-review | 1032 | 2307 | 2.235x | 1032 | 2307 | 2.235x |
-| river-operating-review | 1016 | 2289 | 2.253x | 1016 | 2289 | 2.253x |
-| sierra-operating-review | 1042 | 2317 | 2.224x | 1042 | 2317 | 2.224x |
-| tangent-operating-review | 1035 | 2309 | 2.231x | 1035 | 2309 | 2.231x |
-| umber-operating-review | 1000 | 2276 | 2.276x | 1000 | 2276 | 2.276x |
-| vector-operating-review | 1015 | 2287 | 2.253x | 1015 | 2287 | 2.253x |
-| willow-operating-review | 1024 | 2299 | 2.245x | 1024 | 2299 | 2.245x |
+| product-brief | 348 | 610 | 1.753x | 348 | 610 | 1.753x |
+| release-notes | 343 | 686 | 2.000x | 343 | 686 | 2.000x |
+| support-playbook | 387 | 1289 | 3.331x | 387 | 1289 | 3.331x |
+| atlas-operating-review | 1002 | 2319 | 2.314x | 1002 | 2319 | 2.314x |
+| aurora-operating-review | 1020 | 2336 | 2.290x | 1020 | 2336 | 2.290x |
+| beacon-operating-review | 1014 | 2327 | 2.295x | 1014 | 2327 | 2.295x |
+| cinder-operating-review | 1003 | 2319 | 2.312x | 1003 | 2319 | 2.312x |
+| delta-operating-review | 1023 | 2340 | 2.287x | 1023 | 2340 | 2.287x |
+| echo-operating-review | 1008 | 2326 | 2.308x | 1008 | 2326 | 2.308x |
+| faro-operating-review | 995 | 2310 | 2.322x | 995 | 2310 | 2.322x |
+| grove-operating-review | 1012 | 2329 | 2.301x | 1012 | 2329 | 2.301x |
+| harbor-operating-review | 1023 | 2339 | 2.286x | 1023 | 2339 | 2.286x |
+| ion-operating-review | 1015 | 2334 | 2.300x | 1015 | 2334 | 2.300x |
+| juniper-operating-review | 1016 | 2328 | 2.291x | 1016 | 2328 | 2.291x |
+| kite-operating-review | 985 | 2303 | 2.338x | 985 | 2303 | 2.338x |
+| lumen-operating-review | 1020 | 2337 | 2.291x | 1020 | 2337 | 2.291x |
+| matrix-operating-review | 1020 | 2336 | 2.290x | 1020 | 2336 | 2.290x |
+| nimbus-operating-review | 1036 | 2349 | 2.267x | 1036 | 2349 | 2.267x |
+| orbit-operating-review | 1029 | 2346 | 2.280x | 1029 | 2346 | 2.280x |
+| pulse-operating-review | 1026 | 2343 | 2.284x | 1026 | 2343 | 2.284x |
+| quartz-operating-review | 1033 | 2349 | 2.274x | 1033 | 2349 | 2.274x |
+| river-operating-review | 1017 | 2331 | 2.292x | 1017 | 2331 | 2.292x |
+| sierra-operating-review | 1043 | 2359 | 2.262x | 1043 | 2359 | 2.262x |
+| tangent-operating-review | 1036 | 2351 | 2.269x | 1036 | 2351 | 2.269x |
+| umber-operating-review | 1001 | 2318 | 2.316x | 1001 | 2318 | 2.316x |
+| vector-operating-review | 1016 | 2329 | 2.292x | 1016 | 2329 | 2.292x |
+| willow-operating-review | 1025 | 2341 | 2.284x | 1025 | 2341 | 2.284x |

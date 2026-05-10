@@ -1,15 +1,15 @@
-# Lux Specification v0.1
+# Orvi Specification v0.1
 
-This is the first executable Lux specification. It formalizes the syntax used by
-`lux-language-guide.md` and the parser in this repository.
+This is the first executable Orvi specification. It formalizes the syntax used by
+`orvi-language-guide.md` and the parser in this repository.
 
 ## Document Model
 
-A Lux document is an optional top-level metadata block followed by a sequence
+A Orvi document is an optional top-level metadata block followed by a sequence
 of block nodes. Blank lines separate paragraphs. Line comments begin with `//`
 after optional indentation and are not rendered.
 
-Metadata is not rendered as content. v0.1 supports `lux: 0.1`,
+Metadata is not rendered as content. v0.1 supports `orvi: 0.1`,
 `title: <text>`, `lang: <language-tag>`, and `dir: ltr|rtl|auto`.
 
 ## Grammar
@@ -18,7 +18,7 @@ Metadata is not rendered as content. v0.1 supports `lux: 0.1`,
 document        = [ metadata_block ] { blank | comment | block } ;
 metadata_block  = "---" newline { blank | comment | metadata_entry } "---" newline ;
 metadata_entry  = metadata_key ":" whitespace metadata_value newline ;
-metadata_key    = "lux" | "title" | "lang" | "dir" ;
+metadata_key    = "orvi" | "title" | "lang" | "dir" ;
 metadata_value  = "0.1" | title_text | language_tag | "ltr" | "rtl" | "auto" ;
 title_text      = bare_token { whitespace bare_token } ;
 language_tag    = bare_token ;
@@ -76,7 +76,7 @@ modifier        = color | size | weight | "bg=" color ;
 
 Component nesting defaults to a maximum depth of `8`.
 
-Tabs are declarative. Lux v0.1 does not define user-script syntax; conforming
+Tabs are declarative. Orvi v0.1 does not define user-script syntax; conforming
 renderers provide tab behavior with generated HTML and CSS.
 
 ## Built-In Semantic Elements
@@ -117,7 +117,7 @@ Accessibility requirements:
   HTML elements where available.
 
 Dark mode is a renderer/theme concern. It is selected with the renderer option
-`colorScheme: "dark"` or equivalent theme configuration; Lux v0.1 has no
+`colorScheme: "dark"` or equivalent theme configuration; Orvi v0.1 has no
 document-level dark-mode syntax.
 
 ## Error Rules
@@ -129,6 +129,6 @@ partial AST, but the CLI fails builds when any error diagnostic exists.
 Dynamic content and expressions such as `{name}` are unsupported in v0.1 and
 produce diagnostics outside fenced code blocks.
 
-Unknown metadata keys, unsupported Lux versions, invalid metadata values,
+Unknown metadata keys, unsupported Orvi versions, invalid metadata values,
 component nesting deeper than the configured limit, and invalid `dir` values
 produce diagnostics.

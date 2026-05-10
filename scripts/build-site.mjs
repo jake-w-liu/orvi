@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderLux } from "../dist/esm/renderer.js";
+import { renderOrvi } from "../dist/esm/renderer.js";
 
 const root = dirname(
   fileURLToPath(new URL("../package.json", import.meta.url)),
@@ -25,8 +25,8 @@ await cp(join(root, "dist", "esm"), join(siteDir, "dist", "esm"), {
   recursive: true,
 });
 await cp(
-  join(root, "dist", "lux-base.css"),
-  join(siteDir, "dist", "lux-base.css"),
+  join(root, "dist", "orvi-base.css"),
+  join(siteDir, "dist", "orvi-base.css"),
 );
 await mkdir(join(siteDir, "examples"), { recursive: true });
 await cp(
@@ -34,12 +34,12 @@ await cp(
   join(siteDir, "examples", "welcome.html"),
 );
 await cp(join(root, "schemas"), join(siteDir, "schemas"), { recursive: true });
-const renderedLuxFiles = await renderLuxFiles();
+const renderedOrviFiles = await renderOrviFiles();
 
 const packageJson = JSON.parse(
   await readFile(join(root, "package.json"), "utf8"),
 );
-const pagesCname = process.env.LUX_PAGES_CNAME?.trim();
+const pagesCname = process.env.ORVI_PAGES_CNAME?.trim();
 await writeFile(
   join(siteDir, "index.html"),
   `<!doctype html>
@@ -47,13 +47,13 @@ await writeFile(
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Lux Playground</title>
+    <title>Orvi Playground</title>
     <meta http-equiv="refresh" content="0; url=/playground/">
     <link rel="canonical" href="/playground/">
   </head>
   <body>
-    <p><a href="/playground/">Open Lux Playground</a></p>
-    <p><a href="/rendered/">Browse rendered Lux files</a></p>
+    <p><a href="/playground/">Open Orvi Playground</a></p>
+    <p><a href="/rendered/">Browse rendered Orvi files</a></p>
   </body>
 </html>
 `,
@@ -64,17 +64,17 @@ if (pagesCname) {
 await writeFile(join(siteDir, ".nojekyll"), "");
 await writeFile(
   join(siteDir, "version.json"),
-  `${JSON.stringify({ name: packageJson.name, version: packageJson.version, renderedLuxFiles }, null, 2)}\n`,
+  `${JSON.stringify({ name: packageJson.name, version: packageJson.version, renderedOrviFiles }, null, 2)}\n`,
 );
 
-async function renderLuxFiles() {
-  const sourceFiles = await findLuxFiles(root);
+async function renderOrviFiles() {
+  const sourceFiles = await findOrviFiles(root);
   const rendered = [];
   for (const sourcePath of sourceFiles) {
     const relativePath = relative(root, sourcePath);
     const outputPath = join(siteDir, "rendered", `${relativePath}.html`);
     const source = await readFile(sourcePath, "utf8");
-    const result = renderLux(source, {
+    const result = renderOrvi(source, {
       fullDocument: true,
       fallbackTitle: relativePath,
     });
@@ -92,17 +92,17 @@ async function renderLuxFiles() {
   return rendered;
 }
 
-async function findLuxFiles(dir) {
+async function findOrviFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
   const files = await Promise.all(
     entries.map(async (entry) => {
       if (entry.isDirectory()) {
         if (skippedDirs.has(entry.name)) return [];
-        return findLuxFiles(join(dir, entry.name));
+        return findOrviFiles(join(dir, entry.name));
       }
 
       const path = join(dir, entry.name);
-      return path.endsWith(".lux") ? [path] : [];
+      return path.endsWith(".ov") ? [path] : [];
     }),
   );
 
@@ -126,14 +126,14 @@ async function writeRenderedIndex(files) {
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Rendered Lux Files</title>
-    <link rel="stylesheet" href="/dist/lux-base.css">
+    <title>Rendered Orvi Files</title>
+    <link rel="stylesheet" href="/dist/orvi-base.css">
   </head>
   <body>
-    <main class="lux-document">
-      <h1>Rendered Lux Files</h1>
-      <ul class="lux-list">
-        ${rows || "<li>No Lux files found.</li>"}
+    <main class="orvi-document">
+      <h1>Rendered Orvi Files</h1>
+      <ul class="orvi-list">
+        ${rows || "<li>No Orvi files found.</li>"}
       </ul>
     </main>
   </body>

@@ -1,39 +1,39 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { parseLux } from "../src/parser";
+import { parseOrvi } from "../src/parser";
 
-describe("lux-language-guide examples", () => {
-  it("keeps every fenced lux example valid", () => {
+describe("orvi-language-guide examples", () => {
+  it("keeps every fenced orvi example valid", () => {
     const guide = readFileSync(
-      resolve(__dirname, "..", "lux-language-guide.md"),
+      resolve(__dirname, "..", "orvi-language-guide.md"),
       "utf8",
     );
-    const examples = extractLuxFences(guide);
+    const examples = extractOrviFences(guide);
 
     expect(examples).toHaveLength(11);
 
     for (const example of examples) {
-      const ast = parseLux(example.source);
+      const ast = parseOrvi(example.source);
       expect(ast.diagnostics).toEqual([]);
     }
   });
 });
 
-interface LuxFence {
+interface OrviFence {
   line: number;
   source: string;
 }
 
-function extractLuxFences(markdown: string): LuxFence[] {
+function extractOrviFences(markdown: string): OrviFence[] {
   const lines = markdown.split(/\r?\n/);
-  const fences: LuxFence[] = [];
+  const fences: OrviFence[] = [];
   let collecting = false;
   let startLine = 0;
   let fenceMarker = "";
   let buffer: string[] = [];
 
   for (const [index, line] of lines.entries()) {
-    const openingFence = line.trim().match(/^(`{3,})lux$/);
+    const openingFence = line.trim().match(/^(`{3,})orvi$/);
     if (!collecting && openingFence) {
       collecting = true;
       startLine = index + 1;

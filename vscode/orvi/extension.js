@@ -4,38 +4,38 @@ const { mkdtemp, readFile, rm, writeFile } = require("fs/promises");
 const os = require("os");
 const path = require("path");
 
-const LANGUAGE_ID = "lux";
-const DIAGNOSTIC_SOURCE = "lux";
+const LANGUAGE_ID = "orvi";
+const DIAGNOSTIC_SOURCE = "orvi";
 const CHANGE_DEBOUNCE_MS = 300;
 const COMPLETION_TRIGGER_CHARS = ["[", ":", "=", " ", "\n"];
 
 const COMPLETION_DEFINITIONS = [
-  { label: "callout", insertText: "[callout type=${1|info,warning,success,error|}]\n  $2\n[/callout]", detail: "Lux component" },
-  { label: "grid", insertText: "[grid ${1|2,3,4|}]\n  $2\n  ---\n  $3\n[/grid]", detail: "Lux component" },
-  { label: "card", insertText: "[card]\n  $1\n[/card]", detail: "Lux component" },
-  { label: "tabs", insertText: "[tabs]\n  [tab label=${1:Overview}]\n    $2\n  [/tab]\n[/tabs]", detail: "Lux component" },
-  { label: "tab", insertText: "[tab label=${1:Overview}]\n  $2\n[/tab]", detail: "Lux component" },
-  { label: "btn:", insertText: "btn: ${1:Label} -> ${2:https://example.com}", detail: "Lux semantic prefix" },
-  { label: "img:", insertText: "img: ${1:./image.jpg} | ${2:Alt text}", detail: "Lux semantic prefix" },
-  { label: "hr", insertText: "hr", detail: "Lux semantic prefix" },
-  { label: "br", insertText: "br", detail: "Lux semantic prefix" },
-  { label: "badge:", insertText: "badge: ${1:Label}", detail: "Lux semantic prefix" },
-  { label: "type=", insertText: "type=${1|info,warning,success,error|}", detail: "Lux modifier" },
-  { label: "label=", insertText: "label=${1:Overview}", detail: "Lux modifier" },
-  { label: "bg=", insertText: "bg=${1|red,blue,green,gray,muted,yellow,purple,orange,pink,cyan,white,black|}", detail: "Lux background modifier" },
-  { label: "red", insertText: "red", detail: "Lux color modifier" },
-  { label: "blue", insertText: "blue", detail: "Lux color modifier" },
-  { label: "green", insertText: "green", detail: "Lux color modifier" },
-  { label: "muted", insertText: "muted", detail: "Lux color modifier" },
-  { label: "sm", insertText: "sm", detail: "Lux size modifier" },
-  { label: "lg", insertText: "lg", detail: "Lux size modifier" },
-  { label: "xl", insertText: "xl", detail: "Lux size modifier" },
-  { label: "bold", insertText: "bold", detail: "Lux weight modifier" },
-  { label: "light", insertText: "light", detail: "Lux weight modifier" },
-  { label: "lux:", insertText: "lux: 0.1", detail: "Lux metadata key" },
-  { label: "title:", insertText: "title: ${1:Document title}", detail: "Lux metadata key" },
-  { label: "lang:", insertText: "lang: ${1|en,es,fr,de,ja,zh|}", detail: "Lux metadata key" },
-  { label: "dir:", insertText: "dir: ${1|ltr,rtl,auto|}", detail: "Lux metadata key" }
+  { label: "callout", insertText: "[callout type=${1|info,warning,success,error|}]\n  $2\n[/callout]", detail: "Orvi component" },
+  { label: "grid", insertText: "[grid ${1|2,3,4|}]\n  $2\n  ---\n  $3\n[/grid]", detail: "Orvi component" },
+  { label: "card", insertText: "[card]\n  $1\n[/card]", detail: "Orvi component" },
+  { label: "tabs", insertText: "[tabs]\n  [tab label=${1:Overview}]\n    $2\n  [/tab]\n[/tabs]", detail: "Orvi component" },
+  { label: "tab", insertText: "[tab label=${1:Overview}]\n  $2\n[/tab]", detail: "Orvi component" },
+  { label: "btn:", insertText: "btn: ${1:Label} -> ${2:https://example.com}", detail: "Orvi semantic prefix" },
+  { label: "img:", insertText: "img: ${1:./image.jpg} | ${2:Alt text}", detail: "Orvi semantic prefix" },
+  { label: "hr", insertText: "hr", detail: "Orvi semantic prefix" },
+  { label: "br", insertText: "br", detail: "Orvi semantic prefix" },
+  { label: "badge:", insertText: "badge: ${1:Label}", detail: "Orvi semantic prefix" },
+  { label: "type=", insertText: "type=${1|info,warning,success,error|}", detail: "Orvi modifier" },
+  { label: "label=", insertText: "label=${1:Overview}", detail: "Orvi modifier" },
+  { label: "bg=", insertText: "bg=${1|red,blue,green,gray,muted,yellow,purple,orange,pink,cyan,white,black|}", detail: "Orvi background modifier" },
+  { label: "red", insertText: "red", detail: "Orvi color modifier" },
+  { label: "blue", insertText: "blue", detail: "Orvi color modifier" },
+  { label: "green", insertText: "green", detail: "Orvi color modifier" },
+  { label: "muted", insertText: "muted", detail: "Orvi color modifier" },
+  { label: "sm", insertText: "sm", detail: "Orvi size modifier" },
+  { label: "lg", insertText: "lg", detail: "Orvi size modifier" },
+  { label: "xl", insertText: "xl", detail: "Orvi size modifier" },
+  { label: "bold", insertText: "bold", detail: "Orvi weight modifier" },
+  { label: "light", insertText: "light", detail: "Orvi weight modifier" },
+  { label: "orvi:", insertText: "orvi: 0.1", detail: "Orvi metadata key" },
+  { label: "title:", insertText: "title: ${1:Document title}", detail: "Orvi metadata key" },
+  { label: "lang:", insertText: "lang: ${1|en,es,fr,de,ja,zh|}", detail: "Orvi metadata key" },
+  { label: "dir:", insertText: "dir: ${1|ltr,rtl,auto|}", detail: "Orvi metadata key" }
 ];
 
 let diagnosticCollection;
@@ -45,7 +45,7 @@ const pendingPreviewUpdates = new Map();
 const previewPanels = new Map();
 
 function activate(context) {
-  diagnosticCollection = vscode.languages.createDiagnosticCollection("lux");
+  diagnosticCollection = vscode.languages.createDiagnosticCollection("orvi");
   context.subscriptions.push(diagnosticCollection);
 
   context.subscriptions.push(
@@ -73,7 +73,7 @@ function activate(context) {
       { provideCompletionItems },
       ...COMPLETION_TRIGGER_CHARS
     ),
-    vscode.commands.registerCommand("lux.preview", () => previewActiveDocument())
+    vscode.commands.registerCommand("orvi.preview", () => previewActiveDocument())
   );
 
   vscode.workspace.textDocuments.forEach(checkDocument);
@@ -99,7 +99,7 @@ function deactivate() {
 }
 
 function scheduleCheck(document) {
-  if (!isLuxFile(document)) return;
+  if (!isOrviFile(document)) return;
   clearPendingCheck(document);
   documentVersions.set(document.uri.toString(), document.version);
   pendingChecks.set(
@@ -109,7 +109,7 @@ function scheduleCheck(document) {
 }
 
 function schedulePreviewUpdate(document) {
-  if (!isLuxFile(document) || !previewPanels.has(document.uri.toString())) return;
+  if (!isOrviFile(document) || !previewPanels.has(document.uri.toString())) return;
   clearPendingPreviewUpdate(document);
   pendingPreviewUpdates.set(
     document.uri.toString(),
@@ -118,21 +118,21 @@ function schedulePreviewUpdate(document) {
 }
 
 function checkDocument(document) {
-  if (!isLuxFile(document)) return;
+  if (!isOrviFile(document)) return;
 
   clearPendingCheck(document);
   const documentKey = document.uri.toString();
   const version = document.version;
   documentVersions.set(documentKey, version);
 
-  runLuxCheck(document, (diagnostics) => {
+  runOrviCheck(document, (diagnostics) => {
     if (documentVersions.get(documentKey) !== version) return;
     diagnosticCollection.set(document.uri, diagnostics);
   });
 }
 
-function runLuxCheck(document, callback) {
-  const cliPath = vscode.workspace.getConfiguration("lux").get("cliPath", "lux");
+function runOrviCheck(document, callback) {
+  const cliPath = vscode.workspace.getConfiguration("orvi").get("cliPath", "orvi");
   const cwd = workspaceFolderPath(document);
 
   execFile(cliPath, ["check", document.uri.fsPath, "--json"], { cwd }, (error, stdout, stderr) => {
@@ -143,7 +143,7 @@ function runLuxCheck(document, callback) {
     }
 
     if (error) {
-      const message = stderr.trim() || error.message || "Lux check failed.";
+      const message = stderr.trim() || error.message || "Orvi check failed.";
       callback([createDiagnostic(document, { message, severity: "error", line: 1, column: 1 })]);
       return;
     }
@@ -163,8 +163,8 @@ function provideCompletionItems() {
 
 async function previewActiveDocument() {
   const editor = vscode.window.activeTextEditor;
-  if (!editor || !isLuxFile(editor.document)) {
-    vscode.window.showWarningMessage("Open a Lux file to preview.");
+  if (!editor || !isOrviFile(editor.document)) {
+    vscode.window.showWarningMessage("Open an Orvi file to preview.");
     return;
   }
 
@@ -178,8 +178,8 @@ async function previewActiveDocument() {
   }
 
   const panel = vscode.window.createWebviewPanel(
-    "luxPreview",
-    `Lux Preview: ${path.basename(document.uri.fsPath)}`,
+    "orviPreview",
+    `Orvi Preview: ${path.basename(document.uri.fsPath)}`,
     vscode.ViewColumn.Beside,
     { enableScripts: false }
   );
@@ -194,7 +194,7 @@ async function previewActiveDocument() {
 }
 
 async function refreshPreview(document, panel = previewPanels.get(document.uri.toString())) {
-  if (!panel || !isLuxFile(document)) return;
+  if (!panel || !isOrviFile(document)) return;
   const documentKey = document.uri.toString();
   clearPendingPreviewUpdate(document);
   panel.webview.html = renderPreviewLoading();
@@ -212,15 +212,15 @@ async function refreshPreview(document, panel = previewPanels.get(document.uri.t
 }
 
 async function buildPreviewHtml(document) {
-  const cliPath = vscode.workspace.getConfiguration("lux").get("cliPath", "lux");
+  const cliPath = vscode.workspace.getConfiguration("orvi").get("cliPath", "orvi");
   const cwd = workspaceFolderPath(document);
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "lux-preview-"));
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "orvi-preview-"));
   const outputPath = path.join(tempDir, "preview.html");
   let inputPath = document.uri.fsPath;
 
   try {
     if (document.isDirty && typeof document.getText === "function") {
-      inputPath = path.join(tempDir, path.basename(document.uri.fsPath) || "preview.lux");
+      inputPath = path.join(tempDir, path.basename(document.uri.fsPath) || "preview.ov");
       await writeFile(inputPath, document.getText(), "utf8");
     }
 
@@ -236,7 +236,7 @@ function execFilePromise(command, args, options) {
   return new Promise((resolve, reject) => {
     execFile(command, args, options, (error, stdout, stderr) => {
       if (error) {
-        error.message = stderr.trim() || stdout.trim() || error.message || "Lux preview failed.";
+        error.message = stderr.trim() || stdout.trim() || error.message || "Orvi preview failed.";
         reject(error);
         return;
       }
@@ -247,16 +247,16 @@ function execFilePromise(command, args, options) {
 }
 
 function renderPreviewLoading() {
-  return renderPreviewShell("<main class=\"state\">Building Lux preview...</main>");
+  return renderPreviewShell("<main class=\"state\">Building Orvi preview...</main>");
 }
 
 function renderPreviewFrame(html) {
-  return renderPreviewShell(`<iframe title="Lux preview" sandbox srcdoc="${escapeAttribute(html)}"></iframe>`);
+  return renderPreviewShell(`<iframe title="Orvi preview" sandbox srcdoc="${escapeAttribute(html)}"></iframe>`);
 }
 
 function renderPreviewError(error) {
-  const message = error && error.message ? error.message : "Lux preview failed.";
-  return renderPreviewShell(`<main class="state error"><h1>Lux preview failed</h1><pre>${escapeHtml(message)}</pre></main>`);
+  const message = error && error.message ? error.message : "Orvi preview failed.";
+  return renderPreviewShell(`<main class="state error"><h1>Orvi preview failed</h1><pre>${escapeHtml(message)}</pre></main>`);
 }
 
 function renderPreviewShell(body) {
@@ -286,7 +286,7 @@ function toVsCodeDiagnostics(payload, document) {
 
 function createDiagnostic(document, diagnostic) {
   const range = toRange(document, diagnostic);
-  const message = diagnostic.message || diagnostic.code || "Lux diagnostic";
+  const message = diagnostic.message || diagnostic.code || "Orvi diagnostic";
   const item = new vscode.Diagnostic(range, message, toSeverity(diagnostic.severity));
 
   item.source = DIAGNOSTIC_SOURCE;
@@ -340,7 +340,7 @@ function escapeAttribute(value) {
   return escapeHtml(value);
 }
 
-function isLuxFile(document) {
+function isOrviFile(document) {
   return document && document.languageId === LANGUAGE_ID && document.uri && document.uri.scheme === "file";
 }
 

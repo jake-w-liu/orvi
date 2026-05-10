@@ -89,7 +89,7 @@ h2 {
   background: #1d4ed8;
 }
 
-#lux-source {
+#orvi-source {
   background: transparent;
   border: 0;
   color: #e5e7eb;
@@ -109,7 +109,7 @@ h2 {
   overflow: auto;
 }
 
-.preview-surface .lux-document {
+.preview-surface .orvi-document {
   margin: 0;
   max-width: none;
   min-height: 100%;

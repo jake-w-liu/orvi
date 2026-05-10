@@ -1,4 +1,4 @@
-export const defaultCss = `:root {
+:root {
   color-scheme: light;
   --orvi-fg: #1f2937;
   --orvi-muted: #6b7280;
@@ -275,4 +275,3 @@ export const defaultCss = `:root {
     grid-template-columns: 1fr;
   }
 }
-`;

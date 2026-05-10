@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-const pluginDir = path.join(__dirname, "..", "integrations", "obsidian-lux");
+const pluginDir = path.join(__dirname, "..", "integrations", "obsidian-orvi");
 
 class FakePlugin {
   codeBlockProcessors: Array<{ language: string; callback: Function }> = [];
@@ -55,8 +55,8 @@ class FakeElement {
 
 function withObsidianMock<T>(callback: () => T): T {
   const runtime = {
-    renderLux: (source: string) => ({
-      html: `<main class="lux-document"><h1>${source.replace(/^#\s*/, "")}</h1></main>`,
+    renderOrvi: (source: string) => ({
+      html: `<main class="orvi-document"><h1>${source.replace(/^#\s*/, "")}</h1></main>`,
       ast: { diagnostics: [] }
     })
   };
@@ -82,13 +82,13 @@ function withObsidianMock<T>(callback: () => T): T {
   }
 }
 
-describe("Obsidian Lux plugin scaffold", () => {
+describe("Obsidian Orvi plugin scaffold", () => {
   it("declares the required community plugin manifest fields", () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(pluginDir, "manifest.json"), "utf8"));
 
     expect(manifest).toMatchObject({
-      id: "lux",
-      name: "Lux",
+      id: "orvi",
+      name: "Orvi",
       version: "0.1.0",
       minAppVersion: "1.5.0",
       description: expect.any(String),
@@ -98,7 +98,7 @@ describe("Obsidian Lux plugin scaffold", () => {
     expect(manifest.id).not.toMatch(/obsidian/i);
   });
 
-  it("registers Lux code block rendering and .lux document preview support", () => {
+  it("registers Orvi code block rendering and .ov document preview support", () => {
     withObsidianMock(() => {
       const PluginClass = require(path.join(pluginDir, "main.js"));
       const plugin = new PluginClass() as FakePlugin;
@@ -106,13 +106,13 @@ describe("Obsidian Lux plugin scaffold", () => {
       (plugin as unknown as { onload: () => void }).onload();
 
       expect(plugin.codeBlockProcessors).toHaveLength(1);
-      expect(plugin.codeBlockProcessors[0].language).toBe("lux");
-      expect(plugin.extensions).toEqual([{ extensions: ["lux"], viewType: "markdown" }]);
+      expect(plugin.codeBlockProcessors[0].language).toBe("orvi");
+      expect(plugin.extensions).toEqual([{ extensions: ["ov"], viewType: "markdown" }]);
       expect(plugin.postProcessors).toHaveLength(1);
     });
   });
 
-  it("renders Lux code blocks into an isolated Obsidian container", () => {
+  it("renders Orvi code blocks into an isolated Obsidian container", () => {
     withObsidianMock(() => {
       const PluginClass = require(path.join(pluginDir, "main.js"));
       const plugin = new PluginClass() as FakePlugin;
@@ -122,20 +122,20 @@ describe("Obsidian Lux plugin scaffold", () => {
       plugin.codeBlockProcessors[0].callback("# Hello", root);
 
       expect(root.children).toHaveLength(1);
-      expect(root.children[0].className).toBe("lux-obsidian-render");
-      expect(root.children[0].innerHTML).toContain("lux-document");
+      expect(root.children[0].className).toBe("orvi-obsidian-render");
+      expect(root.children[0].innerHTML).toContain("orvi-document");
       expect(root.children[0].innerHTML).toContain("<h1>Hello</h1>");
     });
   });
 
-  it("formats Lux diagnostics with source ranges from the parser", () => {
+  it("formats Orvi diagnostics with source ranges from the parser", () => {
     withObsidianMock(() => {
       const pluginModule = require(path.join(pluginDir, "main.js"));
 
       expect(
         pluginModule.formatDiagnostic({
           severity: "error",
-          code: "LUX_UNKNOWN_COMPONENT",
+          code: "ORVI_UNKNOWN_COMPONENT",
           message: "Unknown component.",
           line: 3,
           column: 5
@@ -149,10 +149,10 @@ describe("Obsidian Lux plugin scaffold", () => {
     const readme = fs.readFileSync(path.join(pluginDir, "README.md"), "utf8");
 
     expect(buildScript).toContain('runtimeFiles = ["ast.js", "parser.js", "renderer.js", "styles.js"]');
-    expect(buildScript).toContain("src\", \"lux-base.css");
-    expect(buildScript).toContain("lux-obsidian-render .lux-document");
+    expect(buildScript).toContain("src\", \"orvi-base.css");
+    expect(buildScript).toContain("orvi-obsidian-render .orvi-document");
     expect(readme).toContain("npm run build");
-    expect(readme).toContain("node integrations/obsidian-lux/build.mjs");
+    expect(readme).toContain("node integrations/obsidian-orvi/build.mjs");
     expect(readme).toContain("runtime/");
   });
 });

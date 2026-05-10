@@ -2,8 +2,8 @@ import { benchmarkCorpus, BenchmarkCorpusFixture } from "./corpus";
 
 export interface FixtureMeasurement {
   name: string;
-  luxChars: number;
-  luxBytes: number;
+  orviChars: number;
+  orviBytes: number;
   htmlChars: number;
   htmlBytes: number;
   charRatio: number;
@@ -12,8 +12,8 @@ export interface FixtureMeasurement {
 
 export interface CorpusMeasurement {
   fixtureCount: number;
-  luxChars: number;
-  luxBytes: number;
+  orviChars: number;
+  orviBytes: number;
   htmlChars: number;
   htmlBytes: number;
   charRatio: number;
@@ -21,37 +21,37 @@ export interface CorpusMeasurement {
 }
 
 export function measureFixture(fixture: BenchmarkCorpusFixture): FixtureMeasurement {
-  const luxBytes = byteLength(fixture.lux);
+  const orviBytes = byteLength(fixture.orvi);
   const htmlBytes = byteLength(fixture.html);
 
   return {
     name: fixture.name,
-    luxChars: fixture.lux.length,
-    luxBytes,
+    orviChars: fixture.orvi.length,
+    orviBytes,
     htmlChars: fixture.html.length,
     htmlBytes,
-    charRatio: ratio(fixture.html.length, fixture.lux.length),
-    byteRatio: ratio(htmlBytes, luxBytes)
+    charRatio: ratio(fixture.html.length, fixture.orvi.length),
+    byteRatio: ratio(htmlBytes, orviBytes)
   };
 }
 
 export function measureCorpus(fixtures = benchmarkCorpus): CorpusMeasurement {
   const totals = fixtures.reduce(
     (acc, fixture) => {
-      acc.luxChars += fixture.lux.length;
-      acc.luxBytes += byteLength(fixture.lux);
+      acc.orviChars += fixture.orvi.length;
+      acc.orviBytes += byteLength(fixture.orvi);
       acc.htmlChars += fixture.html.length;
       acc.htmlBytes += byteLength(fixture.html);
       return acc;
     },
-    { luxChars: 0, luxBytes: 0, htmlChars: 0, htmlBytes: 0 }
+    { orviChars: 0, orviBytes: 0, htmlChars: 0, htmlBytes: 0 }
   );
 
   return {
     fixtureCount: fixtures.length,
     ...totals,
-    charRatio: ratio(totals.htmlChars, totals.luxChars),
-    byteRatio: ratio(totals.htmlBytes, totals.luxBytes)
+    charRatio: ratio(totals.htmlChars, totals.orviChars),
+    byteRatio: ratio(totals.htmlBytes, totals.orviBytes)
   };
 }
 
@@ -62,29 +62,29 @@ export function createBenchmarkReport(fixtures = benchmarkCorpus): string {
   const rows = measurements
     .map(
       (measurement) =>
-        `| ${measurement.name} | ${measurement.luxChars} | ${measurement.htmlChars} | ${measurement.charRatio.toFixed(
+        `| ${measurement.name} | ${measurement.orviChars} | ${measurement.htmlChars} | ${measurement.charRatio.toFixed(
           3
-        )}x | ${measurement.luxBytes} | ${measurement.htmlBytes} | ${measurement.byteRatio.toFixed(3)}x |`
+        )}x | ${measurement.orviBytes} | ${measurement.htmlBytes} | ${measurement.byteRatio.toFixed(3)}x |`
     )
     .join("\n");
 
-  return `# Lux Benchmark Corpus Results
+  return `# Orvi Benchmark Corpus Results
 
 Measured on ${measuredAt} from the deterministic fixtures in \`benchmarks/corpus.ts\`.
 
-The corpus is intentionally "large-ish" rather than synthetic at huge scale: ${totals.fixtureCount} valid Lux documents covering metadata, headings, inline scopes, lists, grids, callouts, cards, tabs, tables, code fences, images, badges, and buttons. Each fixture is rendered through \`renderLux\` in tests and compared with its paired equivalent HTML.
+The corpus is intentionally "large-ish" rather than synthetic at huge scale: ${totals.fixtureCount} valid Orvi documents covering metadata, headings, inline scopes, lists, grids, callouts, cards, tabs, tables, code fences, images, badges, and buttons. Each fixture is rendered through \`renderOrvi\` in tests and compared with its paired equivalent HTML.
 
 ## Summary
 
-| Fixtures | Lux chars | HTML chars | Char ratio | Lux bytes | HTML bytes | Byte ratio |
+| Fixtures | Orvi chars | HTML chars | Char ratio | Orvi bytes | HTML bytes | Byte ratio |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| ${totals.fixtureCount} | ${totals.luxChars} | ${totals.htmlChars} | ${totals.charRatio.toFixed(3)}x | ${
-    totals.luxBytes
+| ${totals.fixtureCount} | ${totals.orviChars} | ${totals.htmlChars} | ${totals.charRatio.toFixed(3)}x | ${
+    totals.orviBytes
   } | ${totals.htmlBytes} | ${totals.byteRatio.toFixed(3)}x |
 
 ## Fixture Measurements
 
-| Fixture | Lux chars | HTML chars | Char ratio | Lux bytes | HTML bytes | Byte ratio |
+| Fixture | Orvi chars | HTML chars | Char ratio | Orvi bytes | HTML bytes | Byte ratio |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 ${rows}
 `;

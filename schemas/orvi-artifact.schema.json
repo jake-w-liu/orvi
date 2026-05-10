@@ -1,25 +1,25 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lux-lang.dev/schemas/lux-artifact.schema.json",
-  "title": "Lux Artifact",
+  "$id": "https://orvi.dev/schemas/orvi-artifact.schema.json",
+  "title": "Orvi Artifact",
   "type": "object",
   "additionalProperties": false,
   "required": ["type", "version", "metadata", "render", "diagnostics"],
   "properties": {
     "type": {
-      "const": "application/vnd.lux.document+json"
+      "const": "application/vnd.orvi.document+json"
     },
     "version": {
       "const": "0.1"
     },
-    "luxVersion": {
+    "orviVersion": {
       "type": "string"
     },
     "metadata": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "lux": { "type": "string" },
+        "orvi": { "type": "string" },
         "title": { "type": "string" },
         "lang": { "type": "string" },
         "dir": { "enum": ["ltr", "rtl", "auto"] }

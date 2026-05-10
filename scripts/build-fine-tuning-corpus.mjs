@@ -12,19 +12,19 @@ const ts = require("typescript");
 const root = dirname(
   fileURLToPath(new URL("../package.json", import.meta.url)),
 );
-const corpusPath = join(root, "training", "fine-tuning", "lux-corpus.jsonl");
+const corpusPath = join(root, "training", "fine-tuning", "orvi-corpus.jsonl");
 const manifestPath = join(
   root,
   "training",
   "fine-tuning",
-  "lux-corpus.manifest.json",
+  "orvi-corpus.manifest.json",
 );
-const corpusSchema = "lux-training-example-v1";
+const corpusSchema = "orvi-training-example-v1";
 
 const sourcePaths = {
   benchmark: join(root, "benchmarks", "corpus.ts"),
-  welcomeExample: join(root, "examples", "welcome.lux"),
-  spec: join(root, "lux-spec-v0.1.md"),
+  welcomeExample: join(root, "examples", "welcome.ov"),
+  spec: join(root, "orvi-spec-v0.1.md"),
 };
 
 async function main() {
@@ -73,7 +73,7 @@ export async function buildArtifacts() {
 }
 
 export async function buildFineTuningCorpus() {
-  const [benchmarkCorpus, welcomeLux, specMarkdown] = await Promise.all([
+  const [benchmarkCorpus, welcomeOrvi, specMarkdown] = await Promise.all([
     loadBenchmarkCorpus(),
     readFile(sourcePaths.welcomeExample, "utf8"),
     readFile(sourcePaths.spec, "utf8"),
@@ -84,11 +84,11 @@ export async function buildFineTuningCorpus() {
   for (const fixture of benchmarkCorpus) {
     records.push(
       record({
-        id: `benchmark:${fixture.name}:html-to-lux`,
+        id: `benchmark:${fixture.name}:html-to-orvi`,
         source: sourcePaths.benchmark,
-        task: "html-to-lux",
+        task: "html-to-orvi",
         input: [
-          "Convert this rendered Lux HTML into valid Lux v0.1 markup.",
+          "Convert this rendered Orvi HTML into valid Orvi v0.1 markup.",
           "Keep the structure, components, text, links, and image alt text equivalent.",
           "",
           `Fixture: ${fixture.name}`,
@@ -96,7 +96,7 @@ export async function buildFineTuningCorpus() {
           "HTML:",
           fixture.html,
         ].join("\n"),
-        output: fixture.lux,
+        output: fixture.orvi,
         metadata: {
           fixture: fixture.name,
           sourceKind: "benchmark",
@@ -108,14 +108,14 @@ export async function buildFineTuningCorpus() {
 
   records.push(
     record({
-      id: "example:welcome:prompt-to-lux",
+      id: "example:welcome:prompt-to-orvi",
       source: sourcePaths.welcomeExample,
-      task: "prompt-to-lux",
+      task: "prompt-to-orvi",
       input: [
-        "Write the repository welcome example as valid Lux v0.1 markup.",
+        "Write the repository welcome example as valid Orvi v0.1 markup.",
         "Include the heading, styled intro line, two-column grid, info callout, and call-to-action link.",
       ].join("\n"),
-      output: welcomeLux,
+      output: welcomeOrvi,
       metadata: {
         sourceKind: "example",
         fixture: "welcome",
@@ -128,8 +128,8 @@ export async function buildFineTuningCorpus() {
       record({
         id: `spec:component:${slug(component)}`,
         source: sourcePaths.spec,
-        task: "spec-surface-to-lux",
-        input: `Write a valid Lux v0.1 snippet using the built-in \`${component}\` component from the specification.`,
+        task: "spec-surface-to-orvi",
+        input: `Write a valid Orvi v0.1 snippet using the built-in \`${component}\` component from the specification.`,
         output: componentExample(component),
         metadata: {
           sourceKind: "spec",
@@ -145,8 +145,8 @@ export async function buildFineTuningCorpus() {
       record({
         id: `spec:semantic:${slug(semantic)}`,
         source: sourcePaths.spec,
-        task: "spec-surface-to-lux",
-        input: `Write a valid Lux v0.1 snippet using the built-in \`${semantic}:\` semantic element from the specification.`,
+        task: "spec-surface-to-orvi",
+        input: `Write a valid Orvi v0.1 snippet using the built-in \`${semantic}:\` semantic element from the specification.`,
         output: semanticExample(semantic),
         metadata: {
           sourceKind: "spec",
@@ -162,8 +162,8 @@ export async function buildFineTuningCorpus() {
       record({
         id: `spec:modifier:color:${slug(color)}`,
         source: sourcePaths.spec,
-        task: "spec-surface-to-lux",
-        input: `Write a valid Lux v0.1 snippet using the \`${color}\` inline color modifier from the specification.`,
+        task: "spec-surface-to-orvi",
+        input: `Write a valid Orvi v0.1 snippet using the \`${color}\` inline color modifier from the specification.`,
         output: colorExample(color),
         metadata: {
           sourceKind: "spec",
@@ -180,8 +180,8 @@ export async function buildFineTuningCorpus() {
       record({
         id: `spec:modifier:size:${slug(size)}`,
         source: sourcePaths.spec,
-        task: "spec-surface-to-lux",
-        input: `Write a valid Lux v0.1 snippet using the \`${size}\` inline size modifier from the specification.`,
+        task: "spec-surface-to-orvi",
+        input: `Write a valid Orvi v0.1 snippet using the \`${size}\` inline size modifier from the specification.`,
         output: sizeExample(size),
         metadata: {
           sourceKind: "spec",
@@ -198,8 +198,8 @@ export async function buildFineTuningCorpus() {
       record({
         id: `spec:modifier:weight:${slug(weight)}`,
         source: sourcePaths.spec,
-        task: "spec-surface-to-lux",
-        input: `Write a valid Lux v0.1 snippet using the \`${weight}\` inline weight modifier from the specification.`,
+        task: "spec-surface-to-orvi",
+        input: `Write a valid Orvi v0.1 snippet using the \`${weight}\` inline weight modifier from the specification.`,
         output: weightExample(weight),
         metadata: {
           sourceKind: "spec",
@@ -216,8 +216,8 @@ export async function buildFineTuningCorpus() {
       record({
         id: `spec:modifier:background:${slug(color)}`,
         source: sourcePaths.spec,
-        task: "spec-surface-to-lux",
-        input: `Write a valid Lux v0.1 snippet using the \`bg=${color}\` inline background modifier from the specification.`,
+        task: "spec-surface-to-orvi",
+        input: `Write a valid Orvi v0.1 snippet using the \`bg=${color}\` inline background modifier from the specification.`,
         output: backgroundExample(color),
         metadata: {
           sourceKind: "spec",
@@ -413,25 +413,25 @@ badge: Ready | type=success`;
 function colorExample(color) {
   return `# ${title(color)} Text
 
-[${color}] ${title(color)} status text for a Lux document. []`;
+[${color}] ${title(color)} status text for a Orvi document. []`;
 }
 
 function sizeExample(size) {
   return `# ${title(size)} Text
 
-[${size}] Size-sensitive text for a Lux document. []`;
+[${size}] Size-sensitive text for a Orvi document. []`;
 }
 
 function weightExample(weight) {
   return `# ${title(weight)} Weight
 
-[${weight}] ${title(weight)} emphasis for a Lux document. []`;
+[${weight}] ${title(weight)} emphasis for a Orvi document. []`;
 }
 
 function backgroundExample(color) {
   return `# ${title(color)} Background
 
-[bg=${color}] Background-highlighted text for a Lux document. []`;
+[bg=${color}] Background-highlighted text for a Orvi document. []`;
 }
 
 function record({ id, source, task, input, output, metadata }) {
@@ -443,8 +443,8 @@ function record({ id, source, task, input, output, metadata }) {
     input: input.trimEnd(),
     output: output.trimEnd(),
     metadata: {
-      luxVersion: "0.1",
-      outputFormat: "lux",
+      orviVersion: "0.1",
+      outputFormat: "orvi",
       ...metadata,
     },
   };
@@ -489,7 +489,7 @@ function serializeJsonl(records) {
 
 function createManifest(records, jsonl) {
   return {
-    schema: "lux-training-corpus-manifest-v1",
+    schema: "orvi-training-corpus-manifest-v1",
     corpusSchema,
     output: repoPath(corpusPath),
     recordCount: records.length,

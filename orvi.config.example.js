@@ -1,5 +1,5 @@
 module.exports = {
-  title: "Lux Preview",
+  title: "Orvi Preview",
   lang: "en",
   dir: "ltr",
   colorScheme: "light",

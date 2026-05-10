@@ -1,10 +1,10 @@
 {
-  "name": "@lux-lang/lux",
+  "name": "@orvi/orvi",
   "version": "0.1.0",
-  "description": "Lux markup parser, HTML renderer, and CLI.",
+  "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
   "keywords": [
-    "lux",
+    "orvi",
     "markup",
     "parser",
     "renderer",
@@ -48,35 +48,35 @@
       "import": "./dist/esm/react.js",
       "require": "./dist/react.js"
     },
-    "./lux-base.css": "./dist/lux-base.css"
+    "./orvi-base.css": "./dist/orvi-base.css"
   },
   "bin": {
-    "lux": "dist/cli.js"
+    "orvi": "dist/cli.js"
   },
   "files": [
     "dist",
-    "src/lux-base.css",
+    "src/orvi-base.css",
     "schemas",
-    "vscode/lux",
-    "lux-spec-v0.1.md",
-    "lux.config.example.js"
+    "vscode/orvi",
+    "orvi-spec-v0.1.md",
+    "orvi.config.example.js"
   ],
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm && npm run build:assets",
     "build:cjs": "tsc",
     "build:esm": "tsc -p tsconfig.esm.json && node scripts/prepare-esm.mjs",
-    "build:assets": "node -e \"require('fs').copyFileSync('src/lux-base.css','dist/lux-base.css')\"",
+    "build:assets": "node -e \"require('fs').copyFileSync('src/orvi-base.css','dist/orvi-base.css')\"",
     "check": "tsc --noEmit",
-    "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser lux examples/welcome.lux --check",
+    "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser orvi examples/welcome.ov --check",
     "finetune:corpus": "node scripts/build-fine-tuning-corpus.mjs",
     "finetune:corpus:check": "node scripts/build-fine-tuning-corpus.mjs --check",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "playground:test": "node --test playground/playground.test.mjs",
-    "obsidian:build": "npm run build && node integrations/obsidian-lux/build.mjs",
-    "site:build": "npm run build && node dist/cli.js build examples/welcome.lux -o examples/welcome.html && node scripts/build-site.mjs",
+    "obsidian:build": "npm run build && node integrations/obsidian-orvi/build.mjs",
+    "site:build": "npm run build && node dist/cli.js build examples/welcome.ov -o examples/welcome.html && node scripts/build-site.mjs",
     "verify": "npm run check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run format:check",
-    "vscode:package": "npm --prefix vscode/lux run package --",
-    "vscode:publish": "npm --prefix vscode/lux run publish --"
+    "vscode:package": "npm --prefix vscode/orvi run package --",
+    "vscode:publish": "npm --prefix vscode/orvi run publish --"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

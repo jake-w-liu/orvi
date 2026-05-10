@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "Lux",
-  "scopeName": "source.lux",
+  "name": "Orvi",
+  "scopeName": "source.orvi",
   "patterns": [
     { "include": "#comments" },
     { "include": "#fenced-code" },
@@ -17,7 +17,7 @@
     "comments": {
       "patterns": [
         {
-          "name": "comment.line.double-slash.lux",
+          "name": "comment.line.double-slash.ov",
           "match": "^\\s*//.*$"
         }
       ]
@@ -25,17 +25,17 @@
     "fenced-code": {
       "patterns": [
         {
-          "name": "markup.fenced_code.block.lux",
+          "name": "markup.fenced_code.block.ov",
           "begin": "^\\s*(```)\\s*([A-Za-z0-9_-]+)?(?:\\s*(\\|)\\s*([^`]+))?\\s*$",
           "beginCaptures": {
-            "1": { "name": "punctuation.definition.raw.begin.lux" },
-            "2": { "name": "entity.name.type.language.lux" },
-            "3": { "name": "punctuation.separator.filename.lux" },
-            "4": { "name": "string.unquoted.filename.lux" }
+            "1": { "name": "punctuation.definition.raw.begin.ov" },
+            "2": { "name": "entity.name.type.language.ov" },
+            "3": { "name": "punctuation.separator.filename.ov" },
+            "4": { "name": "string.unquoted.filename.ov" }
           },
           "end": "^\\s*(```)\\s*$",
           "endCaptures": {
-            "1": { "name": "punctuation.definition.raw.end.lux" }
+            "1": { "name": "punctuation.definition.raw.end.ov" }
           }
         }
       ]
@@ -43,11 +43,11 @@
     "headings": {
       "patterns": [
         {
-          "name": "markup.heading.lux",
+          "name": "markup.heading.ov",
           "match": "^(#{1,6})\\s+(.+)$",
           "captures": {
-            "1": { "name": "punctuation.definition.heading.lux" },
-            "2": { "name": "entity.name.section.lux" }
+            "1": { "name": "punctuation.definition.heading.ov" },
+            "2": { "name": "entity.name.section.ov" }
           }
         }
       ]
@@ -55,12 +55,12 @@
     "semantic": {
       "patterns": [
         {
-          "name": "support.function.semantic.lux",
+          "name": "support.function.semantic.ov",
           "match": "^\\s*(btn|img|hr|br|badge)(:)\\s*(.*)$",
           "captures": {
-            "1": { "name": "keyword.control.semantic.lux" },
-            "2": { "name": "punctuation.separator.key-value.lux" },
-            "3": { "name": "string.unquoted.semantic-payload.lux" }
+            "1": { "name": "keyword.control.semantic.ov" },
+            "2": { "name": "punctuation.separator.key-value.ov" },
+            "3": { "name": "string.unquoted.semantic-payload.ov" }
           }
         }
       ]
@@ -68,22 +68,22 @@
     "component-tags": {
       "patterns": [
         {
-          "name": "meta.tag.block.begin.lux",
+          "name": "meta.tag.block.begin.ov",
           "match": "^\\s*(\\[)(callout|grid|card|tabs|tab)(?:\\s+([^\\]]+))?(\\])\\s*$",
           "captures": {
-            "1": { "name": "punctuation.definition.tag.begin.lux" },
-            "2": { "name": "entity.name.tag.component.lux" },
-            "3": { "name": "meta.attributes.lux" },
-            "4": { "name": "punctuation.definition.tag.end.lux" }
+            "1": { "name": "punctuation.definition.tag.begin.ov" },
+            "2": { "name": "entity.name.tag.component.ov" },
+            "3": { "name": "meta.attributes.ov" },
+            "4": { "name": "punctuation.definition.tag.end.ov" }
           }
         },
         {
-          "name": "meta.tag.block.end.lux",
+          "name": "meta.tag.block.end.ov",
           "match": "^\\s*(\\[\\/)(callout|grid|card|tabs|tab)(\\])\\s*$",
           "captures": {
-            "1": { "name": "punctuation.definition.tag.begin.lux" },
-            "2": { "name": "entity.name.tag.component.lux" },
-            "3": { "name": "punctuation.definition.tag.end.lux" }
+            "1": { "name": "punctuation.definition.tag.begin.ov" },
+            "2": { "name": "entity.name.tag.component.ov" },
+            "3": { "name": "punctuation.definition.tag.end.ov" }
           }
         }
       ]
@@ -91,16 +91,16 @@
     "inline-scopes": {
       "patterns": [
         {
-          "name": "meta.inline-scope.lux",
+          "name": "meta.inline-scope.ov",
           "match": "(\\[)(?=(?:red|blue|green|gray|muted|yellow|purple|orange|pink|cyan|white|black|xs|sm|md|lg|xl|2xl|light|regular|medium|bold|bg=)[^\\]]*\\])([^\\]]+)(\\])",
           "captures": {
-            "1": { "name": "punctuation.definition.scope.begin.lux" },
-            "2": { "name": "support.constant.modifier.lux" },
-            "3": { "name": "punctuation.definition.scope.end.lux" }
+            "1": { "name": "punctuation.definition.scope.begin.ov" },
+            "2": { "name": "support.constant.modifier.ov" },
+            "3": { "name": "punctuation.definition.scope.end.ov" }
           }
         },
         {
-          "name": "punctuation.definition.scope.close.lux",
+          "name": "punctuation.definition.scope.close.ov",
           "match": "\\[\\]"
         }
       ]
@@ -108,7 +108,7 @@
     "tables": {
       "patterns": [
         {
-          "name": "markup.table.row.lux",
+          "name": "markup.table.row.ov",
           "match": "^\\s*\\|.*\\|\\s*$"
         }
       ]
@@ -116,11 +116,11 @@
     "lists": {
       "patterns": [
         {
-          "name": "markup.list.unnumbered.lux",
+          "name": "markup.list.unnumbered.ov",
           "match": "^\\s*[-*]\\s+.+$"
         },
         {
-          "name": "markup.list.numbered.lux",
+          "name": "markup.list.numbered.ov",
           "match": "^\\s*\\d+\\.\\s+.+$"
         }
       ]
@@ -128,15 +128,15 @@
     "inline-markup": {
       "patterns": [
         {
-          "name": "markup.bold.lux",
+          "name": "markup.bold.ov",
           "match": "\\*\\*[^*]+\\*\\*"
         },
         {
-          "name": "markup.italic.lux",
+          "name": "markup.italic.ov",
           "match": "_[^_]+_"
         },
         {
-          "name": "markup.strikethrough.lux",
+          "name": "markup.strikethrough.ov",
           "match": "~~[^~]+~~"
         }
       ]

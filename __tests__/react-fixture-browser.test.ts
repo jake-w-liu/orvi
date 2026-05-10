@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { pathToFileURL } from "url";
 import * as React from "react";
-import { ReactLuxFixtureApp } from "../fixtures/react-browser/app";
+import { ReactOrviFixtureApp } from "../fixtures/react-browser/app";
 import { defaultCss } from "../src/renderer";
 
 const CHROME_CANDIDATES = [
@@ -21,19 +21,19 @@ describe("React fixture browser smoke", () => {
   it("renders the exported React renderer in a fixture and inspects the result", async () => {
     const diagnostics: unknown[] = [];
     const fixtureHtml = renderReactElement(
-      React.createElement(ReactLuxFixtureApp, {
+      React.createElement(ReactOrviFixtureApp, {
         onDiagnostics: (items) => diagnostics.push(...items)
       })
     );
 
     expect(diagnostics).toEqual([]);
     expect(fixtureHtml).toContain('data-fixture="react-browser"');
-    expect(fixtureHtml).toContain('class="lux-react-root fixture-renderer"');
+    expect(fixtureHtml).toContain('class="orvi-react-root fixture-renderer"');
     expect(fixtureHtml).toContain("<h1>React Fixture</h1>");
     expect(fixtureHtml).toContain('role="note"');
-    expect(fixtureHtml).toContain("Exported React renderer mounted this Lux document.");
-    expect(fixtureHtml).toContain("lux-grid lux-grid-2");
-    expect(fixtureHtml).toContain("lux-text-green lux-font-bold");
+    expect(fixtureHtml).toContain("Exported React renderer mounted this Orvi document.");
+    expect(fixtureHtml).toContain("orvi-grid orvi-grid-2");
+    expect(fixtureHtml).toContain("orvi-text-green orvi-font-bold");
 
     const chrome = findChrome();
     if (!chrome) {
@@ -41,7 +41,7 @@ describe("React fixture browser smoke", () => {
       return;
     }
 
-    const workspace = mkdtempSync(join(tmpdir(), "lux-react-fixture-"));
+    const workspace = mkdtempSync(join(tmpdir(), "orvi-react-fixture-"));
     try {
       const htmlPath = join(workspace, "react-fixture.html");
       const profilePath = join(workspace, "profile");
@@ -81,25 +81,25 @@ describe("React fixture browser smoke", () => {
             readyState: document.readyState,
             title: document.title,
             fixture: document.querySelector("[data-fixture]")?.getAttribute("data-fixture") ?? null,
-            renderedHeading: document.querySelector(".lux-react-root .lux-document h1")?.textContent ?? null,
-            diagnosticCount: document.querySelector(".lux-react-root")?.getAttribute("data-lux-diagnostics") ?? null,
-            calloutLabel: document.querySelector(".lux-callout")?.getAttribute("aria-label") ?? null,
-            gridColumns: document.querySelectorAll(".lux-grid-column").length,
-            readyText: document.querySelector(".lux-text-green.lux-font-bold")?.textContent?.trim() ?? null,
-            linkHref: document.querySelector(".lux-btn")?.getAttribute("href") ?? null,
+            renderedHeading: document.querySelector(".orvi-react-root .orvi-document h1")?.textContent ?? null,
+            diagnosticCount: document.querySelector(".orvi-react-root")?.getAttribute("data-orvi-diagnostics") ?? null,
+            calloutLabel: document.querySelector(".orvi-callout")?.getAttribute("aria-label") ?? null,
+            gridColumns: document.querySelectorAll(".orvi-grid-column").length,
+            readyText: document.querySelector(".orvi-text-green.orvi-font-bold")?.textContent?.trim() ?? null,
+            linkHref: document.querySelector(".orvi-btn")?.getAttribute("href") ?? null,
             body: document.body?.textContent ?? ""
           })`,
-          (state) => state.readyState === "complete" && state.title === "Lux React Fixture"
+          (state) => state.readyState === "complete" && state.title === "Orvi React Fixture"
         );
 
-        expect(documentState.title).toBe("Lux React Fixture");
+        expect(documentState.title).toBe("Orvi React Fixture");
         expect(documentState.fixture).toBe("react-browser");
         expect(documentState.renderedHeading).toBe("React Fixture");
         expect(documentState.diagnosticCount).toBe("0");
         expect(documentState.calloutLabel).toBe("Success callout");
         expect(documentState.gridColumns).toBe(2);
         expect(documentState.readyText).toBe("Ready");
-        expect(documentState.linkHref).toBe("https://example.com/lux");
+        expect(documentState.linkHref).toBe("https://example.com/orvi");
         expect(documentState.body).toContain("Browser inspection");
       } finally {
         await stopProcess(chromeProcess);
@@ -117,7 +117,7 @@ function wrapFixtureDocument(body: string): string {
     "<head>",
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    "<title>Lux React Fixture</title>",
+    "<title>Orvi React Fixture</title>",
     `<style>${defaultCss}</style>`,
     "</head>",
     "<body>",

@@ -1,16 +1,16 @@
 export const DEFAULT_SOURCE = `---
-lux: 0.1
-title: Lux Playground
+orvi: 0.1
+title: Orvi Playground
 ---
 
-# Welcome to Lux
+# Welcome to Orvi
 
 [blue bold] A new way to write beautiful documents. []
 
 ---
 
 [grid 2]
-  ## Why Lux?
+  ## Why Orvi?
 
   Simple syntax that compiles to rich HTML. No more falling back to raw tags.
   ---
@@ -20,18 +20,18 @@ title: Lux Playground
 [/grid]
 
 [callout type=info]
-  Lux is currently in early development.
+  Orvi is currently in early development.
 [/callout]
 
-btn: Get Started -> https://lux-lang.dev
+btn: Get Started -> https://orvi.dev
 `;
 
-export async function loadLuxRuntime() {
+export async function loadOrviRuntime() {
   return import("../dist/esm/renderer.js");
 }
 
 export function renderPreview(source, runtime) {
-  const result = runtime.renderLux(source, { colorScheme: "light" });
+  const result = runtime.renderOrvi(source, { colorScheme: "light" });
   return {
     html: result.html,
     diagnostics: result.ast.diagnostics
@@ -39,7 +39,7 @@ export function renderPreview(source, runtime) {
 }
 
 function boot(runtime) {
-  const source = document.querySelector("#lux-source");
+  const source = document.querySelector("#orvi-source");
   const preview = document.querySelector("#preview");
   const diagnostics = document.querySelector("#diagnostics");
   const status = document.querySelector("#preview-status");
@@ -88,7 +88,7 @@ function renderDiagnostics(container, diagnostics) {
 
 async function main() {
   try {
-    boot(await loadLuxRuntime());
+    boot(await loadOrviRuntime());
   } catch (error) {
     const status = document.querySelector("#preview-status");
     const preview = document.querySelector("#preview");

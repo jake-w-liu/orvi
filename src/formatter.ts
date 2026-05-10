@@ -6,10 +6,10 @@ import {
   DocumentNode,
   InlineModifier,
   InlineNode,
-  LuxDiagnostic,
+  OrviDiagnostic,
   SemanticNode
 } from "./ast";
-import { parseLux } from "./parser";
+import { parseOrvi } from "./parser";
 
 export interface FormatOptions {
   indent?: string;
@@ -19,11 +19,11 @@ export interface FormatOptions {
 export interface FormatResult {
   formatted: string;
   ast: DocumentNode;
-  diagnostics: LuxDiagnostic[];
+  diagnostics: OrviDiagnostic[];
 }
 
-export function formatLux(source: string, options: FormatOptions = {}): FormatResult {
-  const ast = parseLux(source);
+export function formatOrvi(source: string, options: FormatOptions = {}): FormatResult {
+  const ast = parseOrvi(source);
   const indent = options.indent ?? "  ";
   const metadata = formatMetadata(ast.metadata);
   const body = [metadata, formatBlocks(ast.children, 0, indent).trimEnd()].filter(Boolean).join("\n\n");
@@ -38,7 +38,7 @@ export function formatLux(source: string, options: FormatOptions = {}): FormatRe
 
 function formatMetadata(metadata: DocumentMetadata): string {
   const entries: string[] = [];
-  if (metadata.lux) entries.push(`lux: ${metadata.lux}`);
+  if (metadata.orvi) entries.push(`orvi: ${metadata.orvi}`);
   if (metadata.title) entries.push(`title: ${metadata.title}`);
   if (metadata.lang) entries.push(`lang: ${metadata.lang}`);
   if (metadata.dir) entries.push(`dir: ${metadata.dir}`);

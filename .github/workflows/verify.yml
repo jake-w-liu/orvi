@@ -46,12 +46,12 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: vscode/lux/package-lock.json
+          cache-dependency-path: vscode/orvi/package-lock.json
 
       - name: Install extension dependencies
-        working-directory: vscode/lux
+        working-directory: vscode/orvi
         run: npm ci
 
       - name: Package extension
-        working-directory: vscode/lux
-        run: npm run package -- --out lux-language.vsix
+        working-directory: vscode/orvi
+        run: npm run package -- --out orvi-language.vsix
