@@ -370,7 +370,8 @@ marking the parent complete.
   - [x] Live preview panel
   - [x] Release prep metadata, README, changelog, license, package lock, and `.vscodeignore`
 - [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
-- [ ] Run Marketplace publish with a configured `VSCE_PAT`
+- [x] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.lux-language`
+- [ ] Configure `VSCE_PAT` for repeatable automated Marketplace releases
 - [x] **Prettier plugin bridge** for auto-formatting `.lux` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`
