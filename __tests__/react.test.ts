@@ -1,24 +1,21 @@
 import * as React from "react";
 import { OrviRenderer } from "../src/react";
 
+const { renderToStaticMarkup } = require("react-dom/server") as {
+  renderToStaticMarkup(element: React.ReactElement): string;
+};
+
 describe("OrviRenderer", () => {
   it("returns a React element containing rendered Orvi HTML", () => {
-    const diagnostics: unknown[] = [];
-    const element = OrviRenderer({
-      source: "# Hello\n\n[green bold] Done []",
-      onDiagnostics: (items) => diagnostics.push(...items)
+    const element = React.createElement(OrviRenderer, {
+      source: "# Hello\n\n[green bold] Done []"
     });
+    const html = renderToStaticMarkup(element);
 
     expect(React.isValidElement(element)).toBe(true);
-    const props = element.props as {
-      className: string;
-      "data-orvi-diagnostics": number;
-      dangerouslySetInnerHTML: { __html: string };
-    };
-    expect(props.className).toBe("orvi-react-root");
-    expect(props["data-orvi-diagnostics"]).toBe(0);
-    expect(props.dangerouslySetInnerHTML.__html).toContain("<h1>Hello</h1>");
-    expect(props.dangerouslySetInnerHTML.__html).toContain("orvi-text-green orvi-font-bold");
-    expect(diagnostics).toEqual([]);
+    expect(html).toContain('class="orvi-react-root"');
+    expect(html).toContain('data-orvi-diagnostics="0"');
+    expect(html).toContain("<h1>Hello</h1>");
+    expect(html).toContain("orvi-text-green orvi-font-bold");
   });
 });

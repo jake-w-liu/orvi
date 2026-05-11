@@ -361,11 +361,11 @@ marking the parent complete.
 - [x] Support a theming API (`orvi.config.js`)
 - [x] Support renderer/theme color scheme selection with `colorScheme: "dark"`
 - [x] Render declarative CSS tabs with ARIA attributes
-- [x] Render callouts, images, tabs, and document structure with v0.1 accessibility guarantees
+- [x] Render callouts, images, tabs, and document structure with accessibility-oriented markup
 - [x] Add generated HTML launch smoke coverage for Firefox headless, with a clean skip when Firefox is unavailable
 - [x] Add generated HTML DOM smoke coverage for Chrome headless, with a clean skip when Chrome is unavailable
 - [x] Add Safari WebDriver render smoke harness with clean skip when remote automation is disabled
-- [x] Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine
+- [x] Add Safari WebDriver DOM render smoke coverage; it runs when Safari remote automation is enabled on the host machine
 
 **Output:** `@orvi/orvi/renderer` export
 

@@ -8,6 +8,10 @@ import * as React from "react";
 import { ReactOrviFixtureApp } from "../fixtures/react-browser/app";
 import { defaultCss } from "../src/renderer";
 
+const { renderToStaticMarkup } = require("react-dom/server") as {
+  renderToStaticMarkup(element: React.ReactElement): string;
+};
+
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -20,7 +24,7 @@ const CHROME_CANDIDATES = [
 describe("React fixture browser smoke", () => {
   it("renders the exported React renderer in a fixture and inspects the result", async () => {
     const diagnostics: unknown[] = [];
-    const fixtureHtml = renderReactElement(
+    const fixtureHtml = renderToStaticMarkup(
       React.createElement(ReactOrviFixtureApp, {
         onDiagnostics: (items) => diagnostics.push(...items)
       })
@@ -125,50 +129,6 @@ function wrapFixtureDocument(body: string): string {
     "</body>",
     "</html>"
   ].join("\n");
-}
-
-function renderReactElement(node: React.ReactNode): string {
-  if (node === null || node === undefined || typeof node === "boolean") return "";
-  if (typeof node === "string" || typeof node === "number" || typeof node === "bigint") {
-    return escapeHtml(String(node));
-  }
-  if (Array.isArray(node)) return node.map(renderReactElement).join("");
-  if (!React.isValidElement(node)) return "";
-
-  if (node.type === React.Fragment) {
-    return renderReactElement((node.props as { children?: React.ReactNode }).children);
-  }
-
-  if (typeof node.type === "function") {
-    const Component = node.type as (props: unknown) => React.ReactNode;
-    return renderReactElement(Component(node.props));
-  }
-
-  if (typeof node.type !== "string") {
-    throw new Error(`Unsupported React fixture element type: ${String(node.type)}`);
-  }
-
-  const props = node.props as Record<string, unknown> & {
-    children?: React.ReactNode;
-    dangerouslySetInnerHTML?: { __html: string };
-  };
-  const attributes = Object.entries(props)
-    .filter(([name]) => name !== "children" && name !== "dangerouslySetInnerHTML")
-    .map(renderAttribute)
-    .filter(Boolean)
-    .join("");
-  const children = props.dangerouslySetInnerHTML?.__html ?? renderReactElement(props.children);
-  return `<${node.type}${attributes}>${children}</${node.type}>`;
-}
-
-function renderAttribute([name, value]: [string, unknown]): string {
-  if (value === null || value === undefined || typeof value === "function" || value === false) return "";
-  const htmlName = name === "className" ? "class" : name === "htmlFor" ? "for" : name;
-  if (value === true) return ` ${htmlName}`;
-  if (typeof value === "object") {
-    throw new Error(`Unsupported React fixture prop "${name}"`);
-  }
-  return ` ${htmlName}="${escapeAttr(String(value))}"`;
 }
 
 function findChrome(): string | undefined {
@@ -347,16 +307,4 @@ function stopProcess(chromeProcess: ChildProcessWithoutNullStreams): Promise<voi
 
     chromeProcess.kill("SIGTERM");
   });
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function escapeAttr(value: string): string {
-  return escapeHtml(value).replace(/'/g, "&#39;");
 }

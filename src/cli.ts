@@ -106,13 +106,13 @@ function format(options: FormatArgs): void {
   const result = formatOrvi(source);
 
   if (options.check) {
-    const ok = source === result.formatted && !hasErrorDiagnostics(result.diagnostics);
+    const ok = source === result.formatted && result.diagnostics.length === 0;
     if (options.json) {
       console.log(JSON.stringify({ ok, diagnostics: result.diagnostics }, null, 2));
     } else if (ok) {
       console.log(`${inputPath} is already formatted.`);
-    } else if (hasErrorDiagnostics(result.diagnostics)) {
-      failOnErrors(result.diagnostics);
+    } else if (result.diagnostics.length > 0) {
+      failOnDiagnostics("Orvi format diagnostics:", result.diagnostics);
     } else {
       console.log(`${inputPath} is not formatted. Run orvi format ${inputPath} --write to update it.`);
     }
@@ -121,7 +121,7 @@ function format(options: FormatArgs): void {
     return;
   }
 
-  failOnErrors(result.diagnostics);
+  failOnDiagnostics("Orvi format diagnostics:", result.diagnostics);
 
   if (options.write) {
     writeFileSync(inputPath, result.formatted);
@@ -176,7 +176,7 @@ function serve(options: ServeArgs): void {
       theme: config.theme,
       extraCss: config.css
     });
-    response.writeHead(result.ast.diagnostics.length ? 422 : 200, {
+    response.writeHead(hasErrorDiagnostics(result.ast.diagnostics) ? 422 : 200, {
       "Content-Type": "text/html; charset=utf-8"
     });
     response.end(withDiagnostics(result.html, result.ast.diagnostics));
@@ -247,10 +247,14 @@ function failOnErrors(diagnostics: OrviDiagnostic[]): void {
   const errors = errorDiagnostics(diagnostics);
   if (errors.length === 0) return;
 
-  console.error("Orvi syntax errors:");
-  for (const diagnostic of errors) {
-    console.error(`${diagnostic.line}:${diagnostic.column} ${diagnostic.code} ${diagnostic.message}`);
-  }
+  printDiagnostics("Orvi syntax errors:", errors);
+  process.exit(1);
+}
+
+function failOnDiagnostics(title: string, diagnostics: OrviDiagnostic[]): void {
+  if (diagnostics.length === 0) return;
+
+  printDiagnostics(title, diagnostics);
   process.exit(1);
 }
 
@@ -262,12 +266,29 @@ function errorDiagnostics(diagnostics: OrviDiagnostic[]): OrviDiagnostic[] {
   return diagnostics.filter((diagnostic) => diagnostic.severity === "error");
 }
 
+function printDiagnostics(title: string, diagnostics: OrviDiagnostic[]): void {
+  console.error(title);
+  for (const diagnostic of diagnostics) {
+    console.error(`${diagnostic.line}:${diagnostic.column} ${diagnostic.code} ${diagnostic.message}`);
+  }
+}
+
 function withDiagnostics(html: string, diagnostics: OrviDiagnostic[]): string {
   if (diagnostics.length === 0) return html;
   const panel = `<pre style="background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;margin:1rem;padding:1rem;white-space:pre-wrap">${diagnostics
-    .map((diagnostic) => `${diagnostic.line}:${diagnostic.column} ${diagnostic.code} ${diagnostic.message}`)
+    .map((diagnostic) =>
+      escapeHtml(`${diagnostic.line}:${diagnostic.column} ${diagnostic.code} ${diagnostic.message}`)
+    )
     .join("\n")}</pre>`;
   return html.replace("<body>", `<body>${panel}`);
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function assertReadable(path: string): void {

@@ -28,12 +28,41 @@ export function formatOrvi(source: string, options: FormatOptions = {}): FormatR
   const metadata = formatMetadata(ast.metadata);
   const body = [metadata, formatBlocks(ast.children, 0, indent).trimEnd()].filter(Boolean).join("\n\n");
   const formatted = options.finalNewline === false ? body : `${body}\n`;
+  const diagnostics = [...ast.diagnostics, ...formatLossDiagnostics(source)];
 
   return {
     formatted,
     ast,
-    diagnostics: ast.diagnostics
+    diagnostics
   };
+}
+
+function formatLossDiagnostics(source: string): OrviDiagnostic[] {
+  const diagnostics: OrviDiagnostic[] = [];
+  const lines = source.replace(/\r\n?/g, "\n").split("\n");
+  let inCode = false;
+
+  lines.forEach((text, index) => {
+    const trimmed = text.trim();
+    if (trimmed.startsWith("```")) {
+      inCode = !inCode;
+      return;
+    }
+    if (inCode || !trimmed.startsWith("//")) return;
+
+    const column = text.indexOf("//") + 1;
+    diagnostics.push({
+      severity: "warning",
+      code: "ORVI_FORMAT_COMMENT_DROPPED",
+      message: "The formatter does not preserve Orvi comment lines.",
+      line: index + 1,
+      column,
+      endLine: index + 1,
+      endColumn: column + trimmed.length
+    });
+  });
+
+  return diagnostics;
 }
 
 function formatMetadata(metadata: DocumentMetadata): string {

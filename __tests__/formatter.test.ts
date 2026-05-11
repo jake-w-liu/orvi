@@ -62,4 +62,25 @@ dir: rtl
 # RTL Title
 `);
   });
+
+  it("warns before dropping comment lines", () => {
+    const result = formatOrvi(`// keep this note
+# Title
+
+\`\`\`
+// code comment is preserved
+\`\`\``);
+
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          severity: "warning",
+          code: "ORVI_FORMAT_COMMENT_DROPPED",
+          line: 1,
+          column: 1
+        })
+      ])
+    );
+    expect(result.formatted).toContain("// code comment is preserved");
+  });
 });

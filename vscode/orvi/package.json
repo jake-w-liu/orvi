@@ -95,7 +95,7 @@
         "orvi.cliPath": {
           "type": "string",
           "default": "orvi",
-          "description": "Path to the Orvi CLI executable used for diagnostics."
+          "description": "Path to the Orvi CLI executable used for diagnostics and preview."
         }
       }
     }

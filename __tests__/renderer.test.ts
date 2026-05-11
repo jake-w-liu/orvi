@@ -79,6 +79,14 @@ Heads up
     expect(result.html).toContain('href="#"');
   });
 
+  it("sanitizes obfuscated unsafe URL schemes", () => {
+    const tabbedScheme = renderOrvi("btn: Bad -> java\tscript:alert(1)");
+    const unknownScheme = renderOrvi("btn: Bad -> webcal://example.com/event");
+
+    expect(tabbedScheme.html).toContain('href="#"');
+    expect(unknownScheme.html).toContain('href="#"');
+  });
+
   it("can emit a full HTML document with base CSS", () => {
     const result = renderOrvi("# Full", {
       fullDocument: true,
@@ -92,6 +100,33 @@ Heads up
     expect(result.html).toContain("--orvi-radius: 0.25rem;");
   });
 
+  it("drops unsafe runtime theme declarations", () => {
+    const result = renderOrvi("# Safe", {
+      fullDocument: true,
+      theme: {
+        colors: {
+          blue: "#0f766e",
+          ["bad: red;}</style><script>alert(1)</script><style>"]: "red"
+        } as Record<string, string>,
+        radius: "0.25rem;</style><script>alert(1)</script>"
+      }
+    });
+
+    expect(result.html).toContain("--orvi-blue: #0f766e;");
+    expect(result.html).not.toContain("bad: red");
+    expect(result.html).not.toContain("alert(1)");
+  });
+
+  it("prevents extra CSS from closing the generated style tag", () => {
+    const result = renderOrvi("# Safe", {
+      fullDocument: true,
+      extraCss: "</style><script>alert(1)</script>"
+    });
+
+    expect(result.html).toContain("<\\/style><script>alert(1)</script>");
+    expect(result.html).not.toContain("</style><script>");
+  });
+
   it("can emit full document language and direction attributes", () => {
     const result = renderOrvi("# Bonjour", {
       fullDocument: true,
@@ -100,6 +135,16 @@ Heads up
     });
 
     expect(result.html).toContain('<html lang="fr" dir="rtl">');
+  });
+
+  it("ignores invalid runtime direction values", () => {
+    const result = renderOrvi("# Safe", {
+      fullDocument: true,
+      dir: 'ltr" onload="alert(1)' as "ltr"
+    });
+
+    expect(result.html).toContain('<html lang="en">');
+    expect(result.html).not.toContain("onload=");
   });
 
   it("uses document metadata for full document title, language, and direction", () => {

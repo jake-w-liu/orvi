@@ -1,5 +1,7 @@
-import { execFileSync, spawnSync } from "child_process";
+import { ChildProcessWithoutNullStreams, execFileSync, spawn, spawnSync } from "child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { get } from "http";
+import { AddressInfo, createServer as createNetServer } from "net";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
 
@@ -83,6 +85,18 @@ describe("Orvi CLI", () => {
     expect(readFileSync(unformattedPath, "utf8")).toBe(unformattedSource);
   });
 
+  it("refuses to write formatting output when diagnostics warn about data loss", () => {
+    const commentPath = join(workspace, "comment.ov");
+    const source = "// keep this note\n# Title\n";
+    writeFileSync(commentPath, source);
+
+    const result = runOrvi(["format", commentPath, "--write"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("ORVI_FORMAT_COMMENT_DROPPED");
+    expect(readFileSync(commentPath, "utf8")).toBe(source);
+  });
+
   it("prints JSON diagnostics for format check failures", () => {
     const invalidPath = join(workspace, "invalid-format.ov");
     writeFileSync(invalidPath, "[chart]\n");
@@ -139,4 +153,112 @@ title: Metadata Title
     expect(result.status).toBe(0);
     expect(html).toContain("<title>Metadata Title</title>");
   });
+
+  it("escapes diagnostics in the preview server panel", async () => {
+    const inputPath = join(workspace, "invalid-preview.ov");
+    writeFileSync(
+      inputPath,
+      `[callout type="<script>"]
+Bad
+[/callout]`
+    );
+    const port = await getAvailablePort();
+    const server = spawn(process.execPath, [cliPath, "serve", inputPath, "--port", String(port)], {
+      cwd: packageRoot
+    });
+
+    try {
+      await waitForOutput(server, "Orvi preview");
+      const response = await getText(`http://127.0.0.1:${port}/`);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.body).toContain("&lt;script&gt;");
+      expect(response.body).not.toContain("Unknown callout type '&quot;<script>&quot;'");
+      expect(response.body).not.toContain('orvi-callout-"<script>"');
+    } finally {
+      server.kill();
+    }
+  });
+
+  it("serves warning-only documents with a successful status", async () => {
+    const inputPath = join(workspace, "warning-preview.ov");
+    writeFileSync(
+      inputPath,
+      `---
+extra: value
+---
+
+# Warn only`
+    );
+    const port = await getAvailablePort();
+    const server = spawn(process.execPath, [cliPath, "serve", inputPath, "--port", String(port)], {
+      cwd: packageRoot
+    });
+
+    try {
+      await waitForOutput(server, "Orvi preview");
+      const response = await getText(`http://127.0.0.1:${port}/`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toContain("ORVI_UNKNOWN_METADATA");
+    } finally {
+      server.kill();
+    }
+  });
 });
+
+function getAvailablePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createNetServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address() as AddressInfo;
+      server.close((error) => {
+        if (error) reject(error);
+        else resolve(address.port);
+      });
+    });
+  });
+}
+
+function waitForOutput(server: ChildProcessWithoutNullStreams, text: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let output = "";
+    const timer = setTimeout(() => {
+      reject(new Error(`Timed out waiting for CLI output: ${text}\n${output}`));
+    }, 5000);
+    server.stdout.on("data", (chunk: Buffer) => {
+      output += chunk.toString("utf8");
+      if (output.includes(text)) {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+    server.stderr.on("data", (chunk: Buffer) => {
+      output += chunk.toString("utf8");
+    });
+    server.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    server.once("exit", (code, signal) => {
+      clearTimeout(timer);
+      reject(new Error(`CLI exited before expected output: code=${code} signal=${signal}\n${output}`));
+    });
+  });
+}
+
+function getText(url: string): Promise<{ statusCode: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    get(url, (response) => {
+      let body = "";
+      response.setEncoding("utf8");
+      response.on("data", (chunk) => {
+        body += chunk;
+      });
+      response.on("end", () => {
+        resolve({ statusCode: response.statusCode ?? 0, body });
+      });
+    }).on("error", reject);
+  });
+}

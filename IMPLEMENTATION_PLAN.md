@@ -18,7 +18,7 @@ implementation companion and avoid drifting from the guide roadmap.
 | Renderer color scheme                       | Done: `colorScheme: "dark"`                                                                                                               |
 | Top-level metadata                          | Done: optional `orvi`, `title`, `lang`, and `dir` metadata                                                                                 |
 | v0.1 parser decisions                       | Done: nesting limit, unsupported dynamic expression diagnostics, metadata validation, `img` alt requirement                               |
-| Accessibility guarantees                    | Done: semantic HTML, image alt validation, callout roles/labels, tabs ARIA                                                                |
+| Accessibility-oriented markup               | Done: semantic HTML, image alt validation, callout roles/labels, tabs ARIA                                                                |
 | CLI build/check/format                      | Done                                                                                                                                      |
 | CLI JSON diagnostics                        | Done: `orvi check --json`, `orvi format --check --json`                                                                                     |
 | CLI live preview server                     | Done: `orvi serve` with hot reload                                                                                                         |
@@ -72,7 +72,7 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add Firefox headless launch smoke test for generated HTML.
    - Done: add Chrome headless DOM render smoke test.
    - Done: add Safari WebDriver render smoke harness.
-   - Done: run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine.
+   - Done: add Safari WebDriver DOM render smoke coverage; it runs when Safari remote automation is enabled on the host machine.
 
 4. Build playground
    - Done: editor + preview split view.

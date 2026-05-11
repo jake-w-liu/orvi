@@ -6,6 +6,22 @@ exports.renderToHtml = renderToHtml;
 const parser_1 = require("./parser");
 const styles_1 = require("./styles");
 Object.defineProperty(exports, "defaultCss", { enumerable: true, get: function () { return styles_1.defaultCss; } });
+const THEME_COLOR_TOKENS = new Set([
+    "fg",
+    "muted",
+    "border",
+    "surface",
+    "soft",
+    "red",
+    "blue",
+    "green",
+    "gray",
+    "yellow",
+    "purple",
+    "orange",
+    "pink",
+    "cyan"
+]);
 function renderOrvi(source, options = {}) {
     const ast = (0, parser_1.parseOrvi)(source);
     return {
@@ -23,12 +39,12 @@ function renderToHtml(ast, options = {}) {
     const title = escapeHtml(options.title ?? ast.metadata.title ?? options.fallbackTitle ?? "Orvi Document");
     const lang = escapeAttr(options.lang ?? ast.metadata.lang ?? "en");
     const direction = options.dir ?? ast.metadata.dir;
-    const dir = direction ? ` dir="${direction}"` : "";
+    const dir = isDirection(direction) ? ` dir="${escapeAttr(direction)}"` : "";
     const htmlClass = themeClass(options.colorScheme);
     const htmlClassAttr = htmlClass ? ` class="${htmlClass}"` : "";
     const css = options.includeCss === false
         ? ""
-        : `<style>\n${styles_1.defaultCss}\n${themeCss(options.theme)}\n${options.extraCss ?? ""}\n</style>`;
+        : `<style>\n${styleText(styles_1.defaultCss, themeCss(options.theme), options.extraCss ?? "")}\n</style>`;
     const reload = options.liveReload ? liveReloadScript() : "";
     return [
         "<!doctype html>",
@@ -198,16 +214,28 @@ function safeUrl(value) {
     const trimmed = value.trim();
     if (!trimmed)
         return "#";
-    if (/^(https?:|mailto:|tel:)/i.test(trimmed))
-        return trimmed;
-    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed))
+    if (/[\u0000-\u001f\u007f]/.test(trimmed))
         return "#";
     if (trimmed.startsWith("//"))
         return "#";
+    const colonIndex = trimmed.indexOf(":");
+    const separatorIndexes = ["/", "?", "#"]
+        .map((separator) => trimmed.indexOf(separator))
+        .filter((index) => index !== -1);
+    const firstSeparator = separatorIndexes.length ? Math.min(...separatorIndexes) : -1;
+    if (colonIndex !== -1 && (firstSeparator === -1 || colonIndex < firstSeparator)) {
+        const scheme = trimmed.slice(0, colonIndex).replace(/\s+/g, "");
+        if (/^(https?|mailto|tel)$/i.test(scheme))
+            return trimmed;
+        return "#";
+    }
     return trimmed;
 }
 function themeClass(colorScheme) {
     return colorScheme === "dark" ? "orvi-theme-dark" : "";
+}
+function isDirection(value) {
+    return value === "ltr" || value === "rtl" || value === "auto";
 }
 function calloutLabel(type) {
     if (!type)
@@ -222,19 +250,43 @@ function liveReloadScript() {
 })();
 </script>`;
 }
+function styleText(...blocks) {
+    return blocks.filter(Boolean).join("\n").replace(/<\/style/gi, "<\\/style");
+}
 function themeCss(theme) {
     if (!theme)
         return "";
     const declarations = [];
     for (const [token, value] of Object.entries(theme.colors ?? {})) {
-        if (value)
-            declarations.push(`  --orvi-${token}: ${value};`);
+        if (!isThemeColorToken(token))
+            continue;
+        const safeValue = cssDeclarationValue(value);
+        if (safeValue)
+            declarations.push(`  --orvi-${token}: ${safeValue};`);
     }
-    if (theme.radius)
-        declarations.push(`  --orvi-radius: ${theme.radius};`);
-    if (theme.font)
-        declarations.push(`  --orvi-font: ${theme.font};`);
-    if (theme.maxWidth)
-        declarations.push(`  --orvi-max-width: ${theme.maxWidth};`);
+    const radius = cssDeclarationValue(theme.radius);
+    const font = cssDeclarationValue(theme.font);
+    const maxWidth = cssDeclarationValue(theme.maxWidth);
+    if (radius)
+        declarations.push(`  --orvi-radius: ${radius};`);
+    if (font)
+        declarations.push(`  --orvi-font: ${font};`);
+    if (maxWidth)
+        declarations.push(`  --orvi-max-width: ${maxWidth};`);
     return declarations.length ? `:root {\n${declarations.join("\n")}\n}` : "";
+}
+function isThemeColorToken(value) {
+    return THEME_COLOR_TOKENS.has(value);
+}
+function cssDeclarationValue(value) {
+    if (!value)
+        return undefined;
+    const trimmed = value.trim();
+    if (!trimmed)
+        return undefined;
+    if (/[\u0000-\u001f\u007f;{}<>]/.test(trimmed))
+        return undefined;
+    if (/\/\*|\*\//.test(trimmed))
+        return undefined;
+    return trimmed;
 }

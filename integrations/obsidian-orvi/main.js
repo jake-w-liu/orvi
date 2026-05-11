@@ -17,7 +17,10 @@ class OrviObsidianPlugin extends Plugin {
       if (!ctx.sourcePath || !ctx.sourcePath.toLowerCase().endsWith(".ov")) return;
 
       const section = typeof ctx.getSectionInfo === "function" ? ctx.getSectionInfo(el) : null;
-      if (section && section.lineStart !== 0) return;
+      if (section && section.lineStart !== 0) {
+        clearElement(el);
+        return;
+      }
 
       const source = await readSourcePath(this.app, ctx.sourcePath);
       if (source === null) return;

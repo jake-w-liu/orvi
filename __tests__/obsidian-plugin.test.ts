@@ -128,6 +128,37 @@ describe("Obsidian Orvi plugin scaffold", () => {
     });
   });
 
+  it("clears later Markdown sections when rendering a full .ov document preview", async () => {
+    await withObsidianMock(async () => {
+      const PluginClass = require(path.join(pluginDir, "main.js"));
+      const plugin = new PluginClass() as FakePlugin;
+      const file = { path: "note.ov" };
+      plugin.app = {
+        vault: {
+          getAbstractFileByPath: () => file,
+          cachedRead: async () => "# Full\n\nSecond section"
+        }
+      };
+      (plugin as unknown as { onload: () => void }).onload();
+
+      const firstSection = new FakeElement();
+      const laterSection = new FakeElement();
+      laterSection.appendChild(new FakeElement("p"));
+
+      await plugin.postProcessors[0](firstSection, {
+        sourcePath: "note.ov",
+        getSectionInfo: () => ({ lineStart: 0 })
+      });
+      await plugin.postProcessors[0](laterSection, {
+        sourcePath: "note.ov",
+        getSectionInfo: () => ({ lineStart: 2 })
+      });
+
+      expect(firstSection.children[0].innerHTML).toContain("<h1>Full");
+      expect(laterSection.children).toHaveLength(0);
+    });
+  });
+
   it("formats Orvi diagnostics with source ranges from the parser", () => {
     withObsidianMock(() => {
       const pluginModule = require(path.join(pluginDir, "main.js"));

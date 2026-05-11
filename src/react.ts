@@ -21,9 +21,9 @@ export function OrviRenderer({
     fullDocument: false
   });
 
-  if (onDiagnostics) {
-    onDiagnostics(result.ast.diagnostics);
-  }
+  React.useEffect(() => {
+    onDiagnostics?.(result.ast.diagnostics);
+  }, [onDiagnostics, result.ast.diagnostics]);
 
   return React.createElement("div", {
     ...props,

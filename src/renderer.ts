@@ -53,6 +53,23 @@ export type ThemeColorToken =
   | "pink"
   | "cyan";
 
+const THEME_COLOR_TOKENS = new Set<ThemeColorToken>([
+  "fg",
+  "muted",
+  "border",
+  "surface",
+  "soft",
+  "red",
+  "blue",
+  "green",
+  "gray",
+  "yellow",
+  "purple",
+  "orange",
+  "pink",
+  "cyan"
+]);
+
 interface RenderContext {
   tabSet: number;
 }
@@ -76,13 +93,13 @@ export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): st
   const title = escapeHtml(options.title ?? ast.metadata.title ?? options.fallbackTitle ?? "Orvi Document");
   const lang = escapeAttr(options.lang ?? ast.metadata.lang ?? "en");
   const direction = options.dir ?? ast.metadata.dir;
-  const dir = direction ? ` dir="${direction}"` : "";
+  const dir = isDirection(direction) ? ` dir="${escapeAttr(direction)}"` : "";
   const htmlClass = themeClass(options.colorScheme);
   const htmlClassAttr = htmlClass ? ` class="${htmlClass}"` : "";
   const css =
     options.includeCss === false
       ? ""
-      : `<style>\n${defaultCss}\n${themeCss(options.theme)}\n${options.extraCss ?? ""}\n</style>`;
+      : `<style>\n${styleText(defaultCss, themeCss(options.theme), options.extraCss ?? "")}\n</style>`;
   const reload = options.liveReload ? liveReloadScript() : "";
   return [
     "<!doctype html>",
@@ -279,14 +296,29 @@ function escapeAttr(value: string): string {
 function safeUrl(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "#";
-  if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return "#";
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return "#";
   if (trimmed.startsWith("//")) return "#";
+
+  const colonIndex = trimmed.indexOf(":");
+  const separatorIndexes = ["/", "?", "#"]
+    .map((separator) => trimmed.indexOf(separator))
+    .filter((index) => index !== -1);
+  const firstSeparator = separatorIndexes.length ? Math.min(...separatorIndexes) : -1;
+  if (colonIndex !== -1 && (firstSeparator === -1 || colonIndex < firstSeparator)) {
+    const scheme = trimmed.slice(0, colonIndex).replace(/\s+/g, "");
+    if (/^(https?|mailto|tel)$/i.test(scheme)) return trimmed;
+    return "#";
+  }
+
   return trimmed;
 }
 
 function themeClass(colorScheme: OrviColorScheme | undefined): string {
   return colorScheme === "dark" ? "orvi-theme-dark" : "";
+}
+
+function isDirection(value: string | undefined): value is OrviDirection {
+  return value === "ltr" || value === "rtl" || value === "auto";
 }
 
 function calloutLabel(type: string): string {
@@ -303,17 +335,39 @@ function liveReloadScript(): string {
 </script>`;
 }
 
+function styleText(...blocks: string[]): string {
+  return blocks.filter(Boolean).join("\n").replace(/<\/style/gi, "<\\/style");
+}
+
 function themeCss(theme: OrviTheme | undefined): string {
   if (!theme) return "";
   const declarations: string[] = [];
 
   for (const [token, value] of Object.entries(theme.colors ?? {})) {
-    if (value) declarations.push(`  --orvi-${token}: ${value};`);
+    if (!isThemeColorToken(token)) continue;
+    const safeValue = cssDeclarationValue(value);
+    if (safeValue) declarations.push(`  --orvi-${token}: ${safeValue};`);
   }
 
-  if (theme.radius) declarations.push(`  --orvi-radius: ${theme.radius};`);
-  if (theme.font) declarations.push(`  --orvi-font: ${theme.font};`);
-  if (theme.maxWidth) declarations.push(`  --orvi-max-width: ${theme.maxWidth};`);
+  const radius = cssDeclarationValue(theme.radius);
+  const font = cssDeclarationValue(theme.font);
+  const maxWidth = cssDeclarationValue(theme.maxWidth);
+  if (radius) declarations.push(`  --orvi-radius: ${radius};`);
+  if (font) declarations.push(`  --orvi-font: ${font};`);
+  if (maxWidth) declarations.push(`  --orvi-max-width: ${maxWidth};`);
 
   return declarations.length ? `:root {\n${declarations.join("\n")}\n}` : "";
+}
+
+function isThemeColorToken(value: string): value is ThemeColorToken {
+  return THEME_COLOR_TOKENS.has(value as ThemeColorToken);
+}
+
+function cssDeclarationValue(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/[\u0000-\u001f\u007f;{}<>]/.test(trimmed)) return undefined;
+  if (/\/\*|\*\//.test(trimmed)) return undefined;
+  return trimmed;
 }
