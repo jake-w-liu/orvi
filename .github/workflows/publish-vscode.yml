@@ -25,7 +25,12 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: vscode/orvi/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            vscode/orvi/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
 
       - name: Install extension dependencies
         working-directory: vscode/orvi

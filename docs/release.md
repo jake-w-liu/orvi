@@ -15,6 +15,7 @@ The Orvi VS Code Marketplace release is public:
 ### Local package check
 
 ```sh
+npm ci
 npm --prefix vscode/orvi ci
 npm run vscode:package
 ```

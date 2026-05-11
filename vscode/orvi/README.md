@@ -47,6 +47,7 @@ code --extensionDevelopmentPath="$PWD/vscode/orvi" "$PWD"
 Package a local `.vsix`:
 
 ```sh
+npm ci
 cd vscode/orvi
 npm ci
 npm run package
