@@ -109,6 +109,7 @@ export class OrviParser {
     }
 
     const start = this.current();
+    const hasClose = this.lines.some((line, index) => index > 0 && line.text.trim() === "---");
     this.index += 1;
     const metadata: DocumentMetadata = {};
 
@@ -128,6 +129,11 @@ export class OrviParser {
 
       const match = /^([a-z][a-z0-9-]*):\s*(.*)$/i.exec(trimmed);
       if (!match) {
+        if (!hasClose) {
+          this.error("ORVI_UNCLOSED_METADATA", "Unclosed metadata block; expected a closing `---`.", start);
+          this.validateMetadata(metadata, start);
+          return metadata;
+        }
         this.error("ORVI_INVALID_METADATA", "Metadata entries must use `key: value` syntax.", line);
         this.index += 1;
         continue;
@@ -158,7 +164,8 @@ export class OrviParser {
       this.index += 1;
     }
 
-    this.error("ORVI_UNCLOSED_METADATA", "Unclosed metadata block.", start);
+    this.error("ORVI_UNCLOSED_METADATA", "Unclosed metadata block; expected a closing `---`.", start);
+    this.validateMetadata(metadata, start);
     return metadata;
   }
 
@@ -355,7 +362,8 @@ export class OrviParser {
     const trimmed = opening.text.trim();
     const meta = trimmed.slice(3).trim();
     const [languagePart, filenamePart] = meta.split("|").map((part) => part.trim());
-    const language = languagePart || undefined;
+    const languageToken = languagePart ? languagePart.split(/\s+/)[0] : "";
+    const language = languageToken && /^[\w.+#-]+$/.test(languageToken) ? languageToken : undefined;
     const filename = filenamePart || undefined;
     const body: string[] = [];
     this.index += 1;
@@ -493,14 +501,16 @@ export class OrviParser {
     }
 
     if (name === "btn") {
-      const parts = payload.split(/\s*(?:->|→)\s*/u);
-      if (parts.length < 2 || !parts[0] || !parts.slice(1).join("->")) {
+      const arrow = /^(.*?)\s*(?:->|→)\s*(.*)$/u.exec(payload);
+      const label = arrow ? arrow[1].trim() : "";
+      const target = arrow ? arrow[2].trim() : "";
+      if (!arrow || !label || !target) {
         this.error("ORVI_INVALID_SEMANTIC", "btn: requires `Label -> target`.", line);
       }
       return {
         ...base,
-        value: parts[0]?.trim() ?? "",
-        target: parts.slice(1).join("->").trim()
+        value: label,
+        target
       };
     }
 
@@ -817,11 +827,16 @@ export class OrviParser {
   }
 
   private isMetadataStart(): boolean {
-    if (this.index !== 0 || this.lines.length < 3) return false;
+    if (this.index !== 0 || this.lines.length < 2) return false;
     if (this.lines[0].text.trim() !== "---") return false;
+    const entryPattern = /^([a-z][a-z0-9-]*):\s*(.*)$/i;
     const closeIndex = this.lines.findIndex((line, index) => index > 0 && line.text.trim() === "---");
-    if (closeIndex < 0) return false;
-    return this.lines.slice(1, closeIndex).some((line) => /^([a-z][a-z0-9-]*):\s*(.*)$/i.test(line.text.trim()));
+    if (closeIndex >= 0) {
+      return this.lines.slice(1, closeIndex).some((line) => entryPattern.test(line.text.trim()));
+    }
+    // No closing `---`: still treat this as a metadata block when the first line already looks
+    // like an entry, so the author gets an ORVI_UNCLOSED_METADATA diagnostic instead of silence.
+    return entryPattern.test((this.lines[1]?.text ?? "").trim());
   }
 
   private error(code: string, message: string, line: SourceLine): void {

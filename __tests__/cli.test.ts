@@ -205,6 +205,31 @@ extra: value
       server.kill();
     }
   });
+
+  it("serves the document at the root path and 404s unknown paths", async () => {
+    const inputPath = join(workspace, "routes-preview.ov");
+    writeFileSync(inputPath, "# Routes\n\nbtn: Go -> /x\n");
+    const port = await getAvailablePort();
+    const server = spawn(process.execPath, [cliPath, "serve", inputPath, "--port", String(port)], {
+      cwd: packageRoot
+    });
+
+    try {
+      await waitForOutput(server, "Orvi preview");
+
+      const root = await getText(`http://127.0.0.1:${port}/`);
+      expect(root.statusCode).toBe(200);
+      expect(root.body).toContain("<h1>Routes</h1>");
+
+      const withQuery = await getText(`http://127.0.0.1:${port}/?reload=1`);
+      expect(withQuery.statusCode).toBe(200);
+
+      const missing = await getText(`http://127.0.0.1:${port}/does-not-exist`);
+      expect(missing.statusCode).toBe(404);
+    } finally {
+      server.kill();
+    }
+  });
 });
 
 function getAvailablePort(): Promise<number> {

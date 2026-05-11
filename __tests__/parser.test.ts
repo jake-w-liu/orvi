@@ -173,6 +173,57 @@ unknown: keep future-proof
     );
   });
 
+  it("reports an unclosed metadata block but still keeps the entries and following blocks", () => {
+    const ast = parseOrvi(`---
+orvi: 0.1
+title: Doc
+
+# Heading`);
+
+    expect(ast.metadata).toEqual({ orvi: "0.1", title: "Doc" });
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(["ORVI_UNCLOSED_METADATA"]);
+    expect(ast.children.map((node) => node.type)).toEqual(["heading"]);
+  });
+
+  it("treats a leading thematic break that is not followed by metadata entries as content", () => {
+    const ast = parseOrvi(`---
+just some prose here
+---`);
+
+    expect(ast.metadata).toEqual({});
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children.map((node) => node.type)).toEqual(["thematicBreak", "paragraph", "thematicBreak"]);
+  });
+
+  it("splits btn on the first arrow and preserves spaces in the target", () => {
+    const ast = parseOrvi("btn: Step 1 -> Step 2 -> /done");
+
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children[0]).toMatchObject({
+      type: "semantic",
+      name: "btn",
+      value: "Step 1",
+      target: "Step 2 -> /done"
+    });
+  });
+
+  it("requires both a label and a target for btn", () => {
+    expect(parseOrvi("btn: -> /x").diagnostics.map((d) => d.code)).toEqual(["ORVI_INVALID_SEMANTIC"]);
+    expect(parseOrvi("btn: Label only").diagnostics.map((d) => d.code)).toEqual(["ORVI_INVALID_SEMANTIC"]);
+  });
+
+  it("sanitizes code-fence language tokens", () => {
+    const ok = parseOrvi("```c++ | main.cpp\nint main(){}\n```");
+    expect(ok.children[0]).toMatchObject({ type: "code", language: "c++", filename: "main.cpp" });
+
+    const trimmed = parseOrvi("```js extra words | app.js\ncode\n```");
+    expect(trimmed.children[0]).toMatchObject({ type: "code", language: "js", filename: "app.js" });
+
+    const invalid = parseOrvi('```"><script>\ncode\n```');
+    expect(invalid.children[0]).toMatchObject({ type: "code" });
+    expect((invalid.children[0] as { language?: string }).language).toBeUndefined();
+  });
+
   it("enforces max component nesting depth", () => {
     const ast = parseOrvi(
       `[card]

@@ -145,7 +145,9 @@ function serve(options: ServeArgs): void {
   });
 
   const server = createServer((request, response) => {
-    if (request.url === "/__orvi/events") {
+    const path = (request.url ?? "/").split(/[?#]/)[0];
+
+    if (path === "/__orvi/events") {
       response.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
@@ -157,9 +159,15 @@ function serve(options: ServeArgs): void {
       return;
     }
 
-    if (request.url === "/orvi-base.css") {
+    if (path === "/orvi-base.css") {
       response.writeHead(200, { "Content-Type": "text/css; charset=utf-8" });
       response.end(defaultCss);
+      return;
+    }
+
+    if (path !== "/" && path !== "/index.html") {
+      response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end("Not found");
       return;
     }
 
