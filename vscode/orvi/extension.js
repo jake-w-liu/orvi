@@ -76,7 +76,8 @@ function activate(context) {
       { provideCompletionItems },
       ...COMPLETION_TRIGGER_CHARS
     ),
-    vscode.commands.registerCommand("orvi.preview", () => previewActiveDocument())
+    vscode.commands.registerCommand("orvi.preview", (uri) => previewDocument(uri, vscode.ViewColumn.Active)),
+    vscode.commands.registerCommand("orvi.previewToSide", (uri) => previewDocument(uri, vscode.ViewColumn.Beside))
   );
 
   vscode.workspace.textDocuments.forEach(checkDocument);
@@ -163,18 +164,17 @@ function provideCompletionItems() {
   });
 }
 
-async function previewActiveDocument() {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor || !isOrviFile(editor.document)) {
-    vscode.window.showWarningMessage("Open an Orvi file to preview.");
+async function previewDocument(uri, viewColumn = vscode.ViewColumn.Beside) {
+  const document = await resolveTargetDocument(uri);
+  if (!document) {
+    vscode.window.showWarningMessage("Open or select an Orvi (.ov) file to preview.");
     return;
   }
 
-  const document = editor.document;
   const documentKey = document.uri.toString();
   const existingPanel = previewPanels.get(documentKey);
   if (existingPanel) {
-    existingPanel.reveal(vscode.ViewColumn.Beside);
+    existingPanel.reveal(viewColumn);
     refreshPreview(document, existingPanel);
     return;
   }
@@ -182,7 +182,7 @@ async function previewActiveDocument() {
   const panel = vscode.window.createWebviewPanel(
     "orviPreview",
     `Orvi Preview: ${path.basename(document.uri.fsPath)}`,
-    vscode.ViewColumn.Beside,
+    viewColumn,
     { enableScripts: false }
   );
 
@@ -193,6 +193,22 @@ async function previewActiveDocument() {
   });
 
   refreshPreview(document, panel);
+}
+
+async function resolveTargetDocument(uri) {
+  if (uri && uri.scheme === "file") {
+    try {
+      const document = await vscode.workspace.openTextDocument(uri);
+      if (isOrviFile(document)) return document;
+    } catch {
+      return undefined;
+    }
+  }
+
+  const editor = vscode.window.activeTextEditor;
+  if (editor && isOrviFile(editor.document)) return editor.document;
+
+  return undefined;
 }
 
 async function refreshPreview(document, panel = previewPanels.get(document.uri.toString())) {

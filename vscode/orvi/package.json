@@ -2,7 +2,7 @@
   "name": "orvi-language",
   "displayName": "Orvi Language",
   "description": "Language support, diagnostics, completions, and preview for Orvi markup.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "jake-w-liu",
   "license": "MIT",
   "preview": true,
@@ -27,8 +27,7 @@
     "syntax"
   ],
   "activationEvents": [
-    "onLanguage:orvi",
-    "onCommand:orvi.preview"
+    "onLanguage:orvi"
   ],
   "categories": [
     "Programming Languages",
@@ -72,24 +71,72 @@
     "commands": [
       {
         "command": "orvi.preview",
-        "title": "Orvi: Preview"
+        "title": "Orvi: Open Preview",
+        "category": "Orvi"
+      },
+      {
+        "command": "orvi.previewToSide",
+        "title": "Orvi: Open Preview to the Side",
+        "category": "Orvi"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "orvi.preview",
+          "command": "orvi.previewToSide",
           "when": "resourceLangId == orvi",
           "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "orvi.preview",
+          "when": "resourceLangId == orvi",
+          "group": "navigation@1"
+        },
+        {
+          "command": "orvi.previewToSide",
+          "when": "resourceLangId == orvi",
+          "group": "navigation@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "orvi.preview",
+          "when": "resourceExtname == .ov",
+          "group": "navigation@1"
+        },
+        {
+          "command": "orvi.previewToSide",
+          "when": "resourceExtname == .ov",
+          "group": "navigation@2"
         }
       ],
       "commandPalette": [
         {
           "command": "orvi.preview",
           "when": "resourceLangId == orvi"
+        },
+        {
+          "command": "orvi.previewToSide",
+          "when": "resourceLangId == orvi"
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "orvi.preview",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "editorLangId == orvi"
+      },
+      {
+        "command": "orvi.previewToSide",
+        "key": "ctrl+k v",
+        "mac": "cmd+k v",
+        "when": "editorLangId == orvi"
+      }
+    ],
     "configuration": {
       "title": "Orvi",
       "properties": {
