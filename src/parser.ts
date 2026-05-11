@@ -785,8 +785,15 @@ export class OrviParser {
   private isTableStart(): boolean {
     if (this.index + 1 >= this.lines.length) return false;
     const current = this.current().text.trim();
+    if (!current.includes("|")) return false;
     const next = this.lines[this.index + 1].text.trim();
-    return current.includes("|") && isTableDivider(next);
+    const headerCells = splitTableRow(current);
+    const dividerCells = splitTableRow(next);
+    return (
+      headerCells.length >= 1 &&
+      headerCells.length === dividerCells.length &&
+      dividerCells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()))
+    );
   }
 
   private isBlockBoundary(line: SourceLine): boolean {
@@ -959,11 +966,6 @@ function splitTableRow(row: string): string[] {
   if (value.startsWith("|")) value = value.slice(1);
   if (value.endsWith("|")) value = value.slice(0, -1);
   return value.split("|").map((cell) => cell.trim());
-}
-
-function isTableDivider(value: string): boolean {
-  const cells = splitTableRow(value);
-  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
 }
 
 function isListLine(trimmed: string): boolean {

@@ -58,6 +58,26 @@ const value = "<safe>";
     expect(ast.children.map((node) => node.type)).toEqual(["semantic", "semantic", "code", "table", "list"]);
   });
 
+  it("recognizes single-column tables when the divider width matches the header", () => {
+    const ast = parseOrvi(`| Item |
+| --- |
+| First |
+| Second |`);
+
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children).toHaveLength(1);
+    expect(ast.children[0]).toMatchObject({ type: "table" });
+  });
+
+  it("does not treat a thematic break after a pipe-containing paragraph as a table", () => {
+    const ast = parseOrvi(`alpha | beta
+---
+gamma`);
+
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children.map((node) => node.type)).toEqual(["paragraph", "thematicBreak", "paragraph"]);
+  });
+
   it("returns diagnostics instead of throwing for invalid syntax", () => {
     const ast = parseOrvi(`[grid 3]
 one
