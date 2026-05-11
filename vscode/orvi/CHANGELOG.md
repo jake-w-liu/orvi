@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8
+
+- Bundled Orvi runtime updated to `orvi-lang` 0.2.1: the formatter no longer
+  mutates a code block nested inside a component (and is idempotent on it), no
+  longer inserts a stray space after the code-fence backticks, and `orvi build`
+  reports a clear error for `-o` with no value. The preview surface is
+  unchanged.
+
 ## 0.1.7
 
 - Preview now picks up a sibling `orvi.config.js` even when the editor buffer

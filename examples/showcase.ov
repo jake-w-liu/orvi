@@ -1,0 +1,153 @@
+---
+orvi: 0.1
+title: Orvi Feature Showcase
+lang: en
+dir: ltr
+---
+
+# Orvi Feature Showcase
+
+Every v0.1 construct, rendered. Inline text supports **bold**, _italic_, and ~~strikethrough~~ — the same as Markdown.
+
+## Inline visual scope
+
+Colors: [red] red [] [blue] blue [] [green] green [] [gray] gray [] [muted] muted [] [yellow] yellow [] [purple] purple [] [orange] orange [] [pink] pink [] [cyan] cyan [] [black] black [] and [bg=black] [white] white-on-black [] [].
+
+Backgrounds: [bg=yellow] highlighted [] [bg=cyan] cyan [] [bg=pink] pink [] [bg=green] green [] [bg=blue] blue [].
+
+Sizes: [xs] xs [] [sm] sm [] [md] md [] [lg] lg [] [xl] xl [] [2xl] 2xl [].
+
+Weights: [light] light [] [regular] regular [] [medium] medium [] [bold] bold [].
+
+Combined and nested: [red bold lg] red + bold + large [], and [bg=blue] outer background, [bold] with bold nested inside [] [].
+
+## Callouts
+
+[callout type=info]
+  Info callout — a note. This is the default callout type.
+[/callout]
+
+[callout type=warning]
+  Warning callout — proceed with caution.
+[/callout]
+
+[callout type=success]
+  Success callout — everything worked.
+[/callout]
+
+[callout type=error]
+  Error callout — something went wrong.
+[/callout]
+
+## Grid layout
+
+[grid 4]
+  ### One
+
+  First column.
+  ---
+  ### Two
+
+  Second column.
+  ---
+  ### Three
+
+  Third column.
+  ---
+  ### Four
+
+  Fourth column.
+[/grid]
+
+## Cards
+
+[grid 2]
+  [card]
+    ### Plain card
+
+    A panel with a border and padding.
+  [/card]
+  ---
+  [card bg=blue]
+    ### Tinted card
+
+    The same panel with a colored background.
+  [/card]
+[/grid]
+
+## Tabs
+
+[tabs]
+  [tab label=Overview]
+    Tab labels render in a row; the active panel shows below. Click a label to switch — the document carries no script.
+  [/tab]
+
+  [tab label=Details]
+    Tabs are declarative. The renderer emits the HTML and CSS that make them work.
+  [/tab]
+
+  [tab label=Notes]
+    - Each tab is a [tab label=...] block
+    - [tabs] may only contain [tab] children
+    - The first tab starts active
+  [/tab]
+[/tabs]
+
+## Semantic lines
+
+btn: Open the repository -> https://github.com/jake-w-liu/orvi
+
+img: ./diagram.png | Pipeline stages: ingest | transform | load
+
+badge: Stable | type=success
+
+badge: Phase 1 | Phase 2 | Phase 3 | type=info
+
+hr:
+
+br:
+
+## Code blocks
+
+```ts | greet.ts
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+```
+
+```
+plain fenced block — no language token
+keeps  its  spacing  verbatim
+```
+
+A fenced block also nests inside a component, and the code text keeps its own indentation:
+
+[callout type=success]
+  ```py
+  def total(items):
+      return sum(i.price for i in items)
+  ```
+[/callout]
+
+## Tables
+
+| Feature  | Status | Owner |
+| -------- | ------ | ----- |
+| Parser   | Done   | Core  |
+| Renderer | Done   | Core  |
+| CLI      | Done   | Tools |
+
+| Single column |
+| ------------- |
+| First row     |
+| Second row    |
+
+## Lists
+
+- Unordered item
+- Another unordered item
+- A third one
+
+1. Ordered item
+2. Second ordered item
+3. Third ordered item

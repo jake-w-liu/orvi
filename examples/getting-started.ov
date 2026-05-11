@@ -26,12 +26,14 @@ Modifiers cover colors, sizes from xs to 2xl, weights, and a bg= background.
 
 [grid 2]
   ## Components
+
   - callout — notes and alerts, with a type
   - grid N — columns split by ---
   - card — a panel, optionally with a bg
   - tabs and tab — labelled sections
   ---
   ## Semantic lines
+
   - btn: Label -> url
   - img: ./picture.png | alt text
   - badge: Text | type=info
@@ -46,12 +48,15 @@ Modifiers cover colors, sizes from xs to 2xl, weights, and a bg= background.
 
 [grid 3]
   ## Playground
+
   Edit Orvi with a live preview in the browser — nothing to install.
   ---
   ## VS Code
+
   Install the Orvi Language extension for highlighting, diagnostics, completions, and a preview panel.
   ---
   ## Spec
+
   Read orvi-spec-v0.1.md for the full grammar and component reference.
 [/grid]
 

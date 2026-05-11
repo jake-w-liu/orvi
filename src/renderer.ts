@@ -20,6 +20,12 @@ export interface RenderOptions {
   colorScheme?: OrviColorScheme;
   theme?: OrviTheme;
   extraCss?: string;
+  /**
+   * Prefix for generated element ids and form-control names (currently the
+   * `[tabs]` radio groups). Set this per render when multiple Orvi fragments
+   * share one HTML page so their tab groups do not collide. Defaults to "".
+   */
+  idPrefix?: string;
 }
 
 export interface RenderResult {
@@ -72,6 +78,7 @@ const THEME_COLOR_TOKENS = new Set<ThemeColorToken>([
 
 interface RenderContext {
   tabSet: number;
+  idPrefix: string;
 }
 
 export function renderOrvi(source: string, options: RenderOptions = {}): RenderResult {
@@ -83,7 +90,7 @@ export function renderOrvi(source: string, options: RenderOptions = {}): RenderR
 }
 
 export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): string {
-  const ctx: RenderContext = { tabSet: 0 };
+  const ctx: RenderContext = { tabSet: 0, idPrefix: options.idPrefix ?? "" };
   const documentClass = ["orvi-document", themeClass(options.colorScheme)].filter(Boolean).join(" ");
   const body = `<main class="${documentClass}">\n${ast.children.map((node) => renderBlock(node, ctx)).join("\n")}\n</main>`;
   if (!options.fullDocument) {
@@ -188,7 +195,7 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
 
   if (node.name === "tabs") {
     const tabNodes = node.children.filter(isTabNode);
-    const group = `orvi-tabs-${ctx.tabSet++}`;
+    const group = `${ctx.idPrefix}orvi-tabs-${ctx.tabSet++}`;
     return `<div class="orvi-tabs" role="tablist" aria-label="Tabs">${tabNodes
       .map((tab, index) => renderTab(tab, ctx, group, index))
       .join("")}</div>`;

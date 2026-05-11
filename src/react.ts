@@ -16,9 +16,13 @@ export function OrviRenderer({
   className,
   ...props
 }: OrviRendererProps): React.ReactElement {
+  // A stable per-instance id prefix so multiple <OrviRenderer> on one page do
+  // not share `[tabs]` radio-group names.
+  const reactId = React.useId();
+  const idPrefix = `${reactId.replace(/[^A-Za-z0-9_-]/g, "")}-`;
   const result = React.useMemo(
-    () => renderOrvi(source, { ...renderOptions, fullDocument: false }),
-    [source, renderOptions]
+    () => renderOrvi(source, { ...renderOptions, fullDocument: false, idPrefix }),
+    [source, renderOptions, idPrefix]
   );
 
   React.useEffect(() => {

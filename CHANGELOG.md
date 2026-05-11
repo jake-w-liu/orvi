@@ -4,6 +4,43 @@ All notable changes to the `orvi-lang` package. This project follows
 [Semantic Versioning](https://semver.org/) once it reaches `1.0.0`; pre-1.0
 minor versions may include behavior changes, which are noted below.
 
+## 0.2.1
+
+### Fixes
+
+- **Formatter:** a fenced code block nested inside a component is no longer
+  mutated — only the two fence lines pick up the component indentation, the
+  code text stays verbatim, so `orvi format` is idempotent on it (previously a
+  re-format added a level of indentation to the code each time). `orvi format`
+  (and the Prettier plugin) also no longer insert a stray space between the
+  opening backticks and the language token — a fence's opening line is the
+  three backticks immediately followed by the language/filename metadata,
+  matching the spec's examples.
+- **Renderer / React:** `RenderOptions.idPrefix` lets a caller scope generated
+  ids and form-control names (the `[tabs]` radio groups); `OrviRenderer` now
+  passes a per-instance prefix via `React.useId()`, so two `<OrviRenderer>` on
+  one page no longer share a tab radio group.
+- **CLI:** `orvi build … -o` (or `--output`) with no following value is now a
+  clear error instead of silently falling back to the default path.
+
+### Tooling / docs
+
+- New `examples/showcase.ov` — one document that renders every v0.1 construct
+  (all colors/sizes/weights/backgrounds, every callout type, grids, cards, tabs,
+  every semantic line incl. pipes in `img:` alt text and `badge:` labels, code
+  blocks — including one nested in a component — single- and multi-column
+  tables, lists, metadata). The other examples are reformatted to canonical
+  output; `npm run format:check` now covers every `examples/*.ov`, and
+  `__tests__/examples.test.ts` pins them parse-clean and canonically formatted.
+- ESLint now also lints the build scripts (`scripts/*.mjs`), not just `src/`.
+- `npm run build` cleans `dist/` first (reproducible builds); the ESM build no
+  longer emits a broken `dist/esm/cli.js` (the CLI is CommonJS-only by design).
+- `tsconfig.json` moved off the deprecated `moduleResolution: "node"` to
+  `module`/`moduleResolution: "node16"` (same CommonJS output, no behavior
+  change).
+- Dropped the redundant `IMPLEMENTATION_PLAN.md` (the roadmap lives in
+  `orvi-language-guide.md`); refreshed `docs/release.md`.
+
 ## 0.2.0 — Industrial hardening
 
 ### Tooling & quality gates

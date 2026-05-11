@@ -5,5 +5,7 @@
     "moduleResolution": "Bundler",
     "declaration": false,
     "outDir": "dist/esm"
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/cli.ts"]
 }

@@ -40,6 +40,26 @@ const value = 1;
     expect(result.diagnostics).toEqual([]);
     expect(result.formatted).toContain("  console.log(value);");
     expect(result.formatted).toContain("| A   | Longer |");
+    expect(result.formatted).toContain("```ts | app.ts");
+    expect(result.formatted).not.toContain("``` ts");
+  });
+
+  it("does not mutate a code block nested inside a component (idempotent)", () => {
+    const source = `[callout type=info]
+  \`\`\`js
+  const x = 1;
+  \`\`\`
+[/callout]
+`;
+    const first = formatOrvi(source);
+    expect(first.diagnostics).toEqual([]);
+    // Only the fence lines carry the component indentation; the code text is
+    // preserved verbatim, so formatting is idempotent.
+    expect(first.formatted).toBe(source);
+    expect(formatOrvi(first.formatted).formatted).toBe(first.formatted);
+
+    const callout = first.ast.children[0] as { children: Array<{ type: string; value?: string }> };
+    expect(callout.children[0]).toMatchObject({ type: "code", value: "  const x = 1;" });
   });
 
   it("preserves canonical document metadata", () => {

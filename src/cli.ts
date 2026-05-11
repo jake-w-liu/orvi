@@ -250,7 +250,9 @@ function parseBuildArgs(values: string[]): BuildArgs {
   let output: string | undefined;
   for (let index = 0; index < values.length; index += 1) {
     if (values[index] === "-o" || values[index] === "--output") {
-      output = values[index + 1];
+      const next = values[index + 1];
+      if (next === undefined || next.startsWith("-")) throw new Error("Missing value for -o.");
+      output = next;
       index += 1;
     }
   }

@@ -104,7 +104,15 @@ function formatMetadata(metadata: DocumentMetadata): string {
 }
 
 function formatBlocks(blocks: BlockNode[], depth: number, indent: string): string {
-  return blocks.map((block) => indentLines(formatBlock(block, indent), depth, indent)).join("\n\n");
+  return blocks
+    .map((block) => {
+      const text = formatBlock(block, indent);
+      // A fenced code block's body is verbatim source — only the two fence
+      // lines get the component-nesting indentation, never the code text
+      // (otherwise `orvi format` would mutate the code and never settle).
+      return block.type === "code" ? indentFenceLines(text, depth, indent) : indentLines(text, depth, indent);
+    })
+    .join("\n\n");
 }
 
 function formatBlock(block: BlockNode, indent: string): string {
@@ -147,7 +155,7 @@ function formatComponent(node: ComponentNode, indent: string): string {
 
 function formatCode(language: string | undefined, filename: string | undefined, value: string): string {
   const metadata = [language, filename ? `| ${filename}` : ""].filter(Boolean).join(" ");
-  return [`\`\`\`${metadata ? ` ${metadata}` : ""}`, value, "```"].join("\n");
+  return [`\`\`\`${metadata}`, value, "```"].join("\n");
 }
 
 function formatTable(headers: InlineNode[][], rows: InlineNode[][][]): string {
@@ -215,4 +223,12 @@ function indentLines(value: string, depth: number, indent: string): string {
     .split("\n")
     .map((line) => (line ? `${prefix}${line}` : line))
     .join("\n");
+}
+
+function indentFenceLines(value: string, depth: number, indent: string): string {
+  if (depth === 0) return value;
+  const prefix = indent.repeat(depth);
+  const lines = value.split("\n");
+  const last = lines.length - 1;
+  return lines.map((line, index) => (index === 0 || index === last ? `${prefix}${line}` : line)).join("\n");
 }
