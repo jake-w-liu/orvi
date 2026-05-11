@@ -2,6 +2,41 @@
 
 This runbook tracks the release paths that are already wired in this repository.
 
+## npm package (`@orvi/orvi`)
+
+Not published yet. The package metadata, `bin` (`orvi`), `exports` map, `files`
+allowlist, and `repository` field are ready in the root `package.json`, so it is
+publishable once the registry side is set up.
+
+Prerequisites:
+
+- An npm account with publish rights for the `@orvi` scope. Scoped public
+  packages are free; create the `orvi` organization on npm (or, if `@orvi` is
+  unavailable, rename to `orvi` if free, or `@<your-user>/orvi`, and update every
+  `@orvi/orvi` reference in the repo).
+- An npm automation token saved as the `NPM_TOKEN` repository secret for the
+  workflow path below.
+
+Automated publish — `.github/workflows/publish-npm.yml` (`workflow_dispatch`):
+checks out, `npm ci`, optionally `npm version <input>`, runs `npm run verify`
+(which rebuilds `dist/`), verifies `NPM_TOKEN`, then `npm publish --provenance
+--access public`. `--access public` is required for the scoped name;
+`--provenance` needs the workflow's `id-token: write` permission and the
+`repository` field (both in place).
+
+Manual publish:
+
+```sh
+npm ci
+npm run verify        # rebuilds dist/ and runs the full suite
+npm publish --access public   # add --provenance only from CI with OIDC
+```
+
+`prepublishOnly`/`prepare` are intentionally not defined; build `dist/` first
+(via `npm run build` or `npm run verify`) before any manual `npm publish`.
+
+After publishing, remove the "not on npm yet" notes from `README.md`.
+
 ## VS Code extension distribution
 
 - Extension: `jake-w-liu.orvi-language`

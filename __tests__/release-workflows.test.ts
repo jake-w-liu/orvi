@@ -50,6 +50,29 @@ describe("release and deployment workflows", () => {
     expect(extensionPackage.scripts.package).toBe("npm run prepare-runtime && vsce package");
   });
 
+  it("wires a token-gated npm publish workflow without Azure", () => {
+    const workflow = read(".github/workflows/publish-npm.yml");
+    expect(workflow).toContain("workflow_dispatch");
+    expect(workflow).toContain("registry-url: https://registry.npmjs.org");
+    expect(workflow).toContain("npm ci");
+    expect(workflow).toContain("npm run verify");
+    expect(workflow).toContain("secrets.NPM_TOKEN");
+    expect(workflow).toContain("Missing required repository secret: NPM_TOKEN");
+    expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
+    expect(workflow).toContain("npm publish --provenance --access public");
+    expect(workflow).toContain("id-token: write");
+    expect(workflow).not.toContain("azure");
+
+    const rootPackage = JSON.parse(read("package.json")) as {
+      bin?: Record<string, string>;
+      repository?: { url?: string };
+      files?: string[];
+    };
+    expect(rootPackage.bin).toMatchObject({ orvi: "dist/cli.js" });
+    expect(rootPackage.repository?.url).toContain("github.com/jake-w-liu/orvi");
+    expect(rootPackage.files).toEqual(expect.arrayContaining(["dist"]));
+  });
+
   it("records the release runbook and the native GitHub rendering decision", () => {
     const releaseRunbook = read("docs/release.md");
 
@@ -57,9 +80,10 @@ describe("release and deployment workflows", () => {
     expect(releaseRunbook).toContain("orvi.dev");
     expect(releaseRunbook).toContain("There is no Azure-backed automation in this repo.");
     expect(releaseRunbook).toContain("github-linguist");
-    expect(releaseRunbook).toContain(
-      "true native rendering",
-    );
+    expect(releaseRunbook).toContain("true native rendering");
+    expect(releaseRunbook).toContain(".github/workflows/publish-npm.yml");
+    expect(releaseRunbook).toContain("NPM_TOKEN");
+    expect(releaseRunbook).toContain("npm publish --access public");
   });
 });
 

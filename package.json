@@ -10,6 +10,14 @@
     "renderer",
     "cli"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jake-w-liu/orvi.git"
+  },
+  "homepage": "https://github.com/jake-w-liu/orvi#readme",
+  "bugs": {
+    "url": "https://github.com/jake-w-liu/orvi/issues"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

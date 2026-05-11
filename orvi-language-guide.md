@@ -389,6 +389,8 @@ marking the parent complete.
 - [x] Add token-free VSIX package workflow for GitHub Release distribution (no Azure DevOps token)
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`
 - [x] Drop the Azure-tied VS Code Marketplace publish workflow; distribute via GitHub Release VSIX and Open VSX instead
+- [x] Wire npm publish: `package.json` metadata/`bin`/`repository`, `.github/workflows/publish-npm.yml` gated by `NPM_TOKEN`, runbook in `docs/release.md`
+- [ ] Publish `@orvi/orvi` to npm (needs the `@orvi` npm org + `NPM_TOKEN`; not a code task)
 - [x] **Prettier plugin bridge** for auto-formatting `.ov` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`
