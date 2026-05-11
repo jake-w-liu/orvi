@@ -1,5 +1,6 @@
 const vscode = require("vscode");
 const { execFile } = require("child_process");
+const { existsSync } = require("fs");
 const { mkdtemp, readFile, rm, writeFile } = require("fs/promises");
 const os = require("os");
 const path = require("path");
@@ -43,8 +44,10 @@ const pendingChecks = new Map();
 const documentVersions = new Map();
 const pendingPreviewUpdates = new Map();
 const previewPanels = new Map();
+let extensionContext;
 
 function activate(context) {
+  extensionContext = context;
   diagnosticCollection = vscode.languages.createDiagnosticCollection("orvi");
   context.subscriptions.push(diagnosticCollection);
 
@@ -132,10 +135,9 @@ function checkDocument(document) {
 }
 
 function runOrviCheck(document, callback) {
-  const cliPath = vscode.workspace.getConfiguration("orvi").get("cliPath", "orvi");
   const cwd = workspaceFolderPath(document);
 
-  execFile(cliPath, ["check", document.uri.fsPath, "--json"], { cwd }, (error, stdout, stderr) => {
+  runOrvi(["check", document.uri.fsPath, "--json"], { cwd }, (error, stdout, stderr) => {
     const payload = parseJson(stdout);
     if (payload) {
       callback(toVsCodeDiagnostics(payload, document));
@@ -212,7 +214,6 @@ async function refreshPreview(document, panel = previewPanels.get(document.uri.t
 }
 
 async function buildPreviewHtml(document) {
-  const cliPath = vscode.workspace.getConfiguration("orvi").get("cliPath", "orvi");
   const cwd = workspaceFolderPath(document);
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "orvi-preview-"));
   const outputPath = path.join(tempDir, "preview.html");
@@ -224,7 +225,7 @@ async function buildPreviewHtml(document) {
       await writeFile(inputPath, document.getText(), "utf8");
     }
 
-    await execFilePromise(cliPath, ["build", inputPath, "-o", outputPath], { cwd });
+    await runOrviPromise(["build", inputPath, "-o", outputPath], { cwd });
     const html = await readFile(outputPath, "utf8");
     return renderPreviewFrame(html);
   } finally {
@@ -232,9 +233,24 @@ async function buildPreviewHtml(document) {
   }
 }
 
-function execFilePromise(command, args, options) {
+function runOrvi(args, options, callback) {
+  const invocation = resolveOrviInvocation();
+  const execOptions = invocation.env
+    ? {
+        ...options,
+        env: {
+          ...process.env,
+          ...(options && options.env ? options.env : {}),
+          ...invocation.env
+        }
+      }
+    : options;
+  execFile(invocation.command, [...invocation.argsPrefix, ...args], execOptions, callback);
+}
+
+function runOrviPromise(args, options) {
   return new Promise((resolve, reject) => {
-    execFile(command, args, options, (error, stdout, stderr) => {
+    runOrvi(args, options, (error, stdout, stderr) => {
       if (error) {
         error.message = stderr.trim() || stdout.trim() || error.message || "Orvi preview failed.";
         reject(error);
@@ -244,6 +260,27 @@ function execFilePromise(command, args, options) {
       resolve();
     });
   });
+}
+
+function resolveOrviInvocation() {
+  const configuredCliPath = vscode.workspace.getConfiguration("orvi").get("cliPath", "orvi");
+  if (configuredCliPath && configuredCliPath !== "orvi") {
+    return { command: configuredCliPath, argsPrefix: [] };
+  }
+
+  const bundledCliPath = extensionContext
+    ? path.join(extensionContext.extensionPath, "runtime", "cli.js")
+    : path.join(__dirname, "runtime", "cli.js");
+  if (existsSync(bundledCliPath)) {
+    return { command: process.execPath, argsPrefix: [bundledCliPath], env: { ELECTRON_RUN_AS_NODE: "1" } };
+  }
+
+  const repoCliPath = path.resolve(__dirname, "..", "..", "dist", "cli.js");
+  if (existsSync(repoCliPath)) {
+    return { command: process.execPath, argsPrefix: [repoCliPath], env: { ELECTRON_RUN_AS_NODE: "1" } };
+  }
+
+  return { command: configuredCliPath || "orvi", argsPrefix: [] };
 }
 
 function renderPreviewLoading() {
@@ -376,5 +413,6 @@ function workspaceFolderPath(document) {
 
 module.exports = {
   activate,
-  deactivate
+  deactivate,
+  resolveOrviInvocation
 };

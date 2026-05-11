@@ -26,7 +26,8 @@ describe("VS Code extension scaffold", () => {
 
     expect(pkg.main).toBe("./extension.js");
     expect(pkg.activationEvents).toContain("onLanguage:orvi");
-    expect(pkg.scripts.package).toBe("vsce package");
+    expect(pkg.scripts.package).toBe("npm run prepare-runtime && vsce package");
+    expect(pkg.scripts["prepare-runtime"]).toBe("node scripts/prepare-runtime.mjs");
     expect(pkg.devDependencies).toHaveProperty("@vscode/vsce");
     expect(pkg.contributes.configuration.properties["orvi.cliPath"]).toMatchObject({
       type: "string",
@@ -40,8 +41,12 @@ describe("VS Code extension scaffold", () => {
 
     expect(extension).toContain('require("vscode")');
     expect(extension).toContain('require("child_process")');
+    expect(extension).toContain('require("fs")');
     expect(extension).toContain('createDiagnosticCollection("orvi")');
     expect(extension).toContain('getConfiguration("orvi").get("cliPath", "orvi")');
+    expect(extension).toContain('path.join(extensionContext.extensionPath, "runtime", "cli.js")');
+    expect(extension).toContain("process.execPath");
+    expect(extension).toContain("ELECTRON_RUN_AS_NODE");
     expect(extension).toContain('["check", document.uri.fsPath, "--json"]');
     expect(extension).toContain("onDidOpenTextDocument(checkDocument)");
     expect(extension).toContain("onDidSaveTextDocument");

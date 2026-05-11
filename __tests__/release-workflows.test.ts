@@ -36,12 +36,13 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("Missing required repository secret: VSCE_PAT");
     expect(workflow).toContain("npx vsce verify-pat jake-w-liu");
     expect(workflow).toContain("actions/upload-artifact@v4");
+    expect(workflow).toContain("npm run prepare-runtime");
     expect(workflow).toContain("npx vsce publish");
     expect(workflow).toContain("--packagePath orvi-language.vsix");
     const releaseRunbook = read("docs/release.md");
     expect(releaseRunbook).toContain("optional");
     expect(releaseRunbook).toContain("token-backed infrastructure");
-    expect(extensionPackage.scripts.publish).toBe("vsce publish");
+    expect(extensionPackage.scripts.publish).toBe("npm run prepare-runtime && vsce publish");
   });
 
   it("documents the manual account steps that cannot be completed from repo code", () => {

@@ -379,13 +379,14 @@ marking the parent complete.
   - [x] Syntax highlighting scaffold
   - [x] Snippets scaffold
   - [x] Language configuration scaffold
-  - [x] Diagnostics via `orvi check --json`
+  - [x] Diagnostics via the bundled Orvi CLI
   - [x] Packaging script for `.vsix`
   - [x] Autocomplete for components and modifiers
   - [x] Live preview panel
-  - [x] Release prep metadata, README, changelog, license, package lock, and `.vscodeignore`
+  - [x] Release prep metadata, bundled runtime, README, changelog, license, package lock, and `.vscodeignore`
 - [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
 - [x] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.orvi-language`
+- [x] Prepare VS Code extension v0.1.1 with bundled CLI/runtime so diagnostics and preview do not require a global `orvi` command
 - [x] Harden Marketplace release workflow with token validation and VSIX artifact capture
 - [x] Add token-free VSIX package workflow for manual Marketplace upload and GitHub Releases
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`

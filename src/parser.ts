@@ -446,22 +446,26 @@ export class OrviParser {
 
   private parseParagraph(): BlockNode {
     const start = this.current();
-    const parts: string[] = [];
+    const collected: SourceLine[] = [];
 
     while (!this.isEnd()) {
       const line = this.current();
       if (this.isBlockBoundary(line)) {
         break;
       }
-      parts.push(line.text.trim());
+      collected.push(line);
       this.index += 1;
     }
 
-    const value = parts.join(" ");
+    for (const line of collected) {
+      this.validateDynamicContent(line.text, line.line, 1);
+    }
+
+    const value = collected.map((line) => line.text.trim()).join(" ");
     return {
       type: "paragraph",
       loc: loc(start),
-      children: this.parseInline(value, start.line, firstContentColumn(start.text))
+      children: this.parseInline(value, start.line, firstContentColumn(start.text), false)
     };
   }
 
@@ -568,8 +572,8 @@ export class OrviParser {
         }
       }
 
-      if (value[index] === "_") {
-        const close = value.indexOf("_", index + 1);
+      if (value[index] === "_" && canOpenEmphasis(value, index)) {
+        const close = findEmphasisClose(value, index + 1);
         if (close > index + 1) {
           nodes.push({
             type: "emphasis",
@@ -585,7 +589,7 @@ export class OrviParser {
         const bracketClose = value.indexOf("]", index + 1);
         if (bracketClose > index + 1) {
           const rawModifiers = value.slice(index + 1, bracketClose).trim();
-          const modifiers = this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
+          const modifiers = this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, false);
           if (modifiers) {
             const scopeClose = this.findScopeClose(value, bracketClose + 1);
             if (scopeClose >= 0) {
@@ -599,6 +603,8 @@ export class OrviParser {
               continue;
             }
             this.errorAt("ORVI_UNCLOSED_SCOPE", "Unclosed inline scope; expected [].", line, column + index);
+          } else if (value.indexOf("[]", bracketClose + 1) >= 0) {
+            this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
           }
         }
       }
@@ -870,24 +876,80 @@ function parseCloseTag(trimmed: string): CloseTag | undefined {
 function tokenizeOptions(raw: string): TokenizedOptions {
   const args: string[] = [];
   const options: ComponentOptions = {};
-  const tokens = raw.match(/"[^"]*"|'[^']*'|\S+/g) ?? [];
+  const tokens = scanOptionTokens(raw);
 
   for (const token of tokens) {
-    const cleaned = stripQuotes(token);
-    const equals = cleaned.indexOf("=");
+    const equals = indexOfUnquotedEquals(token);
     if (equals > 0) {
-      options[cleaned.slice(0, equals)] = cleaned.slice(equals + 1);
-    } else if (cleaned) {
-      args.push(cleaned);
+      const key = token.slice(0, equals);
+      const value = stripQuotes(token.slice(equals + 1));
+      options[key] = value;
+    } else {
+      const value = stripQuotes(token);
+      if (value) args.push(value);
     }
   }
 
   return { args, options };
 }
 
+function scanOptionTokens(raw: string): string[] {
+  const tokens: string[] = [];
+  const length = raw.length;
+  let index = 0;
+
+  while (index < length) {
+    if (/\s/.test(raw[index])) {
+      index += 1;
+      continue;
+    }
+
+    let token = "";
+    while (index < length && !/\s/.test(raw[index])) {
+      const char = raw[index];
+      if (char === '"' || char === "'") {
+        const quote = char;
+        token += char;
+        index += 1;
+        while (index < length && raw[index] !== quote) {
+          token += raw[index];
+          index += 1;
+        }
+        if (index < length) {
+          token += raw[index];
+          index += 1;
+        }
+      } else {
+        token += char;
+        index += 1;
+      }
+    }
+
+    if (token) tokens.push(token);
+  }
+
+  return tokens;
+}
+
+function indexOfUnquotedEquals(token: string): number {
+  let inSingle = false;
+  let inDouble = false;
+  for (let index = 0; index < token.length; index += 1) {
+    const char = token[index];
+    if (char === '"' && !inSingle) inDouble = !inDouble;
+    else if (char === "'" && !inDouble) inSingle = !inSingle;
+    else if (char === "=" && !inSingle && !inDouble) return index;
+  }
+  return -1;
+}
+
 function stripQuotes(value: string): string {
-  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-    return value.slice(1, -1);
+  if (value.length >= 2) {
+    const first = value[0];
+    const last = value[value.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      return value.slice(1, -1);
+    }
   }
   return value;
 }
@@ -906,6 +968,23 @@ function isTableDivider(value: string): boolean {
 
 function isListLine(trimmed: string): boolean {
   return /^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed);
+}
+
+function canOpenEmphasis(value: string, index: number): boolean {
+  const prev = index === 0 ? "" : value[index - 1];
+  return !/[A-Za-z0-9_]/.test(prev);
+}
+
+function findEmphasisClose(value: string, start: number): number {
+  let index = start;
+  while (index < value.length) {
+    const candidate = value.indexOf("_", index);
+    if (candidate < 0) return -1;
+    const next = candidate + 1 < value.length ? value[candidate + 1] : "";
+    if (!/[A-Za-z0-9_]/.test(next)) return candidate;
+    index = candidate + 1;
+  }
+  return -1;
 }
 
 function loc(line: SourceLine): SourceLocation {

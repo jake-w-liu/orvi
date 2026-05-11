@@ -190,4 +190,71 @@ Hello {name}
       endColumn: 13
     });
   });
+
+  it("treats non-modifier brackets in inline text as plain text", () => {
+    const ast = parseOrvi("See item [42] here.");
+
+    expect(ast.diagnostics).toEqual([]);
+    const paragraph = ast.children[0] as { children: { type: string; value: string }[] };
+    expect(paragraph.children.every((child) => child.type === "text")).toBe(true);
+    expect(paragraph.children.map((child) => child.value).join("")).toBe("See item [42] here.");
+  });
+
+  it("still flags invalid modifiers when an inline scope close follows", () => {
+    const ast = parseOrvi("Have [bogus]X[] here.");
+
+    expect(ast.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining(["ORVI_INVALID_MODIFIER"])
+    );
+  });
+
+  it("parses quoted option values with whitespace and strips quotes", () => {
+    const ast = parseOrvi(`[tabs]
+  [tab label="My Tab"]
+    body
+  [/tab]
+[/tabs]`);
+
+    expect(ast.diagnostics).toEqual([]);
+    const tabs = ast.children[0] as ComponentNode;
+    const tab = tabs.children[0] as ComponentNode;
+    expect(tab.options).toEqual({ label: "My Tab" });
+  });
+
+  it("strips quotes from simple option values", () => {
+    const ast = parseOrvi(`[callout type="success"]
+  Done.
+[/callout]`);
+
+    expect(ast.diagnostics).toEqual([]);
+    expect((ast.children[0] as ComponentNode).options).toEqual({ type: "success" });
+  });
+
+  it("does not treat intraword underscores as emphasis", () => {
+    const ast = parseOrvi("Use snake_case_var here.");
+
+    const paragraph = ast.children[0] as { children: { type: string }[] };
+    expect(paragraph.children.every((child) => child.type === "text")).toBe(true);
+  });
+
+  it("still emphasizes underscore-delimited tokens at word boundaries", () => {
+    const ast = parseOrvi("text _emph_ end");
+
+    const paragraph = ast.children[0] as { children: { type: string }[] };
+    expect(paragraph.children.some((child) => child.type === "emphasis")).toBe(true);
+  });
+
+  it("reports dynamic content diagnostics on the originating line", () => {
+    const ast = parseOrvi("first line\nsecond {x} line");
+
+    expect(ast.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "ORVI_DYNAMIC_CONTENT_UNSUPPORTED",
+        line: 2,
+        column: 8,
+        endLine: 2,
+        endColumn: 11
+      })
+    ]);
+  });
 });

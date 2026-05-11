@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Bundle the Orvi CLI/runtime so diagnostics and preview work without a global
+  `orvi` command.
+- Keep `orvi.cliPath` as an optional override for external CLI builds.
+
 ## 0.1.0
 
 - Add `.ov` language registration.

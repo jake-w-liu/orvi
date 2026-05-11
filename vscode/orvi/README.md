@@ -12,27 +12,13 @@ file extension compact.
 - TextMate syntax highlighting
 - Snippets for callouts, grids, cards, tabs, buttons, and images
 - Completion items for Orvi components, semantic prefixes, modifiers, and metadata
-- Diagnostics from `orvi check --json`
-- Side-by-side preview from `orvi build`
+- Diagnostics from the bundled Orvi CLI
+- Side-by-side preview from the bundled Orvi renderer
 
 ## Requirements
 
-Diagnostics and preview need the Orvi CLI on your `PATH`, or a configured
-absolute path in `orvi.cliPath`.
-
-From the Orvi repo:
-
-```sh
-npm install
-npm run build
-npm link
-```
-
-Then verify:
-
-```sh
-orvi check examples/welcome.ov
-```
+No separate Orvi CLI install is required for normal VS Code use. The extension
+ships with the Orvi CLI/runtime used for diagnostics and preview.
 
 ## Settings
 
@@ -42,8 +28,8 @@ orvi check examples/welcome.ov
 }
 ```
 
-If VS Code cannot find `orvi`, run `which orvi` in your shell and set `orvi.cliPath`
-to that absolute path.
+Leave `orvi.cliPath` as `orvi` to use the bundled CLI. Set it only when you
+want the extension to use a separate local Orvi CLI build.
 
 ## Commands
 
@@ -69,5 +55,5 @@ npm run package
 Install the packaged extension:
 
 ```sh
-code --install-extension orvi-language-0.1.0.vsix
+code --install-extension orvi-language-0.1.1.vsix
 ```

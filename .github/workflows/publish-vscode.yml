@@ -49,6 +49,7 @@ jobs:
       - name: Package extension
         working-directory: vscode/orvi
         run: |
+          npm run prepare-runtime
           if [ -n "${{ inputs.version }}" ]; then
             npx vsce package "${{ inputs.version }}" --no-git-tag-version --out orvi-language.vsix
           else

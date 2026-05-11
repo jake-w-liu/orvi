@@ -2,7 +2,7 @@
   "name": "orvi-language",
   "displayName": "Orvi Language",
   "description": "Language support, diagnostics, completions, and preview for Orvi markup.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "jake-w-liu",
   "license": "MIT",
   "preview": true,
@@ -35,8 +35,9 @@
     "Other"
   ],
   "scripts": {
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "prepare-runtime": "node scripts/prepare-runtime.mjs",
+    "package": "npm run prepare-runtime && vsce package",
+    "publish": "npm run prepare-runtime && vsce publish"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.9.1"
@@ -95,7 +96,7 @@
         "orvi.cliPath": {
           "type": "string",
           "default": "orvi",
-          "description": "Path to the Orvi CLI executable used for diagnostics and preview."
+          "description": "Optional path to an external Orvi CLI executable. The bundled CLI is used by default."
         }
       }
     }

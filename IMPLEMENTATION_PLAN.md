@@ -25,9 +25,9 @@ implementation companion and avoid drifting from the guide roadmap.
 | Formatter                                   | Done: `orvi format` + Prettier plugin bridge                                                                                               |
 | React component                             | Done: `@orvi/orvi/react`                                                                                                               |
 | VS Code syntax highlighting/snippets/config | Done                                                                                                                                      |
-| VS Code diagnostics                         | Done: extension runs `orvi check --json`                                                                                                   |
-| VS Code package/release prep                | Done: extension `npm run package`, package metadata, README, changelog, license, package lock, `.vscodeignore`                            |
-| VS Code Marketplace publish                 | Done: live v0.1.0 release, manual Marketplace upload path, token-free VSIX package fallback, and optional token-backed workflow            |
+| VS Code diagnostics                         | Done: extension uses bundled Orvi CLI by default                                                                                           |
+| VS Code package/release prep                | Done: extension `npm run package`, bundled runtime, package metadata, README, changelog, license, package lock, `.vscodeignore`            |
+| VS Code Marketplace publish                 | Done: live v0.1.0 release; v0.1.1 VSIX prepared locally with bundled CLI; manual Marketplace upload remains the supported update path      |
 | VS Code autocomplete/live preview           | Done                                                                                                                                      |
 | CI                                          | Done: GitHub Actions runs root verify and VS Code package check                                                                           |
 | Prettier plugin                             | Bridge done with basic Prettier CLI coverage                                                                                              |

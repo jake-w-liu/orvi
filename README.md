@@ -106,8 +106,9 @@ deploys the playground, example render, ESM renderer, and Orvi artifact schema.
 ## VS Code
 
 Extension package source lives in `vscode/orvi`. It provides syntax highlighting,
-snippets, completions, diagnostics through `orvi check --json`, and a preview
-panel through `orvi build`.
+snippets, completions, diagnostics, and preview. The VSIX bundles the Orvi
+CLI/runtime, so users do not need a separate global `orvi` command for normal
+editor use.
 
 ```sh
 cd vscode/orvi
@@ -118,7 +119,7 @@ npm run package
 The packaged `.vsix` can be installed with:
 
 ```sh
-code --install-extension vscode/orvi/orvi-language-0.1.0.vsix
+code --install-extension vscode/orvi/orvi-language-0.1.1.vsix
 ```
 
 The current Marketplace release path is manual upload: package the VSIX with
