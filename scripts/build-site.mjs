@@ -40,24 +40,7 @@ const packageJson = JSON.parse(
   await readFile(join(root, "package.json"), "utf8"),
 );
 const pagesCname = process.env.ORVI_PAGES_CNAME?.trim();
-await writeFile(
-  join(siteDir, "index.html"),
-  `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Orvi Playground</title>
-    <meta http-equiv="refresh" content="0; url=playground/">
-    <link rel="canonical" href="playground/">
-  </head>
-  <body>
-    <p><a href="playground/">Open Orvi Playground</a></p>
-    <p><a href="rendered/">Browse rendered Orvi files</a></p>
-  </body>
-</html>
-`,
-);
+await writeFile(join(siteDir, "index.html"), await buildLandingPage());
 if (pagesCname) {
   await writeFile(join(siteDir, "CNAME"), `${pagesCname}\n`);
 }
@@ -66,6 +49,27 @@ await writeFile(
   join(siteDir, "version.json"),
   `${JSON.stringify({ name: packageJson.name, version: packageJson.version, renderedOrviFiles }, null, 2)}\n`,
 );
+
+async function buildLandingPage() {
+  const landingSource = await readFile(
+    join(root, "examples", "getting-started.ov"),
+    "utf8",
+  );
+  const result = renderOrvi(landingSource, {
+    fullDocument: true,
+    title: "Orvi — a strict, human-writable markup language",
+  });
+
+  const nav = `<nav style="display:flex;flex-wrap:wrap;gap:1rem;align-items:baseline;max-width:46rem;margin:1rem auto 0;padding:0 1rem;font:14px/1.5 system-ui,sans-serif">
+  <strong style="font-size:15px">Orvi</strong>
+  <a href="playground/">Playground</a>
+  <a href="rendered/">Rendered examples</a>
+  <a href="https://github.com/jake-w-liu/orvi">GitHub</a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=jake-w-liu.orvi-language">VS Code extension</a>
+</nav>`;
+
+  return result.html.replace("<body>", `<body>\n${nav}`);
+}
 
 async function renderOrviFiles() {
   const sourceFiles = await findOrviFiles(root);

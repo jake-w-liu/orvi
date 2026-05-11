@@ -23,6 +23,10 @@ Implementation progress is tracked in the roadmap section of that guide.
   use it from a clone of this repo (see below). Publishing is wired in
   `.github/workflows/publish-npm.yml`; `docs/release.md` has the steps.
 
+Sample documents to read or render live in `examples/` (`getting-started.ov`,
+`dashboard.ov`, `welcome.ov`). The GitHub Pages site renders each one and serves
+`getting-started.ov` as its landing page.
+
 Orvi documents may start with optional top-level metadata:
 
 ```orvi

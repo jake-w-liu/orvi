@@ -1,0 +1,64 @@
+---
+orvi: 0.1
+title: Service Status — Q2 Operating Review
+lang: en
+---
+
+# Service Status — Q2 Operating Review
+
+badge: Live | type=success
+
+[purple bold] Snapshot across the platform services for the quarterly operating review. []
+
+[grid 3]
+  ## API
+  - Uptime: 99.97%
+  - p95 latency: 142 ms
+  - Open incidents: 0
+  ---
+  ## Ingest
+  - Uptime: 99.82%
+  - Backlog: 1.2k events
+  - Open incidents: 1
+  ---
+  ## Web
+  - Uptime: 100%
+  - LCP: 1.4 s
+  - Open incidents: 0
+[/grid]
+
+[callout type=warning]
+  Ingest backlog crossed the 1k-event threshold on the 14th. Owner: Platform. Mitigation in progress; expected clear by end of week.
+[/callout]
+
+## Incident detail
+
+[tabs]
+  [tab label=Summary]
+    **INC-204** — elevated ingest lag during the regional failover drill. No data loss; customer impact was delayed dashboards for about 18 minutes.
+  [/tab]
+  [tab label=Timeline]
+    1. 09:02 — failover drill begins
+    2. 09:05 — ingest lag alert fires
+    3. 09:14 — extra consumers scaled out
+    4. 09:23 — lag back to baseline
+  [/tab]
+  [tab label=Actions]
+    - Pre-scale consumers before scheduled drills
+    - Add a lag SLO that pages at two minutes
+    - Document the failover runbook
+  [/tab]
+[/tabs]
+
+| Service | Owner | Uptime | Incidents |
+| --- | --- | --- | --- |
+| API | Core | 99.97% | 0 |
+| Ingest | Platform | 99.82% | 1 |
+| Web | Frontend | 100% | 0 |
+
+[card bg=gray]
+  ## Decision
+  Hold the ingest SLO at 99.9% for Q3; revisit if the new lag SLO surfaces recurring breaches.
+[/card]
+
+btn: Open the full report -> https://example.com/reports/q2

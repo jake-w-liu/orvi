@@ -409,6 +409,8 @@ marking the parent complete.
 - [x] Static **Orvi Playground** with editor + preview split
 - [x] Add GitHub Pages deployment workflow for the Orvi Playground
 - [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds
+- [x] Serve an Orvi-authored quickstart (`examples/getting-started.ov`) as the GitHub Pages landing page, with a nav strip to the playground, rendered examples, GitHub, and the VS Code extension
+- [x] Add varied example documents (`examples/getting-started.ov`, `examples/dashboard.ov`) alongside `welcome.ov`
 - [x] Gate `orvi.dev` custom-domain deployment behind `ORVI_PAGES_CNAME` so the default Pages URL stays usable
 
 Optional external branding step: `orvi.dev` is not registered as of the latest

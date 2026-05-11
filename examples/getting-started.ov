@@ -1,0 +1,58 @@
+---
+orvi: 0.1
+title: Get Started with Orvi
+lang: en
+---
+
+# Get Started with Orvi
+
+[blue bold] Orvi is a strict, human-writable markup language: Markdown-simple text, plus native visual scopes, layout components, and semantic elements — and no HTML fallback. []
+
+## Write it like Markdown
+
+Headings, **bold**, _italic_, ~~strikethrough~~, lists, tables, and fenced code blocks all behave the way you expect. When you need more than text, Orvi gives you a clean path forward instead of raw tags.
+
+## Add visual scope
+
+Open a scope with a bracketed modifier and close it with an empty bracket:
+
+```orvi
+[green bold] looks good [] [bg=yellow] highlighted [] [lg] bigger []
+```
+
+Modifiers cover colors, sizes from xs to 2xl, weights, and a bg= background.
+
+## Add layout and structure
+
+[grid 2]
+  ## Components
+  - callout — notes and alerts, with a type
+  - grid N — columns split by ---
+  - card — a panel, optionally with a bg
+  - tabs and tab — labelled sections
+  ---
+  ## Semantic lines
+  - btn: Label -> url
+  - img: ./picture.png | alt text
+  - badge: Text | type=info
+  - hr: and br:
+[/grid]
+
+[callout type=info]
+  Every supported construct is expressed natively in Orvi. One strict spec, one canonical parser — no dialects to reconcile.
+[/callout]
+
+## Try it now
+
+[grid 3]
+  ## Playground
+  Edit Orvi with a live preview in the browser — nothing to install.
+  ---
+  ## VS Code
+  Install the Orvi Language extension for highlighting, diagnostics, completions, and a preview panel.
+  ---
+  ## Spec
+  Read orvi-spec-v0.1.md for the full grammar and component reference.
+[/grid]
+
+badge: v0.1 prototype | type=success
