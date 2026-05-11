@@ -19,9 +19,9 @@ Implementation progress is tracked in the roadmap section of that guide.
 - **In VS Code:** install [`jake-w-liu.orvi-language`](https://marketplace.visualstudio.com/items?itemName=jake-w-liu.orvi-language)
   (`ext install jake-w-liu.orvi-language`) — syntax highlighting, diagnostics,
   completions, and a preview panel, with the Orvi runtime bundled.
-- **CLI / library:** the `orvi-lang` npm package is not published yet — for now
-  use it from a clone of this repo (see below). Publishing is wired in
-  `.github/workflows/publish-npm.yml`; `docs/release.md` has the steps.
+- **CLI / library:** `npm install orvi-lang` (the CLI binary is `orvi`; also
+  `npx orvi-lang build doc.ov`). Published with provenance from
+  `.github/workflows/publish-npm.yml`.
 
 Sample documents to read or render live in `examples/` (`getting-started.ov`,
 `dashboard.ov`, `welcome.ov`). The GitHub Pages site renders each one and serves
@@ -55,24 +55,24 @@ npm run verify  # full check + test + build + format suite
 ## CLI
 
 ```sh
-npm run build
-node dist/cli.js check examples/welcome.ov
-node dist/cli.js check examples/welcome.ov --json
-node dist/cli.js format examples/welcome.ov
-node dist/cli.js format examples/welcome.ov --check
-node dist/cli.js build examples/welcome.ov -o examples/welcome.html
-node dist/cli.js serve examples/welcome.ov --port 4173
+npm install -g orvi-lang   # provides the `orvi` command; or use `npx orvi-lang`
+
+orvi check examples/welcome.ov
+orvi check examples/welcome.ov --json
+orvi format examples/welcome.ov --write
+orvi build examples/welcome.ov -o examples/welcome.html
+orvi serve examples/welcome.ov --port 4173
 ```
 
-`orvi build` and `orvi serve` read `orvi.config.js` beside the input file when it
-exists. See `orvi.config.example.js`.
+From a clone of this repo, the same commands run via `node dist/cli.js …` after
+`npm run build`. `orvi build` and `orvi serve` read `orvi.config.js` beside the
+input file when it exists; see `orvi.config.example.js`.
 
 ## Library
 
-> `orvi-lang` is not on npm yet. Until it is, consume it from a clone of this
-> repo: `npm install && npm run build`, then import from `dist/` (or `src/` in a
-> TS project). The API and package layout below are what the published package
-> will expose.
+```sh
+npm install orvi-lang
+```
 
 ```ts
 import { formatOrvi, parseOrvi, renderOrvi } from "orvi-lang";
@@ -102,7 +102,7 @@ export function Page() {
 }
 ```
 
-Prettier (once `orvi-lang` is on npm):
+Prettier:
 
 ```sh
 prettier --plugin orvi-lang/prettier-plugin --write "**/*.ov"

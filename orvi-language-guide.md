@@ -390,7 +390,7 @@ marking the parent complete.
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`
 - [x] Drop the Azure-tied VS Code Marketplace publish workflow; distribute via GitHub Release VSIX and Open VSX instead
 - [x] Wire npm publish: `package.json` metadata/`bin`/`repository`, `.github/workflows/publish-npm.yml` gated by `NPM_TOKEN`, runbook in `docs/release.md`
-- [ ] Publish the `orvi-lang` package to npm (needs an npm account + `NPM_TOKEN`; not a code task)
+- [x] Publish the `orvi-lang` package to npm (live at npmjs.com/package/orvi-lang with build provenance; global CLI command `orvi`)
 - [x] **Prettier plugin bridge** for auto-formatting `.ov` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`

@@ -4,21 +4,21 @@ This runbook tracks the release paths that are already wired in this repository.
 
 ## npm package (`orvi-lang`)
 
-The package publishes as **`orvi-lang`** (`npm install orvi-lang`, `npx orvi-lang`).
-The unscoped name `orvi` is rejected by npm's name-similarity guard (too close to
-`ora` / `mri`), and the `@orvi` org name is unavailable, so `orvi-lang` is the
-working unscoped name. The CLI binary is still `orvi`. The package metadata, `bin`
-(`orvi`), `exports` map (including the `./parser`, `./renderer`, `./formatter`,
-`./artifact`, `./prettier-plugin`, `./react`, `./orvi-base.css` subpaths),
-`files` allowlist, and `repository` field are ready in the root `package.json`.
+**Published:** <https://www.npmjs.com/package/orvi-lang> (`npm install orvi-lang`,
+`npx orvi-lang`, global CLI command `orvi`), with build provenance from GitHub
+Actions. The unscoped name `orvi` is rejected by npm's name-similarity guard (too
+close to `ora` / `mri`), and the `@orvi` org name is unavailable, so the package
+is `orvi-lang`. The package metadata, `bin` (`orvi`), `exports` map (`./parser`,
+`./renderer`, `./formatter`, `./artifact`, `./prettier-plugin`, `./react`,
+`./orvi-base.css` subpaths), `files` allowlist, and `repository` field live in
+the root `package.json`.
 
-Not published yet. Prerequisites:
+Re-publishing a new version:
 
-- An npm account. The first `npm publish` claims the `orvi-lang` name. If npm ever
-  rejects it too, fall back to a user-scoped name (`@<your-npm-user>/orvi`, no org
-  needed) and update every `orvi-lang` package reference in the repo.
-- An npm automation/granular token with publish rights, saved as the `NPM_TOKEN`
-  repository secret for the workflow path below.
+- Owner: `jake-w-liu`. An npm automation/granular token with publish rights for
+  `orvi-lang` must be saved as the `NPM_TOKEN` repository secret.
+- Bump the version first (`npm version patch|minor|major`, or pass the version as
+  the workflow input).
 
 Automated publish — `.github/workflows/publish-npm.yml` (`workflow_dispatch`):
 checks out, `npm ci`, optionally `npm version <input>`, runs `npm run verify`
