@@ -402,7 +402,8 @@ marking the parent complete.
 - [x] **AI artifact/render-surface support** — native Orvi artifact JSON output type
 - [x] **GitHub Pages rendering** — render `.ov` files from the repo as HTML previews
 - [x] **Native GitHub rendering decision** — direct GitHub.com `.ov` rendering requires GitHub platform support; Orvi uses generated GitHub Pages previews instead (see `docs/release.md`)
-- [ ] **github-linguist submission** — register `.ov` for syntax highlighting and language stats on GitHub.com; grammar is ready (`vscode/orvi/syntaxes/orvi.tmLanguage.json`) and the PR pieces are documented, but Linguist gates new languages on cross-repo usage, so it is parked until `.ov` is widely used
+- [x] **github-linguist submission kit** — full copy-pasteable kit in `docs/linguist-submission.md` (grammar, `languages.yml`/`grammars.yml` entries, submodule + `language_id` steps, sample requirement); interim `.gitattributes` override highlights `.ov` as Markdown on GitHub.com today
+- [ ] **github-linguist PR** — open the Linguist PR once `.ov` meets the cross-repo usage bar (parked until then; not a code task)
 - [x] Static **Orvi Playground** with editor + preview split
 - [x] Add GitHub Pages deployment workflow for the Orvi Playground
 - [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds

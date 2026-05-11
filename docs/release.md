@@ -137,32 +137,15 @@ languages, both routed through [github-linguist](https://github.com/github-lingu
 
 ### github-linguist submission
 
-Grammar: `vscode/orvi/syntaxes/orvi.tmLanguage.json` (`scopeName: source.orvi`),
-already kept in sync with the parser. This repo is MIT-licensed, which satisfies
-Linguist's grammar-license requirement, and can serve as the grammar source repo.
-
-Linguist PR pieces (against a fork of `github-linguist/linguist`):
-
-- `lib/linguist/languages.yml` — add an `Orvi` entry:
-
-  ```yaml
-  Orvi:
-    type: prose
-    color: "#6f57c7"
-    extensions:
-      - ".ov"
-    tm_scope: source.orvi
-    ace_mode: text
-    language_id: # assigned by Linguist maintainers
-  ```
-
-- `vendor/grammars/orvi` — add as a git submodule pointing at
-  `https://github.com/jake-w-liu/orvi`; add the matching line to
-  `vendor/README.md` and the `source.orvi` mapping to `grammars.yml`.
-- Run `script/add-grammar` / `bundle exec rake test` per Linguist's
-  contributing guide, then open the PR.
+The complete, copy-pasteable submission kit lives in
+[`docs/linguist-submission.md`](linguist-submission.md): the `languages.yml`
+entry, the `grammars.yml` mapping, the submodule steps, the `language_id`
+procedure, and the sample-file requirement. The grammar
+(`vscode/orvi/syntaxes/orvi.tmLanguage.json`, scope `source.orvi`) and the MIT
+license are already in place.
 
 **Gate:** Linguist only accepts a new language once it is in real cross-repo use
 (hundreds of `.ov` files across multiple public repositories). Orvi does not meet
-that bar yet, so the submission is prepared but parked until usage exists. Track
-this on the roadmap rather than opening a PR that will be closed as premature.
+that bar yet, so the kit is prepared but the PR is parked until usage exists.
+Until then, the repo root `.gitattributes` carries `*.ov linguist-language=Markdown`
+so github.com gives `.ov` files Markdown-grade highlighting in the interim.

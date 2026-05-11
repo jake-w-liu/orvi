@@ -1,0 +1,7 @@
+# Interim GitHub.com support for Orvi until `.ov` is accepted into
+# github-linguist (see docs/linguist-submission.md). Linguist has no `.ov`
+# language yet, so this override makes github.com highlight `.ov` files using
+# the Markdown grammar — close enough for headings, lists, emphasis, and code
+# fences, though Orvi's `[component]` / `[scope]` brackets will not be
+# highlighted correctly. Remove this line once Orvi ships in Linguist.
+*.ov linguist-language=Markdown
