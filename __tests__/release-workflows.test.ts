@@ -25,35 +25,40 @@ describe("release and deployment workflows", () => {
     expect(siteBuilder).toContain('join(siteDir, "CNAME")');
   });
 
-  it("keeps automated Marketplace publishing optional and token-backed", () => {
-    const workflow = read(".github/workflows/publish-vscode.yml");
+  it("ships VS Code extension distribution without Azure-tied automation", () => {
+    expect(() => read(".github/workflows/publish-vscode.yml")).toThrow();
+
+    const packageWorkflow = read(".github/workflows/package-vscode.yml");
+    expect(packageWorkflow).toContain("workflow_dispatch");
+    expect(packageWorkflow).toContain("npm run package");
+    expect(packageWorkflow).toContain("actions/upload-artifact@v4");
+    expect(packageWorkflow).not.toContain("VSCE_PAT");
+    expect(packageWorkflow).not.toContain("vsce publish");
+
+    const openVsxWorkflow = read(".github/workflows/publish-open-vsx.yml");
+    expect(openVsxWorkflow).toContain("OVSX_PAT");
+    expect(openVsxWorkflow).toContain("ovsx publish");
+    expect(openVsxWorkflow).not.toContain("VSCE_PAT");
+    expect(openVsxWorkflow).not.toContain("azure");
+
+    const rootPackage = JSON.parse(read("package.json")) as { scripts: Record<string, string> };
     const extensionPackage = JSON.parse(read("vscode/orvi/package.json")) as {
       scripts: Record<string, string>;
     };
-
-    expect(workflow).toContain("workflow_dispatch");
-    expect(workflow).toContain("secrets.VSCE_PAT");
-    expect(workflow).toContain("Missing required repository secret: VSCE_PAT");
-    expect(workflow).toContain("npx vsce verify-pat jake-w-liu");
-    expect(workflow).toContain("actions/upload-artifact@v4");
-    expect(workflow).toContain("Install root dependencies");
-    expect(workflow).toContain("npm run prepare-runtime");
-    expect(workflow).toContain("npx vsce publish");
-    expect(workflow).toContain("--packagePath orvi-language.vsix");
-    const releaseRunbook = read("docs/release.md");
-    expect(releaseRunbook).toContain("optional");
-    expect(releaseRunbook).toContain("token-backed infrastructure");
-    expect(extensionPackage.scripts.publish).toBe("npm run prepare-runtime && vsce publish");
+    expect(rootPackage.scripts).not.toHaveProperty("vscode:publish");
+    expect(extensionPackage.scripts).not.toHaveProperty("publish");
+    expect(extensionPackage.scripts.package).toBe("npm run prepare-runtime && vsce package");
   });
 
-  it("documents the manual account steps that cannot be completed from repo code", () => {
+  it("records the release runbook and the native GitHub rendering decision", () => {
     const releaseRunbook = read("docs/release.md");
 
     expect(releaseRunbook).toContain("jake-w-liu.orvi-language");
-    expect(releaseRunbook).toContain("VSCE_PAT");
     expect(releaseRunbook).toContain("orvi.dev");
+    expect(releaseRunbook).toContain("There is no Azure-backed automation in this repo.");
+    expect(releaseRunbook).toContain("github-linguist");
     expect(releaseRunbook).toContain(
-      "GitHub does not provide arbitrary repository-native renderers",
+      "true native rendering",
     );
   });
 });

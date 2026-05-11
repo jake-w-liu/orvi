@@ -75,15 +75,30 @@ describe("VS Code extension scaffold", () => {
       "tab",
       "btn:",
       "img:",
-      "hr",
-      "br",
+      "hr:",
+      "br:",
       "badge:",
       "bg=",
       "red",
       "blue",
       "green",
+      "gray",
+      "yellow",
+      "purple",
+      "orange",
+      "pink",
+      "cyan",
+      "white",
+      "black",
+      "xs",
       "sm",
+      "md",
       "lg",
+      "xl",
+      "2xl",
+      "light",
+      "regular",
+      "medium",
       "bold",
       "orvi:",
       "title:",
@@ -94,23 +109,51 @@ describe("VS Code extension scaffold", () => {
     }
   });
 
-  it("contributes a Orvi preview command and menus", () => {
+  it("contributes Orvi preview commands, menus, and keybindings", () => {
     const root = resolve(__dirname, "..", "vscode", "orvi");
     const pkg = readJson(resolve(root, "package.json"));
 
-    expect(pkg.activationEvents).toEqual(expect.arrayContaining(["onLanguage:orvi", "onCommand:orvi.preview"]));
+    expect(pkg.activationEvents).toContain("onLanguage:orvi");
     expect(pkg.contributes.commands).toContainEqual({
       command: "orvi.preview",
-      title: "Orvi: Preview"
+      title: "Orvi: Open Preview",
+      category: "Orvi"
+    });
+    expect(pkg.contributes.commands).toContainEqual({
+      command: "orvi.previewToSide",
+      title: "Orvi: Open Preview to the Side",
+      category: "Orvi"
     });
     expect(pkg.contributes.menus["editor/title"]).toContainEqual({
-      command: "orvi.preview",
+      command: "orvi.previewToSide",
       when: "resourceLangId == orvi",
       group: "navigation"
+    });
+    expect(pkg.contributes.menus["editor/context"]).toContainEqual({
+      command: "orvi.preview",
+      when: "resourceLangId == orvi",
+      group: "navigation@1"
+    });
+    expect(pkg.contributes.menus["explorer/context"]).toContainEqual({
+      command: "orvi.preview",
+      when: "resourceExtname == .ov",
+      group: "navigation@1"
     });
     expect(pkg.contributes.menus.commandPalette).toContainEqual({
       command: "orvi.preview",
       when: "resourceLangId == orvi"
+    });
+    expect(pkg.contributes.keybindings).toContainEqual({
+      command: "orvi.preview",
+      key: "ctrl+shift+v",
+      mac: "cmd+shift+v",
+      when: "editorLangId == orvi"
+    });
+    expect(pkg.contributes.keybindings).toContainEqual({
+      command: "orvi.previewToSide",
+      key: "ctrl+k v",
+      mac: "cmd+k v",
+      when: "editorLangId == orvi"
     });
   });
 
