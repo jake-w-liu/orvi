@@ -101,6 +101,14 @@ exports.defaultCss = `:root {
   margin-top: 0;
 }
 
+.orvi-theme-dark .orvi-code {
+  background: #0d1117;
+}
+
+.orvi-theme-dark .orvi-code-title {
+  background: #161b22;
+}
+
 .orvi-table {
   border-collapse: collapse;
   width: 100%;
@@ -200,6 +208,8 @@ exports.defaultCss = `:root {
 }
 
 .orvi-tabs {
+  display: flex;
+  flex-wrap: wrap;
   border: 1px solid var(--orvi-border);
   border-radius: var(--orvi-radius);
   overflow: hidden;
@@ -207,18 +217,22 @@ exports.defaultCss = `:root {
 
 .orvi-tab-input {
   position: absolute;
+  width: 1px;
+  height: 1px;
   opacity: 0;
 }
 
 .orvi-tab-label {
+  order: 1;
   border-bottom: 1px solid var(--orvi-border);
   cursor: pointer;
-  display: inline-block;
   font-weight: 700;
   padding: 0.75rem 1rem;
 }
 
 .orvi-tab-panel {
+  order: 2;
+  flex-basis: 100%;
   display: none;
   padding: 1rem;
 }

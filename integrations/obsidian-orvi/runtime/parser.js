@@ -58,6 +58,7 @@ class OrviParser {
             return {};
         }
         const start = this.current();
+        const hasClose = this.lines.some((line, index) => index > 0 && line.text.trim() === "---");
         this.index += 1;
         const metadata = {};
         while (!this.isEnd()) {
@@ -74,6 +75,11 @@ class OrviParser {
             }
             const match = /^([a-z][a-z0-9-]*):\s*(.*)$/i.exec(trimmed);
             if (!match) {
+                if (!hasClose) {
+                    this.error("ORVI_UNCLOSED_METADATA", "Unclosed metadata block; expected a closing `---`.", start);
+                    this.validateMetadata(metadata, start);
+                    return metadata;
+                }
                 this.error("ORVI_INVALID_METADATA", "Metadata entries must use `key: value` syntax.", line);
                 this.index += 1;
                 continue;
@@ -107,7 +113,8 @@ class OrviParser {
             }
             this.index += 1;
         }
-        this.error("ORVI_UNCLOSED_METADATA", "Unclosed metadata block.", start);
+        this.error("ORVI_UNCLOSED_METADATA", "Unclosed metadata block; expected a closing `---`.", start);
+        this.validateMetadata(metadata, start);
         return metadata;
     }
     parseBlocks(stopTag, depth = 0) {
@@ -274,7 +281,8 @@ class OrviParser {
         const trimmed = opening.text.trim();
         const meta = trimmed.slice(3).trim();
         const [languagePart, filenamePart] = meta.split("|").map((part) => part.trim());
-        const language = languagePart || undefined;
+        const languageToken = languagePart ? languagePart.split(/\s+/)[0] : "";
+        const language = languageToken && /^[\w.+#-]+$/.test(languageToken) ? languageToken : undefined;
         const filename = filenamePart || undefined;
         const body = [];
         this.index += 1;
@@ -352,20 +360,23 @@ class OrviParser {
     }
     parseParagraph() {
         const start = this.current();
-        const parts = [];
+        const collected = [];
         while (!this.isEnd()) {
             const line = this.current();
             if (this.isBlockBoundary(line)) {
                 break;
             }
-            parts.push(line.text.trim());
+            collected.push(line);
             this.index += 1;
         }
-        const value = parts.join(" ");
+        for (const line of collected) {
+            this.validateDynamicContent(line.text, line.line, 1);
+        }
+        const value = collected.map((line) => line.text.trim()).join(" ");
         return {
             type: "paragraph",
             loc: loc(start),
-            children: this.parseInline(value, start.line, firstContentColumn(start.text))
+            children: this.parseInline(value, start.line, firstContentColumn(start.text), false)
         };
     }
     parseSemanticLine(line) {
@@ -389,14 +400,16 @@ class OrviParser {
             return base;
         }
         if (name === "btn") {
-            const parts = payload.split(/\s*(?:->|→)\s*/u);
-            if (parts.length < 2 || !parts[0] || !parts.slice(1).join("->")) {
+            const arrow = /^(.*?)\s*(?:->|→)\s*(.*)$/u.exec(payload);
+            const label = arrow ? arrow[1].trim() : "";
+            const target = arrow ? arrow[2].trim() : "";
+            if (!arrow || !label || !target) {
                 this.error("ORVI_INVALID_SEMANTIC", "btn: requires `Label -> target`.", line);
             }
             return {
                 ...base,
-                value: parts[0]?.trim() ?? "",
-                target: parts.slice(1).join("->").trim()
+                value: label,
+                target
             };
         }
         const [valuePart, optionPart] = payload.split("|").map((part) => part.trim());
@@ -459,8 +472,8 @@ class OrviParser {
                     continue;
                 }
             }
-            if (value[index] === "_") {
-                const close = value.indexOf("_", index + 1);
+            if (value[index] === "_" && canOpenEmphasis(value, index)) {
+                const close = findEmphasisClose(value, index + 1);
                 if (close > index + 1) {
                     nodes.push({
                         type: "emphasis",
@@ -475,7 +488,7 @@ class OrviParser {
                 const bracketClose = value.indexOf("]", index + 1);
                 if (bracketClose > index + 1) {
                     const rawModifiers = value.slice(index + 1, bracketClose).trim();
-                    const modifiers = this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
+                    const modifiers = this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, false);
                     if (modifiers) {
                         const scopeClose = this.findScopeClose(value, bracketClose + 1);
                         if (scopeClose >= 0) {
@@ -489,6 +502,9 @@ class OrviParser {
                             continue;
                         }
                         this.errorAt("ORVI_UNCLOSED_SCOPE", "Unclosed inline scope; expected [].", line, column + index);
+                    }
+                    else if (value.indexOf("[]", bracketClose + 1) >= 0) {
+                        this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
                     }
                 }
             }
@@ -638,8 +654,14 @@ class OrviParser {
         if (this.index + 1 >= this.lines.length)
             return false;
         const current = this.current().text.trim();
+        if (!current.includes("|"))
+            return false;
         const next = this.lines[this.index + 1].text.trim();
-        return current.includes("|") && isTableDivider(next);
+        const headerCells = splitTableRow(current);
+        const dividerCells = splitTableRow(next);
+        return (headerCells.length >= 1 &&
+            headerCells.length === dividerCells.length &&
+            dividerCells.every((cell) => /^:?-{3,}:?$/.test(cell.trim())));
     }
     isBlockBoundary(line) {
         const trimmed = line.text.trim();
@@ -666,14 +688,18 @@ class OrviParser {
         return this.index >= this.lines.length;
     }
     isMetadataStart() {
-        if (this.index !== 0 || this.lines.length < 3)
+        if (this.index !== 0 || this.lines.length < 2)
             return false;
         if (this.lines[0].text.trim() !== "---")
             return false;
+        const entryPattern = /^([a-z][a-z0-9-]*):\s*(.*)$/i;
         const closeIndex = this.lines.findIndex((line, index) => index > 0 && line.text.trim() === "---");
-        if (closeIndex < 0)
-            return false;
-        return this.lines.slice(1, closeIndex).some((line) => /^([a-z][a-z0-9-]*):\s*(.*)$/i.test(line.text.trim()));
+        if (closeIndex >= 0) {
+            return this.lines.slice(1, closeIndex).some((line) => entryPattern.test(line.text.trim()));
+        }
+        // No closing `---`: still treat this as a metadata block when the first line already looks
+        // like an entry, so the author gets an ORVI_UNCLOSED_METADATA diagnostic instead of silence.
+        return entryPattern.test((this.lines[1]?.text ?? "").trim());
     }
     error(code, message, line) {
         this.errorAt(code, message, line.line, firstContentColumn(line.text), diagnosticLength(line.text));
@@ -730,22 +756,78 @@ function parseCloseTag(trimmed) {
 function tokenizeOptions(raw) {
     const args = [];
     const options = {};
-    const tokens = raw.match(/"[^"]*"|'[^']*'|\S+/g) ?? [];
+    const tokens = scanOptionTokens(raw);
     for (const token of tokens) {
-        const cleaned = stripQuotes(token);
-        const equals = cleaned.indexOf("=");
+        const equals = indexOfUnquotedEquals(token);
         if (equals > 0) {
-            options[cleaned.slice(0, equals)] = cleaned.slice(equals + 1);
+            const key = token.slice(0, equals);
+            const value = stripQuotes(token.slice(equals + 1));
+            options[key] = value;
         }
-        else if (cleaned) {
-            args.push(cleaned);
+        else {
+            const value = stripQuotes(token);
+            if (value)
+                args.push(value);
         }
     }
     return { args, options };
 }
+function scanOptionTokens(raw) {
+    const tokens = [];
+    const length = raw.length;
+    let index = 0;
+    while (index < length) {
+        if (/\s/.test(raw[index])) {
+            index += 1;
+            continue;
+        }
+        let token = "";
+        while (index < length && !/\s/.test(raw[index])) {
+            const char = raw[index];
+            if (char === '"' || char === "'") {
+                const quote = char;
+                token += char;
+                index += 1;
+                while (index < length && raw[index] !== quote) {
+                    token += raw[index];
+                    index += 1;
+                }
+                if (index < length) {
+                    token += raw[index];
+                    index += 1;
+                }
+            }
+            else {
+                token += char;
+                index += 1;
+            }
+        }
+        if (token)
+            tokens.push(token);
+    }
+    return tokens;
+}
+function indexOfUnquotedEquals(token) {
+    let inSingle = false;
+    let inDouble = false;
+    for (let index = 0; index < token.length; index += 1) {
+        const char = token[index];
+        if (char === '"' && !inSingle)
+            inDouble = !inDouble;
+        else if (char === "'" && !inDouble)
+            inSingle = !inSingle;
+        else if (char === "=" && !inSingle && !inDouble)
+            return index;
+    }
+    return -1;
+}
 function stripQuotes(value) {
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-        return value.slice(1, -1);
+    if (value.length >= 2) {
+        const first = value[0];
+        const last = value[value.length - 1];
+        if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+            return value.slice(1, -1);
+        }
     }
     return value;
 }
@@ -757,12 +839,25 @@ function splitTableRow(row) {
         value = value.slice(0, -1);
     return value.split("|").map((cell) => cell.trim());
 }
-function isTableDivider(value) {
-    const cells = splitTableRow(value);
-    return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
-}
 function isListLine(trimmed) {
     return /^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed);
+}
+function canOpenEmphasis(value, index) {
+    const prev = index === 0 ? "" : value[index - 1];
+    return !/[A-Za-z0-9_]/.test(prev);
+}
+function findEmphasisClose(value, start) {
+    let index = start;
+    while (index < value.length) {
+        const candidate = value.indexOf("_", index);
+        if (candidate < 0)
+            return -1;
+        const next = candidate + 1 < value.length ? value[candidate + 1] : "";
+        if (!/[A-Za-z0-9_]/.test(next))
+            return candidate;
+        index = candidate + 1;
+    }
+    return -1;
 }
 function loc(line) {
     return { line: line.line, column: firstContentColumn(line.text) };

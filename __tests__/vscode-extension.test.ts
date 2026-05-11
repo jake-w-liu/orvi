@@ -47,7 +47,9 @@ describe("VS Code extension scaffold", () => {
     expect(extension).toContain('path.join(extensionContext.extensionPath, "runtime", "cli.js")');
     expect(extension).toContain("process.execPath");
     expect(extension).toContain("ELECTRON_RUN_AS_NODE");
-    expect(extension).toContain('["check", document.uri.fsPath, "--json"]');
+    expect(extension).toContain('["check", inputPath, "--json"]');
+    expect(extension).toContain("document.isDirty");
+    expect(extension).toContain('mkdtemp(path.join(os.tmpdir(), "orvi-check-"');
     expect(extension).toContain("onDidOpenTextDocument(checkDocument)");
     expect(extension).toContain("onDidSaveTextDocument");
     expect(extension).toContain("onDidChangeTextDocument");

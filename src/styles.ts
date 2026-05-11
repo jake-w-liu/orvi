@@ -98,6 +98,14 @@ export const defaultCss = `:root {
   margin-top: 0;
 }
 
+.orvi-theme-dark .orvi-code {
+  background: #0d1117;
+}
+
+.orvi-theme-dark .orvi-code-title {
+  background: #161b22;
+}
+
 .orvi-table {
   border-collapse: collapse;
   width: 100%;

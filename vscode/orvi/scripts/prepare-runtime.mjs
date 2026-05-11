@@ -8,7 +8,7 @@ const repoRoot = resolve(extensionRoot, "..", "..");
 const distPath = resolve(repoRoot, "dist");
 const runtimePath = resolve(extensionRoot, "runtime");
 
-execFileSync("npm", ["run", "build"], {
+execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "build"], {
   cwd: repoRoot,
   stdio: "inherit"
 });

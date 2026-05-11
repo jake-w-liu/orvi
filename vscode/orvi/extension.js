@@ -8,7 +8,7 @@ const path = require("path");
 const LANGUAGE_ID = "orvi";
 const DIAGNOSTIC_SOURCE = "orvi";
 const CHANGE_DEBOUNCE_MS = 300;
-const COMPLETION_TRIGGER_CHARS = ["[", ":", "=", " ", "\n"];
+const COMPLETION_TRIGGER_CHARS = ["[", ":", "="];
 
 const COMPLETION_DEFINITIONS = [
   { label: "callout", insertText: "[callout type=${1|info,warning,success,error|}]\n  $2\n[/callout]", detail: "Orvi component" },
@@ -148,10 +148,30 @@ function checkDocument(document) {
   });
 }
 
-function runOrviCheck(document, callback) {
+async function runOrviCheck(document, callback) {
   const cwd = workspaceFolderPath(document);
+  let inputPath = document.uri.fsPath;
+  let tempDir;
 
-  runOrvi(["check", document.uri.fsPath, "--json"], { cwd }, (error, stdout, stderr) => {
+  // Check the in-memory buffer (not the stale on-disk file) so diagnostics
+  // update while typing, not only on save — mirrors the preview path.
+  if (document.isDirty && typeof document.getText === "function") {
+    try {
+      tempDir = await mkdtemp(path.join(os.tmpdir(), "orvi-check-"));
+      inputPath = path.join(tempDir, path.basename(document.uri.fsPath) || "check.ov");
+      await writeFile(inputPath, document.getText(), "utf8");
+    } catch {
+      inputPath = document.uri.fsPath;
+      tempDir = undefined;
+    }
+  }
+
+  const cleanup = () => {
+    if (tempDir) rm(tempDir, { force: true, recursive: true }).catch(() => {});
+  };
+
+  runOrvi(["check", inputPath, "--json"], { cwd }, (error, stdout, stderr) => {
+    cleanup();
     const payload = parseJson(stdout);
     if (payload) {
       callback(toVsCodeDiagnostics(payload, document));

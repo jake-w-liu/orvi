@@ -1,7 +1,7 @@
 {
   "id": "orvi",
   "name": "Orvi",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.5.0",
   "description": "Render Orvi code blocks and Orvi documents in Obsidian preview.",
   "author": "Orvi contributors",

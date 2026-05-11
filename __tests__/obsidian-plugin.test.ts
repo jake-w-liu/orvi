@@ -89,12 +89,14 @@ describe("Obsidian Orvi plugin scaffold", () => {
     expect(manifest).toMatchObject({
       id: "orvi",
       name: "Orvi",
-      version: "0.1.0",
+      version: expect.stringMatching(/^\d+\.\d+\.\d+$/),
       minAppVersion: "1.5.0",
       description: expect.any(String),
       author: expect.any(String),
       isDesktopOnly: false
     });
+    const versions = JSON.parse(fs.readFileSync(path.join(pluginDir, "versions.json"), "utf8"));
+    expect(versions[manifest.version]).toBe(manifest.minAppVersion);
     expect(manifest.id).not.toMatch(/obsidian/i);
   });
 

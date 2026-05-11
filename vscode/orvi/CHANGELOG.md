@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6
+
+- Diagnostics now reflect the unsaved buffer while you type, not just the
+  last-saved file (the check now runs against a temp copy of the editor
+  contents, like the preview already did).
+- Completions no longer pop on every space and newline — they trigger on
+  `[`, `:`, `=`, and manual invoke only.
+- Bundled runtime picks up the dark-mode code-block contrast fix.
+
 ## 0.1.5
 
 - Fix the preview panel: `[tabs]` now lay out with the tab labels in a
