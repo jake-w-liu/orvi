@@ -10,6 +10,9 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("actions/upload-pages-artifact@v4");
     expect(workflow).toContain("actions/deploy-pages@v4");
     expect(workflow).toContain("npm run site:build");
+    expect(workflow).toContain("deployments: write");
+    expect(workflow).toContain("listDeployments");
+    expect(workflow).toContain("deleteDeployment");
     expect(siteBuilder).toContain("renderOrvi(source");
     expect(siteBuilder).toContain("renderedOrviFiles");
     expect(siteBuilder).toContain('href="playground/"');

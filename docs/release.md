@@ -114,6 +114,10 @@ The Pages workflow at `.github/workflows/deploy-pages.yml` builds:
 - `/schemas/`
 - `/version.json`
 
+After each successful Pages deployment, the workflow keeps the newest
+`github-pages` deployment record and deletes older records so the repository
+sidebar does not accumulate stale Pages deployments.
+
 The default Pages URL is:
 
 ```text
