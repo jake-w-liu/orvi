@@ -31,9 +31,9 @@ implementation companion and avoid drifting from the guide roadmap.
 | VS Code autocomplete/live preview           | Done                                                                                                                                      |
 | CI                                          | Done: GitHub Actions runs root verify and VS Code package check                                                                           |
 | Prettier plugin                             | Bridge done with basic Prettier CLI coverage                                                                                              |
-| Browser rendering verification              | Firefox launch + Chrome DOM smoke done; Safari WebDriver DOM smoke done                                                                   |
+| Browser rendering verification              | Conditional local smoke coverage: Firefox launch, Chrome DOM, and Safari WebDriver; tests skip when a browser or automation is unavailable |
 | ESM package build                           | Done: `dist/esm` import exports                                                                                                           |
-| React fixture app                           | Done: fixture app + Chrome/browser smoke coverage                                                                                         |
+| React fixture app                           | Done: fixture app + conditional Chrome browser smoke coverage                                                                             |
 | Obsidian/GitHub/AI artifact integrations    | Done: Obsidian scaffold, AI artifact, GitHub Pages rendering                                                                              |
 | AI artifact support                         | Done: `@orvi/orvi/artifact` export + JSON schema                                                                                       |
 | GitHub rendering                            | Done: GitHub Pages renders repo `.ov` files as HTML previews; native GitHub repo preview requires platform support                       |
@@ -88,7 +88,7 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: pin byte/character efficiency ratio against rendered HTML.
    - Done: publish benchmark results in `docs/benchmarks.md`.
    - Done: add model-neutral AI authoring prompt and repair guidance.
-   - Fine-tune a model on a Orvi corpus when a target model/provider is chosen.
+   - Fine-tune a model on an Orvi corpus when a target model/provider is chosen.
 
 6. Integrations
    - Done: add native Orvi artifact JSON output and schema for render surfaces.

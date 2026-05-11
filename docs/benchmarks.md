@@ -2,7 +2,7 @@
 
 Measured on 2026-05-11 from the deterministic fixtures in `benchmarks/corpus.ts`.
 
-The corpus is intentionally "large-ish" rather than synthetic at huge scale: 27 valid Orvi documents covering metadata, headings, inline scopes, lists, grids, callouts, cards, tabs, tables, code fences, images, badges, and buttons. Each fixture is rendered through `renderOrvi` in tests and compared with its paired equivalent HTML.
+The corpus is intentionally "large-ish" rather than synthetic at huge scale: 27 valid Orvi documents covering metadata, headings, inline scopes, lists, grids, callouts, cards, tabs, tables, code fences, images, badges, and buttons. Each fixture is rendered through `renderOrvi` in tests and compared with its paired expected HTML string.
 
 ## Summary
 

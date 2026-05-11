@@ -2,11 +2,15 @@
 
 VS Code language support for Orvi markup.
 
+Orvi is a coined short name from "ordered visual": ordered source text rendered
+into visual structure. The short name keeps the command, package, and `.ov`
+file extension compact.
+
 ## Features
 
 - `.ov` language registration
 - TextMate syntax highlighting
-- Snippets for callouts, grids, cards, tabs, buttons, images, and badges
+- Snippets for callouts, grids, cards, tabs, buttons, and images
 - Completion items for Orvi components, semantic prefixes, modifiers, and metadata
 - Diagnostics from `orvi check --json`
 - Side-by-side preview from `orvi build`

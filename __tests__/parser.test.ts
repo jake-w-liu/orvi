@@ -21,7 +21,7 @@ describe("parseOrvi", () => {
   Orvi is early.
 [/callout]
 
-btn: Get Started -> https://orvi.dev`);
+btn: Get Started -> https://github.com/jake-w-liu/orvi`);
 
     expect(ast.diagnostics).toEqual([]);
     expect(ast.children.map((node) => node.type)).toEqual([

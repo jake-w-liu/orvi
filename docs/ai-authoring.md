@@ -22,11 +22,12 @@ any assistant, agent, or render-surface pipeline.
   `card`, `tabs`, or `tab`.
 - `ORVI_UNKNOWN_OPTION`: remove the option or replace it with a documented
   option for that component.
-- `ORVI_GRID_COLUMN_MISMATCH`: adjust `[grid N]` or the `---` separators.
-- `ORVI_INVALID_TABLE`: make every table row the same width as the header.
-- `ORVI_UNSUPPORTED_DYNAMIC_EXPRESSION`: put the expression in a fenced code
+- `ORVI_GRID_MISMATCH`: adjust `[grid N]` or the `---` separators.
+- `ORVI_TABLE_WIDTH_MISMATCH`: make every table row the same width as the header.
+- `ORVI_DYNAMIC_CONTENT_UNSUPPORTED`: put the expression in a fenced code
   block or write literal text.
-- `ORVI_IMG_ALT_REQUIRED`: add `| descriptive alt text` to the image line.
+- `ORVI_INVALID_SEMANTIC`: for `img:` without alt text, add
+  `| descriptive alt text` to the image line.
 
 ## Example Output
 
@@ -67,5 +68,6 @@ npm run finetune:corpus
 
 The corpus and schema are documented in `docs/fine-tuning-corpus.md` and written
 to `training/fine-tuning/orvi-corpus.jsonl`. Keep outputs valid under
-`orvi check`, and include a mix of simple documents, component-heavy layouts,
-invalid-to-valid repairs, and benchmark-like paired Orvi/HTML examples.
+`orvi check`. The committed corpus currently includes prompt-to-Orvi,
+spec-surface-to-Orvi, and rendered-HTML-to-Orvi examples; add separate repair
+records before using it to train diagnostic-repair behavior.

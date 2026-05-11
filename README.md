@@ -4,6 +4,11 @@ Orvi is a strict, human-writable markup language that keeps Markdown-like text
 simple while adding native visual scopes, layout components, and semantic
 elements.
 
+The name is coined from "ordered visual": Orvi source stays ordered and readable
+as text, then renders into visual structure. It is intentionally short for the
+CLI, package name, and `.ov` files. This is a product story, not a trademark or
+domain-ownership claim.
+
 This repo implements the v0.1 prototype from `orvi-language-guide.md`.
 Implementation progress is tracked in the roadmap section of that guide.
 
@@ -146,7 +151,7 @@ The benchmark corpus pins Orvi-vs-rendered-HTML character and byte measurements.
 npm test -- --runTestsByPath __tests__/benchmark-corpus.test.ts
 ```
 
-Current pinned corpus ratio: rendered HTML is `2.259x` the Orvi source size.
+Current pinned corpus ratio: rendered HTML is `2.298x` the Orvi source size.
 Report: `docs/benchmarks.md`.
 
 ## Artifact Schema
@@ -171,10 +176,12 @@ model-neutral prompt in `prompts/orvi-authoring-system.md`.
 
 `npm run verify` runs:
 
-- TypeScript strict check
+- TypeScript `--noEmit` check
+- fine-tuning corpus sync check
 - Jest tests
-- Playground tests
-- Package build
+- playground tests
+- root package build
+- Prettier fixture format check
 
 Tests include parser/renderer/formatter behavior, React export behavior, VS Code
 extension JSON, and every fenced `orvi` example in `orvi-language-guide.md`.

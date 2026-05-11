@@ -13,7 +13,7 @@ describe("benchmark corpus token-ish efficiency", () => {
     expect(measureCorpus().orviChars).toBeGreaterThan(18000);
   });
 
-  it("renders every fixture to the paired equivalent HTML", () => {
+  it("renders every fixture to the paired expected HTML", () => {
     for (const fixture of benchmarkCorpus) {
       const result = renderOrvi(fixture.orvi);
 

@@ -23,7 +23,7 @@ title: Orvi Playground
   Orvi is currently in early development.
 [/callout]
 
-btn: Get Started -> https://orvi.dev
+btn: Get Started -> https://github.com/jake-w-liu/orvi
 `;
 
 export async function loadOrviRuntime() {

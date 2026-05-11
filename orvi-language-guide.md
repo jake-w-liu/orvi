@@ -41,7 +41,7 @@ HTML is powerful but hostile to human authoring:
 
 ### The Gap
 
-There is no language today that is simultaneously:
+Few mainstream authoring languages are simultaneously:
 
 - **Fast to write** (like Markdown)
 - **Token-efficient** (good for AI generation)
@@ -50,6 +50,16 @@ There is no language today that is simultaneously:
 - **Semantically rich** (components, not just tags)
 
 **Orvi is designed to fill that gap.**
+
+### Why the Name Orvi?
+
+Orvi is a coined short name from "ordered visual." The story is simple: authors
+write ordered, readable source text, and the renderer turns it into visual
+structure. The name also keeps the toolchain compact: `orvi` for the CLI,
+`@orvi/orvi` for the package, and `.ov` for files.
+
+This naming story does not claim trademark ownership, domain ownership, or that
+the word is unused elsewhere; those remain separate release and branding checks.
 
 ### Why Now?
 
@@ -69,10 +79,10 @@ The emergence of AI writing assistants changes the calculus. Previous markup lan
 | Goal                 | Description                                                 |
 | -------------------- | ----------------------------------------------------------- |
 | **Human writable**   | A developer or writer can learn Orvi in under an hour        |
-| **AI writable**      | Minimal tokens, unambiguous syntax, no edge cases           |
+| **AI writable**      | Minimal tokens, reduced ambiguity, narrow v0.1 edge cases   |
 | **Visually rich**    | Supports layout, color, components, and interactivity hints |
 | **One spec**         | No fragmentation; one canonical parser                      |
-| **No HTML fallback** | Everything expressible natively in Orvi                      |
+| **No HTML fallback** | Supported document constructs are expressed natively in Orvi |
 
 ### Non-Goals
 
@@ -115,7 +125,7 @@ Each layer builds on the previous. A document can use only Layer 1 and look like
 
 ### 4.1 Text & Headings
 
-Identical to Markdown for maximum familiarity:
+Markdown-like for maximum familiarity:
 
 ```orvi
 # Heading 1
@@ -257,7 +267,7 @@ Same as Markdown with optional filename annotation:
 
 ### 4.6 Tables
 
-Same as Markdown GFM tables:
+GFM-style tables:
 
 ```orvi
 | Name  | Role    | Status  |
@@ -309,7 +319,7 @@ dir: ltr
   Contributions welcome.
 [/callout]
 
-btn: Get Started → https://orvi.dev
+btn: Get Started → https://github.com/jake-w-liu/orvi
 ```
 
 ---
@@ -352,8 +362,8 @@ marking the parent complete.
 - [x] Support renderer/theme color scheme selection with `colorScheme: "dark"`
 - [x] Render declarative CSS tabs with ARIA attributes
 - [x] Render callouts, images, tabs, and document structure with v0.1 accessibility guarantees
-- [x] Test generated HTML launch in Firefox headless
-- [x] Test generated HTML DOM in Chrome headless
+- [x] Add generated HTML launch smoke coverage for Firefox headless, with a clean skip when Firefox is unavailable
+- [x] Add generated HTML DOM smoke coverage for Chrome headless, with a clean skip when Chrome is unavailable
 - [x] Add Safari WebDriver render smoke harness with clean skip when remote automation is disabled
 - [x] Run Safari WebDriver DOM render smoke with Safari remote automation enabled on the host machine
 
@@ -406,7 +416,7 @@ marking the parent complete.
 - [x] Prompt-engineer model-neutral guidance for AI systems to write idiomatic Orvi
 - [x] Prepare a provider-neutral fine-tuning JSONL corpus with deterministic validation
 - [ ] Fine-tune a model on the Orvi corpus with a selected provider and budget
-- [x] Measure token-ish byte/character efficiency vs rendered HTML for equivalent visual output
+- [x] Measure token-ish byte/character efficiency vs paired expected rendered HTML
 - [x] Publish benchmark results in `docs/benchmarks.md`
 
 ---
@@ -427,8 +437,8 @@ marking the parent complete.
 | Renderer       | TypeScript + CSS | No runtime dependencies          |
 | CLI            | Node.js          | Familiar to web developers       |
 | Editor Support | VS Code API      | Largest editor share             |
-| Playground     | React + Monaco   | Interactive, embeddable          |
-| Documentation  | Orvi itself       | Dogfooding the language          |
+| Playground     | Static browser ESM | Interactive prototype without a bundled editor dependency |
+| Documentation  | Markdown + Orvi examples | Current docs plus dogfooded render fixtures |
 
 ### File Conventions
 
@@ -442,11 +452,11 @@ marking the parent complete.
 
 ## 7. AI Integration
 
-Orvi has a unique opportunity to be the **first markup language designed with AI authorship in mind.**
+Orvi is designed to be an **AI-authoring-friendly markup language.**
 
 ### Token Efficiency
 
-Preliminary estimates suggest Orvi can express the same visual content as HTML in **40–60% fewer tokens.** This matters for:
+The current deterministic benchmark corpus shows Orvi source is **56.5% smaller by characters and bytes** than its paired rendered HTML. Token savings still need tokenizer-specific measurement. This matters for:
 
 - Reduced API costs when generating rich content
 - Faster generation
@@ -457,7 +467,7 @@ Preliminary estimates suggest Orvi can express the same visual content as HTML i
 A system prompt can instruct a model to output Orvi natively:
 
 ```
-You are a Orvi document generator. Always respond using valid Orvi syntax.
+You are an Orvi document generator. Always respond using valid Orvi syntax.
 Use [grid], [card], [callout], and inline scopes to produce visually rich output.
 Never use raw HTML. Refer to the Orvi spec for syntax rules.
 ```
@@ -476,7 +486,7 @@ The original open questions below now have v0.1 answers:
 2. **Dynamic content** — Variables and expressions such as `{name}` are not supported in v0.1. They produce diagnostics outside fenced code blocks.
 3. **Interactivity** — Interactivity remains declarative. Orvi has no user-script syntax; tabs are rendered with generated HTML and CSS.
 4. **Dark mode** — Dark mode is a renderer/theme color scheme selected with `colorScheme: "dark"`, not arbitrary Orvi syntax.
-5. **Accessibility** — Accessibility is enforced by the parser and renderer: images require alt text, callouts receive roles and labels, tabs receive ARIA wiring, and output uses semantic HTML.
+5. **Accessibility** — v0.1 enforces a focused accessibility baseline: images require alt text, callouts receive roles and labels, tabs receive ARIA wiring, and output uses semantic HTML.
 6. **Internationalization** — Documents support top-level `lang` and `dir` metadata from day one. `dir` may be `ltr`, `rtl`, or `auto`.
 7. **Versioning** — Documents may declare an optional top-level metadata block with `orvi: 0.1`; `title` metadata feeds full-document HTML titles.
 8. **Governance** — Governance remains project-owner led for now; a public issue can revisit this when the project needs a broader process.
@@ -488,7 +498,7 @@ The original open questions below now have v0.1 answers:
 Orvi is an open idea. The best next steps are:
 
 1. Critique this spec — find the edge cases and weaknesses
-2. Build a prototype parser — even a rough one proves the concept
+2. Improve the prototype parser and renderer by finding edge cases
 3. Write documents in Orvi (even manually) to test readability
 4. Propose missing components or syntax improvements
 

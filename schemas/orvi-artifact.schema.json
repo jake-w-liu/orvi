@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://orvi.dev/schemas/orvi-artifact.schema.json",
+  "$id": "https://jake-w-liu.github.io/orvi/schemas/orvi-artifact.schema.json",
   "title": "Orvi Artifact",
   "type": "object",
   "additionalProperties": false,
