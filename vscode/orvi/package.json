@@ -35,8 +35,7 @@
   ],
   "scripts": {
     "prepare-runtime": "node scripts/prepare-runtime.mjs",
-    "package": "npm run prepare-runtime && vsce package",
-    "publish": "npm run prepare-runtime && vsce publish"
+    "package": "npm run prepare-runtime && vsce package"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.9.1"

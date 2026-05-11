@@ -6,3 +6,4 @@ examples/*.html
 *.vsix
 .site/
 vscode/orvi/runtime/
+.DS_Store

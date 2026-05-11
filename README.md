@@ -119,16 +119,15 @@ npm run package
 The packaged `.vsix` can be installed with:
 
 ```sh
-code --install-extension vscode/orvi/orvi-language-0.1.1.vsix
+code --install-extension vscode/orvi/orvi-language-0.1.2.vsix
 ```
 
-The current Marketplace release path is manual upload: package the VSIX with
-`.github/workflows/package-vscode.yml` or `npm run vscode:package`, then upload
-it from the Marketplace publisher page. `.github/workflows/publish-vscode.yml`
-is kept as optional token-backed infrastructure, but it is not tracked as
-required release work. Open VSX publishing is wired through
+Distribution is Azure-free: package the VSIX with `npm run vscode:package` or the
+`.github/workflows/package-vscode.yml` artifact, then attach it to a GitHub
+Release. Open VSX publishing is wired through
 `.github/workflows/publish-open-vsx.yml` after `OVSX_PAT` and the `jake-w-liu`
-namespace are configured.
+namespace are configured. There is no VS Code Marketplace automation (it would
+require an Azure DevOps token).
 
 Safari WebDriver smoke coverage is included, but macOS must allow Safari remote
 automation before the test can create a real Safari session.

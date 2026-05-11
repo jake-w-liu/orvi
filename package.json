@@ -74,8 +74,7 @@
     "obsidian:build": "npm run build && node integrations/obsidian-orvi/build.mjs",
     "site:build": "npm run build && node dist/cli.js build examples/welcome.ov -o examples/welcome.html && node scripts/build-site.mjs",
     "verify": "npm run check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run format:check",
-    "vscode:package": "npm --prefix vscode/orvi run package --",
-    "vscode:publish": "npm --prefix vscode/orvi run publish --"
+    "vscode:package": "npm --prefix vscode/orvi run package --"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
