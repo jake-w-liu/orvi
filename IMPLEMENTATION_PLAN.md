@@ -10,9 +10,9 @@ implementation companion and avoid drifting from the guide roadmap.
 | Formal grammar/spec                         | Done: `orvi-spec-v0.1.md`                                                                                                                  |
 | Built-in modifiers/components               | Done: parser validation + CSS classes                                                                                                     |
 | Valid/invalid test suite                    | Done: Jest tests                                                                                                                          |
-| Parser package                              | Done: `src/parser.ts`, `orvi/parser`                                                                                             |
+| Parser package                              | Done: `src/parser.ts`, `orvi-lang/parser`                                                                                             |
 | AST types                                   | Done: `src/ast.ts`                                                                                                                        |
-| HTML renderer                               | Done: `src/renderer.ts`, `orvi/renderer`                                                                                         |
+| HTML renderer                               | Done: `src/renderer.ts`, `orvi-lang/renderer`                                                                                         |
 | Default stylesheet                          | Done: `src/orvi-base.css`                                                                                                                  |
 | Theming API                                 | Done: `orvi.config.js` support                                                                                                             |
 | Renderer color scheme                       | Done: `colorScheme: "dark"`                                                                                                               |
@@ -23,7 +23,7 @@ implementation companion and avoid drifting from the guide roadmap.
 | CLI JSON diagnostics                        | Done: `orvi check --json`, `orvi format --check --json`                                                                                     |
 | CLI live preview server                     | Done: `orvi serve` with hot reload                                                                                                         |
 | Formatter                                   | Done: `orvi format` + Prettier plugin bridge                                                                                               |
-| React component                             | Done: `orvi/react`                                                                                                               |
+| React component                             | Done: `orvi-lang/react`                                                                                                               |
 | VS Code syntax highlighting/snippets/config | Done                                                                                                                                      |
 | VS Code diagnostics                         | Done: extension uses bundled Orvi CLI by default                                                                                           |
 | VS Code package/release prep                | Done: extension `npm run package`, bundled runtime, package metadata, README, changelog, license, package lock, `.vscodeignore`            |
@@ -35,7 +35,7 @@ implementation companion and avoid drifting from the guide roadmap.
 | ESM package build                           | Done: `dist/esm` import exports                                                                                                           |
 | React fixture app                           | Done: fixture app + conditional Chrome browser smoke coverage                                                                             |
 | Obsidian/GitHub/AI artifact integrations    | Done: Obsidian scaffold, AI artifact, GitHub Pages rendering                                                                              |
-| AI artifact support                         | Done: `orvi/artifact` export + JSON schema                                                                                       |
+| AI artifact support                         | Done: `orvi-lang/artifact` export + JSON schema                                                                                       |
 | GitHub rendering                            | Done: GitHub Pages renders repo `.ov` files as HTML previews; native GitHub repo preview requires platform support                       |
 | Playground                                  | Done: static editor + preview split + Pages deploy workflow; custom domain gated until DNS is correct                                     |
 | AI corpus/benchmarks                        | Done: larger deterministic corpus + token-ish efficiency tests + published report                                                         |

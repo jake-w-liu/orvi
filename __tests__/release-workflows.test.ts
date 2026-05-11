@@ -69,7 +69,7 @@ describe("release and deployment workflows", () => {
       repository?: { url?: string };
       files?: string[];
     };
-    expect(rootPackage.name).toBe("orvi");
+    expect(rootPackage.name).toBe("orvi-lang");
     expect(rootPackage.bin).toMatchObject({ orvi: "dist/cli.js" });
     expect(rootPackage.repository?.url).toContain("github.com/jake-w-liu/orvi");
     expect(rootPackage.files).toEqual(expect.arrayContaining(["dist"]));

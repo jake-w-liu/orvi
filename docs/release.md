@@ -2,22 +2,21 @@
 
 This runbook tracks the release paths that are already wired in this repository.
 
-## npm package (`orvi`)
+## npm package (`orvi-lang`)
 
-The package is published unscoped as `orvi` — the `@orvi` npm organization name
-is unavailable, but the unscoped name `orvi` is free, and unscoped is also the
-nicer install (`npm install orvi`, `npx orvi`). The package metadata, `bin`
+The package publishes as **`orvi-lang`** (`npm install orvi-lang`, `npx orvi-lang`).
+The unscoped name `orvi` is rejected by npm's name-similarity guard (too close to
+`ora` / `mri`), and the `@orvi` org name is unavailable, so `orvi-lang` is the
+working unscoped name. The CLI binary is still `orvi`. The package metadata, `bin`
 (`orvi`), `exports` map (including the `./parser`, `./renderer`, `./formatter`,
 `./artifact`, `./prettier-plugin`, `./react`, `./orvi-base.css` subpaths),
 `files` allowlist, and `repository` field are ready in the root `package.json`.
 
 Not published yet. Prerequisites:
 
-- An npm account. The first `npm publish` claims the `orvi` name, so do it soon —
-  npm has no way to reserve a name without publishing. If `orvi` turns out to be
-  taken or rejected as too similar to an existing package, fall back to a
-  user-scoped name (`@<your-npm-user>/orvi`, no org needed) or `orvi-lang`, and
-  update every `orvi` package reference in the repo.
+- An npm account. The first `npm publish` claims the `orvi-lang` name. If npm ever
+  rejects it too, fall back to a user-scoped name (`@<your-npm-user>/orvi`, no org
+  needed) and update every `orvi-lang` package reference in the repo.
 - An npm automation/granular token with publish rights, saved as the `NPM_TOKEN`
   repository secret for the workflow path below.
 
