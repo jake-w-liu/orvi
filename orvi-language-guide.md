@@ -173,10 +173,10 @@ Use `[modifier]` syntax to open a visual scope and `[]` to close it:
 
 Modifiers can be:
 
-- Named colors: `red`, `blue`, `green`, `gray`, `muted`, etc.
-- Text size: `sm`, `md`, `lg`, `xl`
-- Weight: `bold`, `light`
-- Background: `bg=colorname`
+- Named colors: `red`, `blue`, `green`, `gray`, `muted`, `yellow`, `purple`, `orange`, `pink`, `cyan`, `white`, `black`
+- Text size: `xs`, `sm`, `md`, `lg`, `xl`, `2xl`
+- Weight: `light`, `regular`, `medium`, `bold`
+- Background: `bg=<color>` (uses the same color names)
 - Combined: `[red bold lg]`
 
 ### 4.3 Block Components
@@ -383,13 +383,12 @@ marking the parent complete.
   - [x] Packaging script for `.vsix`
   - [x] Autocomplete for components and modifiers
   - [x] Live preview panel
+  - [x] Right-click / Explorer context-menu preview and `Cmd/Ctrl+Shift+V` keybindings
   - [x] Release prep metadata, bundled runtime, README, changelog, license, package lock, and `.vscodeignore`
-- [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
-- [x] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.orvi-language`
 - [x] Prepare VS Code extension v0.1.1 with bundled CLI/runtime so diagnostics and preview do not require a global `orvi` command
-- [x] Harden Marketplace release workflow with token validation and VSIX artifact capture
-- [x] Add token-free VSIX package workflow for manual Marketplace upload and GitHub Releases
+- [x] Add token-free VSIX package workflow for GitHub Release distribution (no Azure DevOps token)
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`
+- [x] Drop the Azure-tied VS Code Marketplace publish workflow; distribute via GitHub Release VSIX and Open VSX instead
 - [x] **Prettier plugin bridge** for auto-formatting `.ov` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`
@@ -402,7 +401,8 @@ marking the parent complete.
 - [x] **Obsidian plugin scaffold** — render Orvi code blocks and `.ov` previews in Obsidian
 - [x] **AI artifact/render-surface support** — native Orvi artifact JSON output type
 - [x] **GitHub Pages rendering** — render `.ov` files from the repo as HTML previews
-- [x] **Native GitHub rendering decision** — direct GitHub.com `.ov` rendering requires GitHub platform support; Orvi uses generated GitHub Pages previews instead
+- [x] **Native GitHub rendering decision** — direct GitHub.com `.ov` rendering requires GitHub platform support; Orvi uses generated GitHub Pages previews instead (see `docs/release.md`)
+- [ ] **github-linguist submission** — register `.ov` for syntax highlighting and language stats on GitHub.com; grammar is ready (`vscode/orvi/syntaxes/orvi.tmLanguage.json`) and the PR pieces are documented, but Linguist gates new languages on cross-repo usage, so it is parked until `.ov` is widely used
 - [x] Static **Orvi Playground** with editor + preview split
 - [x] Add GitHub Pages deployment workflow for the Orvi Playground
 - [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds

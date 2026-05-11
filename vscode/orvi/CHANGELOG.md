@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Fix `hr`/`br` completions to insert `hr:`/`br:` (the parser requires the
+  trailing `:`).
+- Complete the modifier completion list: all 12 color names, sizes
+  `xs`–`2xl`, and weights `light`/`regular`/`medium`/`bold`.
+
 ## 0.1.2
 
 - Add right-click `Orvi: Open Preview` and `Open Preview to the Side` from
