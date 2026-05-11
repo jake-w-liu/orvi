@@ -372,6 +372,7 @@ marking the parent complete.
 ### Phase 3 — Developer Tooling
 
 - [x] **CLI tool:** `orvi build input.ov` → `output.html`
+- [x] **One-shot view:** `orvi view input.ov` builds to a temp file and opens it in the browser
 - [x] **CLI check/format:** `orvi check` and `orvi format`
 - [x] **Machine-readable diagnostics:** `orvi check --json` and `orvi format --check --json`
 - [x] **Live preview server:** `orvi serve` with hot reload

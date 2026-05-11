@@ -57,16 +57,16 @@ npm run verify  # full check + test + build + format suite
 ```sh
 npm install -g orvi-lang   # provides the `orvi` command; or use `npx orvi-lang`
 
-orvi check examples/welcome.ov
-orvi check examples/welcome.ov --json
-orvi format examples/welcome.ov --write
-orvi build examples/welcome.ov -o examples/welcome.html
-orvi serve examples/welcome.ov --port 4173
+orvi view doc.ov                       # render to a temp file and open it in the browser
+orvi serve doc.ov                      # live preview with hot reload (Ctrl+C to stop)
+orvi build doc.ov                      # write doc.html next to the input (or -o other.html)
+orvi check doc.ov [--json]             # validate, print diagnostics
+orvi format doc.ov [--write] [--check] # reformat
 ```
 
 From a clone of this repo, the same commands run via `node dist/cli.js …` after
-`npm run build`. `orvi build` and `orvi serve` read `orvi.config.js` beside the
-input file when it exists; see `orvi.config.example.js`.
+`npm run build`. `orvi view`, `orvi build`, and `orvi serve` read `orvi.config.js`
+beside the input file when it exists; see `orvi.config.example.js`.
 
 ## Library
 

@@ -133,6 +133,32 @@ describe("Orvi CLI", () => {
     expect(html).toContain("<title>Configured</title>");
   });
 
+  it("renders a viewable HTML file with `orvi view --no-open`", () => {
+    const inputPath = join(workspace, "viewable.ov");
+    writeFileSync(inputPath, "# Viewable\n\n[green bold] rendered []\n");
+
+    const result = runOrvi(["view", inputPath, "--no-open"]);
+
+    expect(result.status).toBe(0);
+    const builtLine = result.stdout.toString().trim();
+    expect(builtLine).toMatch(/^Built .*orvi-view-viewable-\d+\.html$/);
+    const outputPath = builtLine.replace(/^Built /, "");
+    const html = readFileSync(outputPath, "utf8");
+    expect(html).toContain("<h1>Viewable</h1>");
+    expect(html).toContain("orvi-text-green");
+    rmSync(outputPath, { force: true });
+  });
+
+  it("exits non-zero for `orvi view` on a document with errors", () => {
+    const inputPath = join(workspace, "view-invalid.ov");
+    writeFileSync(inputPath, "[bogus]\nx\n[/bogus]\n");
+
+    const result = runOrvi(["view", inputPath, "--no-open"]);
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr.toString()).toContain("ORVI_UNKNOWN_COMPONENT");
+  });
+
   it("uses document metadata before filename fallback for build titles", () => {
     const inputPath = join(workspace, "metadata-title.ov");
     const outputPath = join(workspace, "metadata-title.html");

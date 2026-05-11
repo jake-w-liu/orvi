@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+import { spawn } from "child_process";
 import { createServer, ServerResponse } from "http";
 import { existsSync, readFileSync, watch, writeFileSync } from "fs";
-import { basename, dirname, extname, resolve } from "path";
+import { tmpdir } from "os";
+import { basename, dirname, extname, join, resolve } from "path";
 import { defaultCss, OrviColorScheme, OrviDirection, OrviTheme, renderOrvi } from "./renderer";
 import { parseOrvi } from "./parser";
 import { OrviDiagnostic } from "./ast";
@@ -10,6 +12,11 @@ import { formatOrvi } from "./formatter";
 interface BuildArgs {
   input: string;
   output?: string;
+}
+
+interface ViewArgs {
+  input: string;
+  open: boolean;
 }
 
 interface ServeArgs {
@@ -44,6 +51,8 @@ const command = args[0];
 try {
   if (command === "build") {
     build(parseBuildArgs(args.slice(1)));
+  } else if (command === "view") {
+    view(parseViewArgs(args.slice(1)));
   } else if (command === "check") {
     check(parseCheckArgs(args.slice(1)));
   } else if (command === "format") {
@@ -61,6 +70,25 @@ try {
 
 function build(options: BuildArgs): void {
   const inputPath = resolve(options.input);
+  const html = renderDocument(inputPath);
+  const outputPath = resolve(options.output ?? defaultOutputPath(inputPath));
+  writeFileSync(outputPath, html);
+  console.log(`Built ${outputPath}`);
+}
+
+function view(options: ViewArgs): void {
+  const inputPath = resolve(options.input);
+  const html = renderDocument(inputPath);
+  const outputPath = join(tmpdir(), `orvi-view-${basename(inputPath, extname(inputPath))}-${process.pid}.html`);
+  writeFileSync(outputPath, html);
+  console.log(`Built ${outputPath}`);
+
+  if (options.open) {
+    openInBrowser(outputPath);
+  }
+}
+
+function renderDocument(inputPath: string): string {
   assertReadable(inputPath);
   const config = loadConfig(inputPath);
   const source = readFileSync(inputPath, "utf8");
@@ -77,10 +105,21 @@ function build(options: BuildArgs): void {
   });
 
   failOnErrors(result.ast.diagnostics);
+  return result.html;
+}
 
-  const outputPath = resolve(options.output ?? defaultOutputPath(inputPath));
-  writeFileSync(outputPath, result.html);
-  console.log(`Built ${outputPath}`);
+function openInBrowser(target: string): void {
+  const platform = process.platform;
+  const command = platform === "darwin" ? "open" : platform === "win32" ? "cmd" : "xdg-open";
+  const commandArgs = platform === "win32" ? ["/c", "start", "", target] : [target];
+
+  try {
+    const child = spawn(command, commandArgs, { stdio: "ignore", detached: true });
+    child.on("error", () => console.log(`Open this file in a browser: ${target}`));
+    child.unref();
+  } catch {
+    console.log(`Open this file in a browser: ${target}`);
+  }
 }
 
 function check(options: CheckArgs): void {
@@ -210,6 +249,13 @@ function parseBuildArgs(values: string[]): BuildArgs {
   return { input, output };
 }
 
+function parseViewArgs(values: string[]): ViewArgs {
+  const input = values.find((value) => !value.startsWith("-"));
+  if (!input) throw new Error("Usage: orvi view <input.ov> [--no-open]");
+
+  return { input, open: !values.includes("--no-open") };
+}
+
 function parseServeArgs(values: string[]): ServeArgs {
   const input = values[0];
   if (!input) throw new Error("Usage: orvi serve <input.ov> [--port 4173]");
@@ -324,7 +370,8 @@ function help(): void {
 
 Usage:
   orvi build <input.ov> [-o output.html]
+  orvi view <input.ov> [--no-open]      build to a temp file and open it
+  orvi serve <input.ov> [--port 4173]   live preview with hot reload
   orvi check <input.ov> [--json]
-  orvi format <input.ov> [--write] [--check]
-  orvi serve <input.ov> [--port 4173]`);
+  orvi format <input.ov> [--write] [--check]`);
 }
