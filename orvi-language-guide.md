@@ -55,8 +55,8 @@ Few mainstream authoring languages are simultaneously:
 
 Orvi is a coined short name from "ordered visual." The story is simple: authors
 write ordered, readable source text, and the renderer turns it into visual
-structure. The name also keeps the toolchain compact: `orvi` for the CLI,
-`@orvi/orvi` for the package, and `.ov` for files.
+structure. The name also keeps the toolchain compact: `orvi` for the CLI and
+the package, and `.ov` for files.
 
 This naming story does not claim trademark ownership, domain ownership, or that
 the word is unused elsewhere; those remain separate release and branding checks.
@@ -351,7 +351,7 @@ marking the parent complete.
 - [x] Validate core edge cases: unknown components/options, grid column counts, ragged tables, and tabs structure
 - [x] Enforce v0.1 language decisions: maximum component nesting depth, unsupported dynamic expressions, metadata keys, and `img` alt text
 
-**Output:** `@orvi/orvi/parser` export
+**Output:** `orvi/parser` export
 
 ### Phase 2 — HTML Renderer
 
@@ -367,7 +367,7 @@ marking the parent complete.
 - [x] Add Safari WebDriver render smoke harness with clean skip when remote automation is disabled
 - [x] Add Safari WebDriver DOM render smoke coverage; it runs when Safari remote automation is enabled on the host machine
 
-**Output:** `@orvi/orvi/renderer` export
+**Output:** `orvi/renderer` export
 
 ### Phase 3 — Developer Tooling
 
@@ -390,7 +390,7 @@ marking the parent complete.
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`
 - [x] Drop the Azure-tied VS Code Marketplace publish workflow; distribute via GitHub Release VSIX and Open VSX instead
 - [x] Wire npm publish: `package.json` metadata/`bin`/`repository`, `.github/workflows/publish-npm.yml` gated by `NPM_TOKEN`, runbook in `docs/release.md`
-- [ ] Publish `@orvi/orvi` to npm (needs the `@orvi` npm org + `NPM_TOKEN`; not a code task)
+- [ ] Publish the unscoped `orvi` package to npm (needs an npm account that owns the name + `NPM_TOKEN`; not a code task)
 - [x] **Prettier plugin bridge** for auto-formatting `.ov` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`

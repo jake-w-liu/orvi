@@ -19,7 +19,7 @@ Implementation progress is tracked in the roadmap section of that guide.
 - **In VS Code:** install [`jake-w-liu.orvi-language`](https://marketplace.visualstudio.com/items?itemName=jake-w-liu.orvi-language)
   (`ext install jake-w-liu.orvi-language`) — syntax highlighting, diagnostics,
   completions, and a preview panel, with the Orvi runtime bundled.
-- **CLI / library:** the `@orvi/orvi` npm package is not published yet — for now
+- **CLI / library:** the `orvi` npm package is not published yet — for now
   use it from a clone of this repo (see below). Publishing is wired in
   `.github/workflows/publish-npm.yml`; `docs/release.md` has the steps.
 
@@ -69,14 +69,14 @@ exists. See `orvi.config.example.js`.
 
 ## Library
 
-> `@orvi/orvi` is not on npm yet. Until it is, consume it from a clone of this
+> `orvi` is not on npm yet. Until it is, consume it from a clone of this
 > repo: `npm install && npm run build`, then import from `dist/` (or `src/` in a
 > TS project). The API and package layout below are what the published package
 > will expose.
 
 ```ts
-import { formatOrvi, parseOrvi, renderOrvi } from "@orvi/orvi";
-import { renderOrviArtifact } from "@orvi/orvi/artifact";
+import { formatOrvi, parseOrvi, renderOrvi } from "orvi";
+import { renderOrviArtifact } from "orvi/artifact";
 
 const ast = parseOrvi("# Hello");
 const html = renderOrvi("# Hello", { fullDocument: true }).html;
@@ -94,18 +94,18 @@ ships an `orvi` CLI bin.
 React:
 
 ```tsx
-import { OrviRenderer } from "@orvi/orvi/react";
-import "@orvi/orvi/orvi-base.css";
+import { OrviRenderer } from "orvi/react";
+import "orvi/orvi-base.css";
 
 export function Page() {
   return <OrviRenderer source="# Hello" />;
 }
 ```
 
-Prettier (once `@orvi/orvi` is on npm):
+Prettier (once `orvi` is on npm):
 
 ```sh
-prettier --plugin @orvi/orvi/prettier-plugin --write "**/*.ov"
+prettier --plugin orvi/prettier-plugin --write "**/*.ov"
 ```
 
 From a clone of this repo, point `--plugin` at the built file
@@ -186,7 +186,7 @@ Report: `docs/benchmarks.md`.
 AI and render-surface integrations can use the structured Orvi artifact:
 
 ```ts
-import { renderOrviArtifact } from "@orvi/orvi/artifact";
+import { renderOrviArtifact } from "orvi/artifact";
 
 const artifact = renderOrviArtifact("# Hello", {
   fullDocument: true,

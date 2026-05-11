@@ -64,10 +64,12 @@ describe("release and deployment workflows", () => {
     expect(workflow).not.toContain("azure");
 
     const rootPackage = JSON.parse(read("package.json")) as {
+      name?: string;
       bin?: Record<string, string>;
       repository?: { url?: string };
       files?: string[];
     };
+    expect(rootPackage.name).toBe("orvi");
     expect(rootPackage.bin).toMatchObject({ orvi: "dist/cli.js" });
     expect(rootPackage.repository?.url).toContain("github.com/jake-w-liu/orvi");
     expect(rootPackage.files).toEqual(expect.arrayContaining(["dist"]));
@@ -83,7 +85,7 @@ describe("release and deployment workflows", () => {
     expect(releaseRunbook).toContain("true native rendering");
     expect(releaseRunbook).toContain(".github/workflows/publish-npm.yml");
     expect(releaseRunbook).toContain("NPM_TOKEN");
-    expect(releaseRunbook).toContain("npm publish --access public");
+    expect(releaseRunbook).toContain("npm publish --provenance --access public");
   });
 });
 

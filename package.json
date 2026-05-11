@@ -1,5 +1,5 @@
 {
-  "name": "@orvi/orvi",
+  "name": "orvi",
   "version": "0.1.1",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
