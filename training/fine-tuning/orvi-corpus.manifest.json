@@ -3,7 +3,7 @@
   "corpusSchema": "orvi-training-example-v1",
   "output": "training/fine-tuning/orvi-corpus.jsonl",
   "recordCount": 72,
-  "jsonlSha256": "81fed9c550615e23dd2c26aedb484cc432b2de8d4323531691a1e86b4b52590e",
+  "jsonlSha256": "a47af7ae53829f8eb8588d66e303436f434f1ac7ab6215131c3fa6cfcca2c444",
   "sources": {
     "benchmarks/corpus.ts": 27,
     "examples/welcome.ov": 1,
