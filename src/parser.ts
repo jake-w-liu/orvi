@@ -139,8 +139,8 @@ export class OrviParser {
         continue;
       }
 
-      const key = match[1];
-      const value = match[2].trim();
+      const key = match[1]!;
+      const value = match[2]!.trim();
       if (!METADATA_KEYS.has(key)) {
         this.warning("ORVI_UNKNOWN_METADATA", `Unknown metadata key '${key}'.`, line);
       } else if (key === "dir") {
@@ -224,8 +224,8 @@ export class OrviParser {
         children.push({
           type: "heading",
           loc: loc(line),
-          depth: heading[1].length,
-          children: this.parseInline(heading[2], line.line, line.text.indexOf(heading[2]) + 1)
+          depth: heading[1]!.length,
+          children: this.parseInline(heading[2]!, line.line, line.text.indexOf(heading[2]!) + 1)
         });
         this.index += 1;
         continue;
@@ -299,7 +299,7 @@ export class OrviParser {
 
       if (trimmed.startsWith("```")) {
         inFence = !inFence;
-        sections[sections.length - 1].push(line);
+        sections[sections.length - 1]!.push(line);
         this.index += 1;
         continue;
       }
@@ -317,7 +317,7 @@ export class OrviParser {
           if (separatorDepth > 0) {
             separatorDepth -= 1;
           }
-          sections[sections.length - 1].push(line);
+          sections[sections.length - 1]!.push(line);
           this.index += 1;
           continue;
         }
@@ -329,7 +329,7 @@ export class OrviParser {
           } else {
             this.error("ORVI_UNKNOWN_COMPONENT", `Unknown block component [${open.name}].`, line);
           }
-          sections[sections.length - 1].push(line);
+          sections[sections.length - 1]!.push(line);
           this.index += 1;
           continue;
         }
@@ -341,7 +341,7 @@ export class OrviParser {
         }
       }
 
-      sections[sections.length - 1].push(line);
+      sections[sections.length - 1]!.push(line);
       this.index += 1;
     }
 
@@ -440,7 +440,7 @@ export class OrviParser {
       if (!match) {
         break;
       }
-      items.push(this.parseInline(match[1], line.line, line.text.indexOf(match[1]) + 1));
+      items.push(this.parseInline(match[1]!, line.line, line.text.indexOf(match[1]!) + 1));
       this.index += 1;
     }
 
@@ -479,7 +479,7 @@ export class OrviParser {
 
   private parseSemanticLine(line: SourceLine): BlockNode | undefined {
     const match = /^([a-z][a-z0-9-]*):(?:\s*(.*))?$/i.exec(line.text.trim());
-    if (!match || !SEMANTIC_NAMES.has(match[1])) {
+    if (!match || !SEMANTIC_NAMES.has(match[1]!)) {
       return undefined;
     }
 
@@ -502,8 +502,8 @@ export class OrviParser {
 
     if (name === "btn") {
       const arrow = /^(.*?)\s*(?:->|→)\s*(.*)$/u.exec(payload);
-      const label = arrow ? arrow[1].trim() : "";
-      const target = arrow ? arrow[2].trim() : "";
+      const label = arrow ? arrow[1]!.trim() : "";
+      const target = arrow ? arrow[2]!.trim() : "";
       if (!arrow || !label || !target) {
         this.error("ORVI_INVALID_SEMANTIC", "btn: requires `Label -> target`.", line);
       }
@@ -514,21 +514,30 @@ export class OrviParser {
       };
     }
 
-    const [valuePart, optionPart] = payload.split("|").map((part) => part.trim());
-    const { options } = tokenizeOptions(optionPart ?? "");
-
     if (name === "img") {
-      if (!valuePart || !optionPart) {
+      const pipeIndex = payload.indexOf("|");
+      const source = pipeIndex < 0 ? payload.trim() : payload.slice(0, pipeIndex).trim();
+      const alt = pipeIndex < 0 ? "" : payload.slice(pipeIndex + 1).trim();
+      if (pipeIndex < 0 || !source || !alt) {
         this.error("ORVI_INVALID_SEMANTIC", "img: requires `source | alt text`.", line);
       }
       return {
         ...base,
-        value: valuePart ?? "",
-        alt: optionPart ?? ""
+        value: source,
+        alt
       };
     }
 
-    if (!valuePart) {
+    // badge: text [| key=value ...] — only the last `|` introduces options, and
+    // only when its trailing segment looks like option assignments, so badge
+    // text may itself contain `|`.
+    const lastPipeIndex = payload.lastIndexOf("|");
+    const trailing = lastPipeIndex < 0 ? "" : payload.slice(lastPipeIndex + 1).trim();
+    const hasOptions = lastPipeIndex >= 0 && /\S=\S/.test(trailing);
+    const text = (hasOptions ? payload.slice(0, lastPipeIndex) : payload).trim();
+    const { options } = tokenizeOptions(hasOptions ? trailing : "");
+
+    if (!text) {
       this.error("ORVI_INVALID_SEMANTIC", "badge: requires text.", line);
     }
     if (options.type && !CALLOUT_TYPES.has(options.type)) {
@@ -536,7 +545,7 @@ export class OrviParser {
     }
     return {
       ...base,
-      value: valuePart ?? "",
+      value: text,
       options
     };
   }
@@ -796,7 +805,7 @@ export class OrviParser {
     if (this.index + 1 >= this.lines.length) return false;
     const current = this.current().text.trim();
     if (!current.includes("|")) return false;
-    const next = this.lines[this.index + 1].text.trim();
+    const next = this.lines[this.index + 1]!.text.trim();
     const headerCells = splitTableRow(current);
     const dividerCells = splitTableRow(next);
     return (
@@ -814,12 +823,12 @@ export class OrviParser {
     if (/^(#{1,6})\s+/.test(trimmed)) return true;
     if (trimmed === "---") return true;
     if (isListLine(trimmed)) return true;
-    if (/^([a-z][a-z0-9-]*):(?:\s*(.*))?$/i.test(trimmed) && SEMANTIC_NAMES.has(trimmed.split(":")[0])) return true;
+    if (/^([a-z][a-z0-9-]*):(?:\s*(.*))?$/i.test(trimmed) && SEMANTIC_NAMES.has(trimmed.split(":")[0]!)) return true;
     return false;
   }
 
   private current(): SourceLine {
-    return this.lines[this.index];
+    return this.lines[this.index]!;
   }
 
   private isEnd(): boolean {
@@ -828,7 +837,7 @@ export class OrviParser {
 
   private isMetadataStart(): boolean {
     if (this.index !== 0 || this.lines.length < 2) return false;
-    if (this.lines[0].text.trim() !== "---") return false;
+    if (this.lines[0]!.text.trim() !== "---") return false;
     const entryPattern = /^([a-z][a-z0-9-]*):\s*(.*)$/i;
     const closeIndex = this.lines.findIndex((line, index) => index > 0 && line.text.trim() === "---");
     if (closeIndex >= 0) {
@@ -880,7 +889,7 @@ function parseOpenTag(trimmed: string): OpenTag | undefined {
   const match = /^\[([a-z][a-z0-9-]*)(?:\s+([^\]]+))?\]$/i.exec(trimmed);
   if (!match) return undefined;
   return {
-    name: match[1],
+    name: match[1]!,
     rawArgs: match[2] ?? ""
   };
 }
@@ -892,7 +901,7 @@ function isComponentName(name: string): name is ComponentName {
 function parseCloseTag(trimmed: string): CloseTag | undefined {
   const match = /^\[\/([a-z][a-z0-9-]*)\]$/i.exec(trimmed);
   if (!match) return undefined;
-  return { name: match[1] };
+  return { name: match[1]! };
 }
 
 function tokenizeOptions(raw: string): TokenizedOptions {
@@ -921,14 +930,14 @@ function scanOptionTokens(raw: string): string[] {
   let index = 0;
 
   while (index < length) {
-    if (/\s/.test(raw[index])) {
+    if (/\s/.test(raw[index]!)) {
       index += 1;
       continue;
     }
 
     let token = "";
-    while (index < length && !/\s/.test(raw[index])) {
-      const char = raw[index];
+    while (index < length && !/\s/.test(raw[index]!)) {
+      const char = raw[index]!;
       if (char === '"' || char === "'") {
         const quote = char;
         token += char;
@@ -988,7 +997,7 @@ function isListLine(trimmed: string): boolean {
 }
 
 function canOpenEmphasis(value: string, index: number): boolean {
-  const prev = index === 0 ? "" : value[index - 1];
+  const prev = index === 0 ? "" : value[index - 1]!;
   return !/[A-Za-z0-9_]/.test(prev);
 }
 
@@ -997,7 +1006,7 @@ function findEmphasisClose(value: string, start: number): number {
   while (index < value.length) {
     const candidate = value.indexOf("_", index);
     if (candidate < 0) return -1;
-    const next = candidate + 1 < value.length ? value[candidate + 1] : "";
+    const next = candidate + 1 < value.length ? value[candidate + 1]! : "";
     if (!/[A-Za-z0-9_]/.test(next)) return candidate;
     index = candidate + 1;
   }

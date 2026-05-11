@@ -412,19 +412,28 @@ class OrviParser {
                 target
             };
         }
-        const [valuePart, optionPart] = payload.split("|").map((part) => part.trim());
-        const { options } = tokenizeOptions(optionPart ?? "");
         if (name === "img") {
-            if (!valuePart || !optionPart) {
+            const pipeIndex = payload.indexOf("|");
+            const source = pipeIndex < 0 ? payload.trim() : payload.slice(0, pipeIndex).trim();
+            const alt = pipeIndex < 0 ? "" : payload.slice(pipeIndex + 1).trim();
+            if (pipeIndex < 0 || !source || !alt) {
                 this.error("ORVI_INVALID_SEMANTIC", "img: requires `source | alt text`.", line);
             }
             return {
                 ...base,
-                value: valuePart ?? "",
-                alt: optionPart ?? ""
+                value: source,
+                alt
             };
         }
-        if (!valuePart) {
+        // badge: text [| key=value ...] — only the last `|` introduces options, and
+        // only when its trailing segment looks like option assignments, so badge
+        // text may itself contain `|`.
+        const lastPipeIndex = payload.lastIndexOf("|");
+        const trailing = lastPipeIndex < 0 ? "" : payload.slice(lastPipeIndex + 1).trim();
+        const hasOptions = lastPipeIndex >= 0 && /\S=\S/.test(trailing);
+        const text = (hasOptions ? payload.slice(0, lastPipeIndex) : payload).trim();
+        const { options } = tokenizeOptions(hasOptions ? trailing : "");
+        if (!text) {
             this.error("ORVI_INVALID_SEMANTIC", "badge: requires text.", line);
         }
         if (options.type && !CALLOUT_TYPES.has(options.type)) {
@@ -432,7 +441,7 @@ class OrviParser {
         }
         return {
             ...base,
-            value: valuePart ?? "",
+            value: text,
             options
         };
     }

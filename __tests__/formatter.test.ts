@@ -63,6 +63,41 @@ dir: rtl
 `);
   });
 
+  it("warns before dropping an unrecognized metadata key", () => {
+    const result = formatOrvi(`---
+orvi: 0.1
+futurekey: keep me
+---
+# Title`);
+
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          severity: "warning",
+          code: "ORVI_FORMAT_METADATA_DROPPED",
+          line: 3,
+          column: 1
+        })
+      ])
+    );
+    expect(result.formatted).not.toContain("futurekey");
+  });
+
+  it("keeps pipes in img alt text and badge labels (round-trips)", () => {
+    const source = `img: ./diagram.png | Flow: A | B | C
+
+badge: One | Two | type=warning
+`;
+    const first = formatOrvi(source);
+    expect(first.diagnostics).toEqual([]);
+    const second = formatOrvi(first.formatted);
+    expect(second.formatted).toBe(first.formatted);
+
+    const [img, badge] = second.ast.children;
+    expect(img).toMatchObject({ type: "semantic", name: "img", value: "./diagram.png", alt: "Flow: A | B | C" });
+    expect(badge).toMatchObject({ type: "semantic", name: "badge", value: "One | Two", options: { type: "warning" } });
+  });
+
   it("warns before dropping comment lines", () => {
     const result = formatOrvi(`// keep this note
 # Title

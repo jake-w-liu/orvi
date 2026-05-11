@@ -172,6 +172,8 @@ describe("VS Code extension scaffold", () => {
     expect(extension).toContain('["build", inputPath, "-o", outputPath]');
     expect(extension).toContain("document.isDirty");
     expect(extension).toContain("writeFile(inputPath, document.getText(), \"utf8\")");
+    expect(extension).toContain("copyWorkspaceConfig(document, tempDir)");
+    expect(extension).toContain('"orvi.config.js"');
     expect(extension).toContain('readFile(outputPath, "utf8")');
     expect(extension).toContain("renderPreviewFrame");
     expect(extension).toContain('sandbox srcdoc="${escapeAttribute(html)}"');

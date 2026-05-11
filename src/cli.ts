@@ -12,16 +12,19 @@ import { formatOrvi } from "./formatter";
 interface BuildArgs {
   input: string;
   output?: string;
+  config?: string;
 }
 
 interface ViewArgs {
   input: string;
   open: boolean;
+  config?: string;
 }
 
 interface ServeArgs {
   input: string;
   port: number;
+  config?: string;
 }
 
 interface FormatArgs {
@@ -45,6 +48,8 @@ interface OrviConfig {
   css?: string;
 }
 
+const FLAGS_WITH_VALUES = new Set(["-o", "--output", "--config", "--port", "-p"]);
+
 const args = process.argv.slice(2);
 const command = args[0];
 
@@ -59,6 +64,10 @@ try {
     format(parseFormatArgs(args.slice(1)));
   } else if (command === "serve") {
     serve(parseServeArgs(args.slice(1)));
+  } else if (command === "version" || command === "--version" || command === "-v") {
+    console.log(cliVersion());
+  } else if (command === "help" || command === "--help" || command === "-h") {
+    help();
   } else {
     help();
     process.exit(command ? 1 : 0);
@@ -70,7 +79,7 @@ try {
 
 function build(options: BuildArgs): void {
   const inputPath = resolve(options.input);
-  const html = renderDocument(inputPath);
+  const html = renderDocument(inputPath, options.config);
   const outputPath = resolve(options.output ?? defaultOutputPath(inputPath));
   writeFileSync(outputPath, html);
   console.log(`Built ${outputPath}`);
@@ -78,7 +87,7 @@ function build(options: BuildArgs): void {
 
 function view(options: ViewArgs): void {
   const inputPath = resolve(options.input);
-  const html = renderDocument(inputPath);
+  const html = renderDocument(inputPath, options.config);
   const outputPath = join(tmpdir(), `orvi-view-${basename(inputPath, extname(inputPath))}-${process.pid}.html`);
   writeFileSync(outputPath, html);
   console.log(`Built ${outputPath}`);
@@ -88,9 +97,9 @@ function view(options: ViewArgs): void {
   }
 }
 
-function renderDocument(inputPath: string): string {
+function renderDocument(inputPath: string, configOverride?: string): string {
   assertReadable(inputPath);
-  const config = loadConfig(inputPath);
+  const config = loadConfig(inputPath, configOverride);
   const source = readFileSync(inputPath, "utf8");
   const result = renderOrvi(source, {
     fullDocument: true,
@@ -174,7 +183,7 @@ function format(options: FormatArgs): void {
 function serve(options: ServeArgs): void {
   const inputPath = resolve(options.input);
   assertReadable(inputPath);
-  const config = loadConfig(inputPath);
+  const config = loadConfig(inputPath, options.config);
   const clients = new Set<ServerResponse>();
 
   watch(inputPath, { persistent: true }, () => {
@@ -235,33 +244,33 @@ function serve(options: ServeArgs): void {
 }
 
 function parseBuildArgs(values: string[]): BuildArgs {
-  const input = values[0];
-  if (!input) throw new Error("Usage: orvi build <input.ov> [-o output.html]");
+  const input = firstPositional(values);
+  if (!input) throw new Error("Usage: orvi build <input.ov> [-o output.html] [--config orvi.config.js]");
 
   let output: string | undefined;
-  for (let index = 1; index < values.length; index += 1) {
+  for (let index = 0; index < values.length; index += 1) {
     if (values[index] === "-o" || values[index] === "--output") {
       output = values[index + 1];
       index += 1;
     }
   }
 
-  return { input, output };
+  return { input, output, config: optionValue(values, "--config") };
 }
 
 function parseViewArgs(values: string[]): ViewArgs {
-  const input = values.find((value) => !value.startsWith("-"));
-  if (!input) throw new Error("Usage: orvi view <input.ov> [--no-open]");
+  const input = firstPositional(values);
+  if (!input) throw new Error("Usage: orvi view <input.ov> [--no-open] [--config orvi.config.js]");
 
-  return { input, open: !values.includes("--no-open") };
+  return { input, open: !values.includes("--no-open"), config: optionValue(values, "--config") };
 }
 
 function parseServeArgs(values: string[]): ServeArgs {
-  const input = values[0];
-  if (!input) throw new Error("Usage: orvi serve <input.ov> [--port 4173]");
+  const input = firstPositional(values);
+  if (!input) throw new Error("Usage: orvi serve <input.ov> [--port 4173] [--config orvi.config.js]");
 
   let port = 4173;
-  for (let index = 1; index < values.length; index += 1) {
+  for (let index = 0; index < values.length; index += 1) {
     if (values[index] === "--port" || values[index] === "-p") {
       port = Number(values[index + 1]);
       index += 1;
@@ -272,11 +281,11 @@ function parseServeArgs(values: string[]): ServeArgs {
     throw new Error("Port must be an integer from 1 to 65535.");
   }
 
-  return { input, port };
+  return { input, port, config: optionValue(values, "--config") };
 }
 
 function parseCheckArgs(values: string[]): CheckArgs {
-  const input = values.find((value) => !value.startsWith("-"));
+  const input = firstPositional(values);
   if (!input) throw new Error("Usage: orvi check <input.ov> [--json]");
 
   return {
@@ -286,7 +295,7 @@ function parseCheckArgs(values: string[]): CheckArgs {
 }
 
 function parseFormatArgs(values: string[]): FormatArgs {
-  const input = values.find((value) => !value.startsWith("-"));
+  const input = firstPositional(values);
   if (!input) throw new Error("Usage: orvi format <input.ov> [--write] [--check]");
 
   return {
@@ -295,6 +304,26 @@ function parseFormatArgs(values: string[]): FormatArgs {
     check: values.includes("--check"),
     json: values.includes("--json")
   };
+}
+
+function firstPositional(values: string[]): string | undefined {
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index]!;
+    if (FLAGS_WITH_VALUES.has(value)) {
+      index += 1;
+      continue;
+    }
+    if (!value.startsWith("-")) return value;
+  }
+  return undefined;
+}
+
+function optionValue(values: string[], flag: string): string | undefined {
+  const index = values.indexOf(flag);
+  if (index === -1) return undefined;
+  const value = values[index + 1];
+  if (value === undefined || value.startsWith("-")) throw new Error(`Missing value for ${flag}.`);
+  return value;
 }
 
 function failOnErrors(diagnostics: OrviDiagnostic[]): void {
@@ -351,10 +380,17 @@ function assertReadable(path: string): void {
   }
 }
 
-function loadConfig(inputPath: string): OrviConfig {
-  const configPath = resolve(dirname(inputPath), "orvi.config.js");
+function loadConfig(inputPath: string, configOverride?: string): OrviConfig {
+  const configPath = configOverride
+    ? resolve(configOverride)
+    : resolve(dirname(inputPath), "orvi.config.js");
+  if (configOverride && !existsSync(configPath)) {
+    throw new Error(`Config file not found: ${configPath}`);
+  }
   if (!existsSync(configPath)) return {};
 
+  // Loading a project's orvi.config.js requires a dynamic, path-based require.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const loaded = require(configPath) as OrviConfig | { default?: OrviConfig };
   if ("default" in loaded && loaded.default) return loaded.default;
   return loaded as OrviConfig;
@@ -365,13 +401,24 @@ function defaultOutputPath(inputPath: string): string {
   return extension ? inputPath.slice(0, -extension.length) + ".html" : `${inputPath}.html`;
 }
 
+function cliVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")) as { version?: string };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
 function help(): void {
-  console.log(`Orvi CLI
+  console.log(`Orvi CLI ${cliVersion()}
 
 Usage:
-  orvi build <input.ov> [-o output.html]
-  orvi view <input.ov> [--no-open]      build to a temp file and open it
-  orvi serve <input.ov> [--port 4173]   live preview with hot reload
+  orvi build <input.ov> [-o output.html] [--config orvi.config.js]
+  orvi view <input.ov> [--no-open] [--config orvi.config.js]   build to a temp file and open it
+  orvi serve <input.ov> [--port 4173] [--config orvi.config.js] live preview with hot reload
   orvi check <input.ov> [--json]
-  orvi format <input.ov> [--write] [--check]`);
+  orvi format <input.ov> [--write] [--check]
+  orvi version
+  orvi help`);
 }

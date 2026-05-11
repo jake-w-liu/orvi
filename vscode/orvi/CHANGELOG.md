@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.7
+
+- Preview now picks up a sibling `orvi.config.js` even when the editor buffer
+  is unsaved (the temp build copy gets the project config copied alongside it).
+- Bundled Orvi runtime updated to `orvi-lang` 0.2.0: stricter parser
+  (`img:`/`badge:` no longer truncate text containing `|`), the formatter and
+  Prettier integration report content loss instead of dropping it silently,
+  and the new `orvi version` / `--config` CLI options.
+
 ## 0.1.6
 
 - Diagnostics now reflect the unsaved buffer while you type, not just the

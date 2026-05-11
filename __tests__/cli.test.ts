@@ -133,6 +133,32 @@ describe("Orvi CLI", () => {
     expect(html).toContain("<title>Configured</title>");
   });
 
+  it("prints the package version with `orvi version` and `orvi --version`", () => {
+    const version = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")).version;
+
+    expect(runOrvi(["version"]).stdout.trim()).toBe(version);
+    expect(runOrvi(["--version"]).stdout.trim()).toBe(version);
+    expect(runOrvi(["version"]).status).toBe(0);
+  });
+
+  it("honors an explicit --config path and errors on a missing one", () => {
+    const inputPath = join(workspace, "configured.ov");
+    const outputPath = join(workspace, "configured.html");
+    const configPath = join(workspace, "custom.orvi.config.js");
+    writeFileSync(inputPath, "# Configured\n");
+    writeFileSync(configPath, `module.exports = { title: "FromCustomConfig", colorScheme: "dark" };\n`);
+
+    const ok = runOrvi(["build", inputPath, "-o", outputPath, "--config", configPath]);
+    expect(ok.status).toBe(0);
+    const html = readFileSync(outputPath, "utf8");
+    expect(html).toContain("<title>FromCustomConfig</title>");
+    expect(html).toContain("orvi-theme-dark");
+
+    const missing = runOrvi(["build", inputPath, "--config", join(workspace, "nope.js")]);
+    expect(missing.status).not.toBe(0);
+    expect(missing.stderr).toContain("Config file not found");
+  });
+
   it("renders a viewable HTML file with `orvi view --no-open`", () => {
     const inputPath = join(workspace, "viewable.ov");
     writeFileSync(inputPath, "# Viewable\n\n[green bold] rendered []\n");

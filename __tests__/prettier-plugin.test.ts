@@ -13,4 +13,15 @@ describe("Prettier Orvi plugin", () => {
 [/card]
 `);
   });
+
+  it("refuses to print when content would be lost or guessed", () => {
+    const print = orviPlugin.printers["orvi-ast"].print;
+    const printSource = (source: string) => print({ getValue: () => ({ source }) });
+
+    expect(() => printSource("// keep this note\n# Title\n")).toThrow(/ORVI_FORMAT_COMMENT_DROPPED/);
+    expect(() => printSource("---\norvi: 0.1\nfuturekey: keep me\n---\n# Title\n")).toThrow(
+      /ORVI_FORMAT_METADATA_DROPPED/
+    );
+    expect(() => printSource("[chart]\nbad\n[/chart]\n")).toThrow(/ORVI_UNKNOWN_COMPONENT/);
+  });
 });

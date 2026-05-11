@@ -296,6 +296,7 @@ function escapeAttr(value: string): string {
 function safeUrl(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "#";
+  // eslint-disable-next-line no-control-regex -- intentionally reject control characters in URLs
   if (/[\u0000-\u001f\u007f]/.test(trimmed)) return "#";
   if (trimmed.startsWith("//")) return "#";
 
@@ -367,6 +368,7 @@ function cssDeclarationValue(value: string | undefined): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
+  // eslint-disable-next-line no-control-regex -- intentionally reject control characters in CSS values
   if (/[\u0000-\u001f\u007f;{}<>]/.test(trimmed)) return undefined;
   if (/\/\*|\*\//.test(trimmed)) return undefined;
   return trimmed;

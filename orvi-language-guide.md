@@ -376,6 +376,7 @@ marking the parent complete.
 - [x] **CLI check/format:** `orvi check` and `orvi format`
 - [x] **Machine-readable diagnostics:** `orvi check --json` and `orvi format --check --json`
 - [x] **Live preview server:** `orvi serve` with hot reload
+- [x] `orvi version` and a `--config <path>` override for `build`/`view`/`serve`
 - [x] **VS Code extension:**
   - [x] Syntax highlighting scaffold
   - [x] Snippets scaffold
@@ -392,9 +393,12 @@ marking the parent complete.
 - [x] Drop the Azure-tied VS Code Marketplace publish workflow; distribute via GitHub Release VSIX and Open VSX instead
 - [x] Wire npm publish: `package.json` metadata/`bin`/`repository`, `.github/workflows/publish-npm.yml` gated by `NPM_TOKEN`, runbook in `docs/release.md`
 - [x] Publish the `orvi-lang` package to npm (live at npmjs.com/package/orvi-lang with build provenance; global CLI command `orvi`)
-- [x] **Prettier plugin bridge** for auto-formatting `.ov` files
+- [x] **Prettier plugin bridge** for auto-formatting `.ov` files (refuses to reformat when it would lose content)
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`
+- [x] Add ESLint (`typescript-eslint`, type-checked) over `src/` to `npm run verify` and CI
+- [x] Add a Jest coverage gate (`npm run test:coverage`) with per-metric thresholds in CI
+- [x] Generate the inlined default stylesheet from `src/orvi-base.css` (`npm run css:sync`) with a drift check in `verify`
 
 ### Phase 4 — Ecosystem
 

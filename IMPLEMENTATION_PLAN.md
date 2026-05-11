@@ -27,10 +27,11 @@ implementation companion and avoid drifting from the guide roadmap.
 | VS Code syntax highlighting/snippets/config | Done                                                                                                                                      |
 | VS Code diagnostics                         | Done: extension uses bundled Orvi CLI by default                                                                                           |
 | VS Code package/release prep                | Done: extension `npm run package`, bundled runtime, package metadata, README, changelog, license, package lock, `.vscodeignore`            |
-| VS Code Marketplace publish                 | Done: live v0.1.0 release; v0.1.1 VSIX prepared locally with bundled CLI; manual Marketplace upload remains the supported update path      |
+| VS Code distribution                        | Done: bundled-runtime VSIX (`npm run package`, currently v0.1.7); distribute via GitHub Release VSIX + Open VSX; no Azure-tied automation  |
 | VS Code autocomplete/live preview           | Done                                                                                                                                      |
-| CI                                          | Done: GitHub Actions runs root verify and VS Code package check                                                                           |
-| Prettier plugin                             | Bridge done with basic Prettier CLI coverage                                                                                              |
+| CI                                          | Done: GitHub Actions runs root verify, a coverage-threshold job, and the VS Code package check                                            |
+| Lint / type strictness / CSS source-of-truth| Done: ESLint (`typescript-eslint`, type-checked) over `src/`; `noUncheckedIndexedAccess` etc.; `src/styles.ts` generated from `src/orvi-base.css` |
+| Prettier plugin                             | Bridge done with basic Prettier CLI coverage; refuses to reformat when it would lose content                                              |
 | Browser rendering verification              | Conditional local smoke coverage: Firefox launch, Chrome DOM, and Safari WebDriver; tests skip when a browser or automation is unavailable |
 | ESM package build                           | Done: `dist/esm` import exports                                                                                                           |
 | React fixture app                           | Done: fixture app + conditional Chrome browser smoke coverage                                                                             |

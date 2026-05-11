@@ -1,3 +1,5 @@
+// AUTO-GENERATED FROM src/orvi-base.css — DO NOT EDIT.
+// Edit src/orvi-base.css instead, then run `npm run css:sync`.
 export const defaultCss = `:root {
   color-scheme: light;
   --orvi-fg: #1f2937;

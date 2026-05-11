@@ -1,7 +1,7 @@
 const vscode = require("vscode");
 const { execFile } = require("child_process");
 const { existsSync } = require("fs");
-const { mkdtemp, readFile, rm, writeFile } = require("fs/promises");
+const { copyFile, mkdtemp, readFile, rm, writeFile } = require("fs/promises");
 const os = require("os");
 const path = require("path");
 
@@ -272,6 +272,7 @@ async function buildPreviewHtml(document) {
     if (document.isDirty && typeof document.getText === "function") {
       inputPath = path.join(tempDir, path.basename(document.uri.fsPath) || "preview.ov");
       await writeFile(inputPath, document.getText(), "utf8");
+      await copyWorkspaceConfig(document, tempDir);
     }
 
     await runOrviPromise(["build", inputPath, "-o", outputPath], { cwd });
@@ -279,6 +280,19 @@ async function buildPreviewHtml(document) {
     return renderPreviewFrame(html);
   } finally {
     rm(tempDir, { force: true, recursive: true }).catch(() => {});
+  }
+}
+
+// When previewing an unsaved buffer we build a temp copy, so a sibling
+// orvi.config.js next to the real document needs to be copied alongside it,
+// otherwise the build would ignore the project's theme/lang/dir config.
+async function copyWorkspaceConfig(document, tempDir) {
+  const configPath = path.join(path.dirname(document.uri.fsPath), "orvi.config.js");
+  if (!existsSync(configPath)) return;
+  try {
+    await copyFile(configPath, path.join(tempDir, "orvi.config.js"));
+  } catch {
+    // Best effort: the preview still renders without the project config.
   }
 }
 

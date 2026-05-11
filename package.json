@@ -1,6 +1,6 @@
 {
   "name": "orvi-lang",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
   "keywords": [
@@ -66,7 +66,8 @@
     "src/orvi-base.css",
     "schemas",
     "orvi-spec-v0.1.md",
-    "orvi.config.example.js"
+    "orvi.config.example.js",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm && npm run build:assets",
@@ -74,26 +75,35 @@
     "build:esm": "tsc -p tsconfig.esm.json && node scripts/prepare-esm.mjs",
     "build:assets": "node -e \"require('fs').copyFileSync('src/orvi-base.css','dist/orvi-base.css')\"",
     "check": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "css:sync": "node scripts/sync-css.mjs",
+    "css:sync:check": "node scripts/sync-css.mjs --check",
     "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser orvi examples/welcome.ov --check",
     "finetune:corpus": "node scripts/build-fine-tuning-corpus.mjs",
     "finetune:corpus:check": "node scripts/build-fine-tuning-corpus.mjs --check",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --coverage",
     "playground:test": "node --test playground/playground.test.mjs",
     "obsidian:build": "npm run build && node integrations/obsidian-orvi/build.mjs",
     "site:build": "npm run build && node dist/cli.js build examples/welcome.ov -o examples/welcome.html && node scripts/build-site.mjs",
-    "verify": "npm run check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run format:check",
+    "verify": "npm run check && npm run lint && npm run css:sync:check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run format:check",
     "vscode:package": "npm --prefix vscode/orvi run package --"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.0",
     "@types/react": "^19.2.14",
+    "eslint": "^10.3.0",
+    "globals": "^17.6.0",
     "jest": "^30.0.5",
     "prettier": "^3.8.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "ts-jest": "^29.4.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.59.2"
   },
   "peerDependencies": {
     "react": ">=18.2.0"

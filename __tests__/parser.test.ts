@@ -58,6 +58,19 @@ const value = "<safe>";
     expect(ast.children.map((node) => node.type)).toEqual(["semantic", "semantic", "code", "table", "list"]);
   });
 
+  it("keeps pipes inside img alt text and badge labels", () => {
+    const ast = parseOrvi(`img: ./diagram.png | Flow: A | B | C
+badge: One | Two | type=warning
+badge: Plain | Text`);
+
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children).toEqual([
+      expect.objectContaining({ type: "semantic", name: "img", value: "./diagram.png", alt: "Flow: A | B | C" }),
+      expect.objectContaining({ type: "semantic", name: "badge", value: "One | Two", options: { type: "warning" } }),
+      expect.objectContaining({ type: "semantic", name: "badge", value: "Plain | Text", options: {} })
+    ]);
+  });
+
   it("recognizes single-column tables when the divider width matches the header", () => {
     const ast = parseOrvi(`| Item |
 | --- |

@@ -37,11 +37,15 @@ export function formatOrvi(source: string, options: FormatOptions = {}): FormatR
   };
 }
 
+const KNOWN_METADATA_KEYS = new Set(["orvi", "title", "lang", "dir"]);
+
 function formatLossDiagnostics(source: string): OrviDiagnostic[] {
   const diagnostics: OrviDiagnostic[] = [];
   const lines = source.replace(/\r\n?/g, "\n").split("\n");
-  let inCode = false;
 
+  diagnostics.push(...metadataLossDiagnostics(lines));
+
+  let inCode = false;
   lines.forEach((text, index) => {
     const trimmed = text.trim();
     if (trimmed.startsWith("```")) {
@@ -65,6 +69,30 @@ function formatLossDiagnostics(source: string): OrviDiagnostic[] {
   return diagnostics;
 }
 
+function metadataLossDiagnostics(lines: string[]): OrviDiagnostic[] {
+  if (lines[0]?.trim() !== "---") return [];
+  const closeIndex = lines.findIndex((line, index) => index > 0 && line.trim() === "---");
+  if (closeIndex < 0) return [];
+
+  const diagnostics: OrviDiagnostic[] = [];
+  for (let index = 1; index < closeIndex; index += 1) {
+    const text = lines[index] ?? "";
+    const match = /^([a-z][a-z0-9-]*):\s*(.*)$/i.exec(text.trim());
+    if (!match || KNOWN_METADATA_KEYS.has(match[1]!)) continue;
+    const column = Math.max(text.indexOf(match[1]!) + 1, 1);
+    diagnostics.push({
+      severity: "warning",
+      code: "ORVI_FORMAT_METADATA_DROPPED",
+      message: `The formatter does not preserve the unrecognized metadata key '${match[1]}'.`,
+      line: index + 1,
+      column,
+      endLine: index + 1,
+      endColumn: column + text.trim().length
+    });
+  }
+  return diagnostics;
+}
+
 function formatMetadata(metadata: DocumentMetadata): string {
   const entries: string[] = [];
   if (metadata.orvi) entries.push(`orvi: ${metadata.orvi}`);
@@ -76,10 +104,10 @@ function formatMetadata(metadata: DocumentMetadata): string {
 }
 
 function formatBlocks(blocks: BlockNode[], depth: number, indent: string): string {
-  return blocks.map((block) => indentLines(formatBlock(block, depth, indent), depth, indent)).join("\n\n");
+  return blocks.map((block) => indentLines(formatBlock(block, indent), depth, indent)).join("\n\n");
 }
 
-function formatBlock(block: BlockNode, depth: number, indent: string): string {
+function formatBlock(block: BlockNode, indent: string): string {
   switch (block.type) {
     case "heading":
       return `${"#".repeat(block.depth)} ${formatInline(block.children)}`;
@@ -129,7 +157,7 @@ function formatTable(headers: InlineNode[][], rows: InlineNode[][][]): string {
     Math.max(header.length, ...stringRows.map((row) => row[index]?.length ?? 0), 3)
   );
 
-  const row = (cells: string[]): string => `| ${cells.map((cell, index) => cell.padEnd(widths[index])).join(" | ")} |`;
+  const row = (cells: string[]): string => `| ${cells.map((cell, index) => cell.padEnd(widths[index] ?? 0)).join(" | ")} |`;
   const divider = `| ${widths.map((width) => "-".repeat(width)).join(" | ")} |`;
 
   return [row(stringHeaders), divider, ...stringRows.map(row)].join("\n");

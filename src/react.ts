@@ -16,14 +16,14 @@ export function OrviRenderer({
   className,
   ...props
 }: OrviRendererProps): React.ReactElement {
-  const result = renderOrvi(source, {
-    ...renderOptions,
-    fullDocument: false
-  });
+  const result = React.useMemo(
+    () => renderOrvi(source, { ...renderOptions, fullDocument: false }),
+    [source, renderOptions]
+  );
 
   React.useEffect(() => {
     onDiagnostics?.(result.ast.diagnostics);
-  }, [onDiagnostics, result.ast.diagnostics]);
+  }, [onDiagnostics, result]);
 
   return React.createElement("div", {
     ...props,

@@ -63,11 +63,13 @@ orvi serve doc.ov                      # live preview with hot reload (Ctrl+C to
 orvi build doc.ov                      # write doc.html next to the input (or -o other.html)
 orvi check doc.ov [--json]             # validate, print diagnostics
 orvi format doc.ov [--write] [--check] # reformat
+orvi version                           # print the package version
 ```
 
-From a clone of this repo, the same commands run via `node dist/cli.js …` after
-`npm run build`. `orvi view`, `orvi build`, and `orvi serve` read `orvi.config.js`
-beside the input file when it exists; see `orvi.config.example.js`.
+`orvi build`, `orvi view`, and `orvi serve` accept `--config path/to/orvi.config.js`
+to override the config file (otherwise they read `orvi.config.js` beside the
+input; see `orvi.config.example.js`). From a clone of this repo, the same
+commands run via `node dist/cli.js …` after `npm run build`.
 
 ## Library
 
@@ -147,7 +149,7 @@ npm run package
 The packaged `.vsix` can be installed with:
 
 ```sh
-code --install-extension vscode/orvi/orvi-language-0.1.6.vsix
+code --install-extension vscode/orvi/orvi-language-0.1.7.vsix
 ```
 
 Distribution is Azure-free: package the VSIX with `npm run vscode:package` or the
@@ -204,12 +206,19 @@ model-neutral prompt in `prompts/orvi-authoring-system.md`.
 
 `npm run verify` runs:
 
-- TypeScript `--noEmit` check
+- TypeScript `--noEmit` check (strict, `noUncheckedIndexedAccess`, …)
+- ESLint over `src/` (`typescript-eslint`, type-checked)
+- CSS sync check (`src/styles.ts` must match `src/orvi-base.css` — `npm run css:sync` regenerates it)
 - fine-tuning corpus sync check
 - Jest tests
 - playground tests
 - root package build
 - Prettier fixture format check
 
+CI additionally runs `npm run test:coverage` (per-metric coverage thresholds)
+and packages the VS Code extension.
+
 Tests include parser/renderer/formatter behavior, React export behavior, VS Code
 extension JSON, and every fenced `orvi` example in `orvi-language-guide.md`.
+Contributor docs: `CONTRIBUTING.md`. Security notes: `SECURITY.md`. Release
+notes: `CHANGELOG.md`.

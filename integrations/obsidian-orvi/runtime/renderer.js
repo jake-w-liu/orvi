@@ -214,6 +214,7 @@ function safeUrl(value) {
     const trimmed = value.trim();
     if (!trimmed)
         return "#";
+    // eslint-disable-next-line no-control-regex -- intentionally reject control characters in URLs
     if (/[\u0000-\u001f\u007f]/.test(trimmed))
         return "#";
     if (trimmed.startsWith("//"))
@@ -284,6 +285,7 @@ function cssDeclarationValue(value) {
     const trimmed = value.trim();
     if (!trimmed)
         return undefined;
+    // eslint-disable-next-line no-control-regex -- intentionally reject control characters in CSS values
     if (/[\u0000-\u001f\u007f;{}<>]/.test(trimmed))
         return undefined;
     if (/\/\*|\*\//.test(trimmed))
