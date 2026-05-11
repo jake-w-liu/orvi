@@ -2,7 +2,7 @@
   "name": "orvi-language",
   "displayName": "Orvi Language",
   "description": "Language support, diagnostics, completions, and preview for Orvi markup.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "jake-w-liu",
   "license": "MIT",
   "preview": true,

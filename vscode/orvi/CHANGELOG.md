@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Update the bundled Orvi runtime: single-column tables are recognized,
+  `btn:` splits on the first arrow and keeps spaces in the target,
+  unclosed metadata blocks report `ORVI_UNCLOSED_METADATA`, code-fence
+  language tokens are sanitized, and `orvi serve` 404s unknown paths.
+
 ## 0.1.3
 
 - Fix `hr`/`br` completions to insert `hr:`/`br:` (the parser requires the

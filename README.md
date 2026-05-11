@@ -119,7 +119,7 @@ npm run package
 The packaged `.vsix` can be installed with:
 
 ```sh
-code --install-extension vscode/orvi/orvi-language-0.1.2.vsix
+code --install-extension vscode/orvi/orvi-language-0.1.4.vsix
 ```
 
 Distribution is Azure-free: package the VSIX with `npm run vscode:package` or the
