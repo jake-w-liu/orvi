@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- Fix the preview panel: `[tabs]` now lay out with the tab labels in a
+  row above the active panel (the bundled stylesheet was rendering
+  later tab labels below the content). Bundled runtime also picks up
+  the new `orvi view` CLI command.
+
 ## 0.1.4
 
 - Update the bundled Orvi runtime: single-column tables are recognized,

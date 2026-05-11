@@ -5,8 +5,9 @@ simple while adding native visual scopes, layout components, and semantic
 elements.
 
 The name is coined from "ordered visual": Orvi source stays ordered and readable
-as text, then renders into visual structure. It is intentionally short for the
-CLI, package name, and `.ov` files. This is a product story, not a trademark or
+as text, then renders into visual structure. It is short for the CLI command
+(`orvi`) and `.ov` files; the npm package is `orvi-lang` (the bare name `orvi` is
+rejected by npm's similarity guard). This is a product story, not a trademark or
 domain-ownership claim.
 
 This repo implements the v0.1 prototype from `orvi-language-guide.md`.
@@ -146,7 +147,7 @@ npm run package
 The packaged `.vsix` can be installed with:
 
 ```sh
-code --install-extension vscode/orvi/orvi-language-0.1.4.vsix
+code --install-extension vscode/orvi/orvi-language-0.1.5.vsix
 ```
 
 Distribution is Azure-free: package the VSIX with `npm run vscode:package` or the
