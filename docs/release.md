@@ -38,13 +38,15 @@ Use the publisher page:
 https://marketplace.visualstudio.com/manage/publishers/jake-w-liu
 ```
 
-### Automated publish
+### Optional automated publish
 
-The workflow at `.github/workflows/publish-vscode.yml` is manual-only through
-`workflow_dispatch`. It packages the extension, stores the VSIX as a workflow
-artifact, verifies the Marketplace token, then publishes that exact VSIX.
+The current supported release path is manual Marketplace upload. The workflow at
+`.github/workflows/publish-vscode.yml` remains available as optional
+token-backed infrastructure through `workflow_dispatch`; it packages the
+extension, stores the VSIX as a workflow artifact, verifies the Marketplace
+token, then publishes that exact VSIX.
 
-Required repository secret:
+Optional repository secret for that workflow:
 
 - `VSCE_PAT`: a Visual Studio Marketplace/Azure DevOps personal access token
   that has publish rights for publisher `jake-w-liu`.
@@ -153,8 +155,9 @@ AAAA  @     2606:50c0:8003::153
 CNAME www   jake-w-liu.github.io
 ```
 
-As of this repo state, RDAP reports `orvi.dev` as not registered. Register the
-domain first, then point it at GitHub Pages before setting `ORVI_PAGES_CNAME`.
+As of the latest check on 2026-05-11, RDAP reports `orvi.dev` as not registered
+and DNS returns no records. Register the domain first, then point it at GitHub
+Pages before setting `ORVI_PAGES_CNAME`.
 
 ## Native GitHub `.ov` Rendering
 

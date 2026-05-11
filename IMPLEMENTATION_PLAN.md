@@ -27,7 +27,7 @@ implementation companion and avoid drifting from the guide roadmap.
 | VS Code syntax highlighting/snippets/config | Done                                                                                                                                      |
 | VS Code diagnostics                         | Done: extension runs `orvi check --json`                                                                                                   |
 | VS Code package/release prep                | Done: extension `npm run package`, package metadata, README, changelog, license, package lock, `.vscodeignore`                            |
-| VS Code Marketplace publish                 | Done: live v0.1.0 release, token-backed publish workflow, and token-free VSIX package fallback; repeatable automation waits on `VSCE_PAT` |
+| VS Code Marketplace publish                 | Done: live v0.1.0 release, manual Marketplace upload path, token-free VSIX package fallback, and optional token-backed workflow            |
 | VS Code autocomplete/live preview           | Done                                                                                                                                      |
 | CI                                          | Done: GitHub Actions runs root verify and VS Code package check                                                                           |
 | Prettier plugin                             | Bridge done with basic Prettier CLI coverage                                                                                              |
@@ -78,9 +78,9 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: editor + preview split view.
    - Done: GitHub Pages deployment workflow.
    - Done: gate `orvi.dev` custom-domain deployment behind `ORVI_PAGES_CNAME`.
-   - Example gallery.
-   - Shareable encoded document state.
-   - Register `orvi.dev`, point DNS to the GitHub Pages site, enable the custom domain, and wait for HTTPS certificate issuance.
+   - Optional future: example gallery.
+   - Optional future: shareable encoded document state.
+   - Optional external branding: register `orvi.dev`, point DNS to the GitHub Pages site, enable the custom domain, and wait for HTTPS certificate issuance.
 
 5. Benchmark corpus
    - Done: add small deterministic Orvi corpus.
@@ -94,7 +94,7 @@ implementation companion and avoid drifting from the guide roadmap.
    - Done: add native Orvi artifact JSON output and schema for render surfaces.
    - Done: render repo `.ov` files to HTML through GitHub Pages.
    - Done: build Obsidian plugin scaffold.
-   - Native GitHub `.ov` rendering requires GitHub platform support.
+   - Done: document that native GitHub `.ov` rendering requires GitHub platform support.
 
 ## Acceptance Gate
 

@@ -389,7 +389,6 @@ marking the parent complete.
 - [x] Harden Marketplace release workflow with token validation and VSIX artifact capture
 - [x] Add token-free VSIX package workflow for manual Marketplace upload and GitHub Releases
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`
-- [ ] Configure `VSCE_PAT` for repeatable automated Marketplace releases
 - [x] **Prettier plugin bridge** for auto-formatting `.ov` files
 - [x] Add basic Prettier CLI fixture coverage to `npm run verify`
 - [x] Add GitHub Actions CI for `npm run verify`
@@ -402,12 +401,16 @@ marking the parent complete.
 - [x] **Obsidian plugin scaffold** — render Orvi code blocks and `.ov` previews in Obsidian
 - [x] **AI artifact/render-surface support** — native Orvi artifact JSON output type
 - [x] **GitHub Pages rendering** — render `.ov` files from the repo as HTML previews
-- [ ] **Native GitHub rendering** — `.ov` files rendered directly in repos (requires GitHub platform support)
+- [x] **Native GitHub rendering decision** — direct GitHub.com `.ov` rendering requires GitHub platform support; Orvi uses generated GitHub Pages previews instead
 - [x] Static **Orvi Playground** with editor + preview split
 - [x] Add GitHub Pages deployment workflow for the Orvi Playground
 - [x] Enable GitHub Pages for the repository with GitHub Actions workflow builds
 - [x] Gate `orvi.dev` custom-domain deployment behind `ORVI_PAGES_CNAME` so the default Pages URL stays usable
-- [ ] Register `orvi.dev`, point DNS at GitHub Pages, set `ORVI_PAGES_CNAME`, configure the Pages custom domain, and wait for HTTPS certificate issuance
+
+Optional external branding step: `orvi.dev` is not registered as of the latest
+RDAP check on 2026-05-11. The repo keeps custom-domain support gated behind
+`ORVI_PAGES_CNAME`, but domain purchase, DNS ownership, and certificate issuance
+are outside implementation progress.
 
 ### Phase 5 — AI Training & Optimization (Ongoing)
 

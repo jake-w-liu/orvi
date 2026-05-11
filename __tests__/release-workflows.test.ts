@@ -25,7 +25,7 @@ describe("release and deployment workflows", () => {
     expect(siteBuilder).toContain('join(siteDir, "CNAME")');
   });
 
-  it("publishes the VS Code extension only through an explicit token-backed workflow", () => {
+  it("keeps automated Marketplace publishing optional and token-backed", () => {
     const workflow = read(".github/workflows/publish-vscode.yml");
     const extensionPackage = JSON.parse(read("vscode/orvi/package.json")) as {
       scripts: Record<string, string>;
@@ -38,6 +38,9 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("actions/upload-artifact@v4");
     expect(workflow).toContain("npx vsce publish");
     expect(workflow).toContain("--packagePath orvi-language.vsix");
+    const releaseRunbook = read("docs/release.md");
+    expect(releaseRunbook).toContain("optional");
+    expect(releaseRunbook).toContain("token-backed infrastructure");
     expect(extensionPackage.scripts.publish).toBe("vsce publish");
   });
 

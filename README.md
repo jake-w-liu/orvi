@@ -121,11 +121,11 @@ The packaged `.vsix` can be installed with:
 code --install-extension vscode/orvi/orvi-language-0.1.0.vsix
 ```
 
-Marketplace publishing is wired through `.github/workflows/publish-vscode.yml`.
-Set a repository secret named `VSCE_PAT`, then run the workflow manually. If
-Azure DevOps PAT creation is unavailable, package the VSIX with
-`.github/workflows/package-vscode.yml` or `npm run vscode:package` and upload it
-from the Marketplace publisher page. Open VSX publishing is wired through
+The current Marketplace release path is manual upload: package the VSIX with
+`.github/workflows/package-vscode.yml` or `npm run vscode:package`, then upload
+it from the Marketplace publisher page. `.github/workflows/publish-vscode.yml`
+is kept as optional token-backed infrastructure, but it is not tracked as
+required release work. Open VSX publishing is wired through
 `.github/workflows/publish-open-vsx.yml` after `OVSX_PAT` and the `jake-w-liu`
 namespace are configured.
 
