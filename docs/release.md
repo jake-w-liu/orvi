@@ -4,7 +4,7 @@ This runbook tracks the release paths that are already wired in this repository.
 
 ## VS Code Marketplace
 
-The Orvi VS Code Marketplace release target is:
+The Orvi VS Code Marketplace release is public:
 
 - Extension: `jake-w-liu.orvi-language`
 - Version: `0.1.0`

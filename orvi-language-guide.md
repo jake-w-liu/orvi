@@ -375,7 +375,7 @@ marking the parent complete.
   - [x] Live preview panel
   - [x] Release prep metadata, README, changelog, license, package lock, and `.vscodeignore`
 - [x] Add token-backed workflow for publishing the VS Code extension to the Marketplace
-- [ ] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.orvi-language`
+- [x] Publish VS Code extension v0.1.0 to the Marketplace as `jake-w-liu.orvi-language`
 - [x] Harden Marketplace release workflow with token validation and VSIX artifact capture
 - [x] Add token-free VSIX package workflow for manual Marketplace upload and GitHub Releases
 - [x] Add Open VSX publish workflow gated by `OVSX_PAT`
