@@ -1,4 +1,5 @@
 import {
+  BaseNode,
   BlockNode,
   ComponentNode,
   DocumentNode,
@@ -8,6 +9,17 @@ import {
 } from "./ast";
 import { parseOrvi } from "./parser";
 import { defaultCss } from "./styles";
+
+/**
+ * Override the rendered HTML for a block-level node. Return a string to use it
+ * verbatim, or `undefined` to fall back to the default. `defaultRender(node)`
+ * renders a node the built-in way (no further hook re-entry), so a hook can
+ * wrap or post-process the default output.
+ */
+export type RenderNodeHook = (
+  node: BlockNode,
+  defaultRender: (node: BlockNode) => string
+) => string | undefined;
 
 export interface RenderOptions {
   fullDocument?: boolean;
@@ -26,6 +38,18 @@ export interface RenderOptions {
    * share one HTML page so their tab groups do not collide. Defaults to "".
    */
   idPrefix?: string;
+  /**
+   * When true, every block-level element carries a `data-orvi-loc="line:column"`
+   * attribute pointing at its source position. Useful for editor integrations
+   * (click-to-source / scroll sync). Off by default.
+   */
+  sourceLocations?: boolean;
+  /**
+   * Optional override for the HTML of block-level nodes. Orvi has no plugin API
+   * by design — this hook plus walking the AST from `parseOrvi` are the
+   * extension points (see `docs/stability.md`).
+   */
+  renderNode?: RenderNodeHook;
 }
 
 export interface RenderResult {
@@ -79,6 +103,8 @@ const THEME_COLOR_TOKENS = new Set<ThemeColorToken>([
 interface RenderContext {
   tabSet: number;
   idPrefix: string;
+  sourceLocations: boolean;
+  renderNode?: RenderNodeHook;
 }
 
 export function renderOrvi(source: string, options: RenderOptions = {}): RenderResult {
@@ -92,9 +118,14 @@ export function renderOrvi(source: string, options: RenderOptions = {}): RenderR
 export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): string {
   // Sanitize the id prefix to id-safe characters so it can never break out of
   // an attribute, regardless of what a caller passes.
-  const ctx: RenderContext = { tabSet: 0, idPrefix: (options.idPrefix ?? "").replace(/[^A-Za-z0-9_-]/g, "") };
+  const ctx: RenderContext = {
+    tabSet: 0,
+    idPrefix: (options.idPrefix ?? "").replace(/[^A-Za-z0-9_-]/g, ""),
+    sourceLocations: options.sourceLocations === true,
+    renderNode: options.renderNode
+  };
   const documentClass = ["orvi-document", themeClass(options.colorScheme)].filter(Boolean).join(" ");
-  const body = `<main class="${documentClass}">\n${ast.children.map((node) => renderBlock(node, ctx)).join("\n")}\n</main>`;
+  const body = `<main class="${documentClass}">\n${(ast.children ?? []).map((node) => renderBlock(node, ctx)).join("\n")}\n</main>`;
   if (!options.fullDocument) {
     return body;
   }
@@ -132,68 +163,83 @@ export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): st
 export { defaultCss };
 
 function renderBlock(node: BlockNode, ctx: RenderContext): string {
+  if (ctx.renderNode) {
+    const custom = ctx.renderNode(node, (inner) => renderBlockDefault(inner, ctx));
+    if (typeof custom === "string") return custom;
+  }
+  return renderBlockDefault(node, ctx);
+}
+
+function renderBlockDefault(node: BlockNode, ctx: RenderContext): string {
+  const loc = locAttr(node, ctx);
   switch (node.type) {
     case "heading": {
       const depth = clampHeadingDepth(node.depth);
-      return `<h${depth}>${renderInline(node.children)}</h${depth}>`;
+      return `<h${depth}${loc}>${renderInline(node.children)}</h${depth}>`;
     }
     case "paragraph":
-      return `<p>${renderInline(node.children)}</p>`;
+      return `<p${loc}>${renderInline(node.children)}</p>`;
     case "thematicBreak":
-      return '<hr class="orvi-hr">';
+      return `<hr class="orvi-hr"${loc}>`;
     case "code":
-      return renderCode(node.language, node.filename, node.value);
+      return renderCode(node.language, node.filename, node.value, loc);
     case "table":
-      return renderTable(node.headers, node.rows);
+      return renderTable(node.headers, node.rows, loc);
     case "list":
-      return renderList(node.ordered, node.items);
+      return renderList(node.ordered, node.items, loc);
     case "component":
       return renderComponent(node, ctx);
     case "semantic":
-      return renderSemantic(node);
+      return renderSemantic(node, loc);
     default:
       return "";
   }
 }
 
-function renderCode(language: string | undefined, filename: string | undefined, value: string): string {
-  const className = language ? ` class="language-${escapeAttr(language)}"` : "";
-  const title = filename ? `<div class="orvi-code-title">${escapeHtml(filename)}</div>\n` : "";
-  return `${title}<pre class="orvi-code"><code${className}>${escapeHtml(value)}</code></pre>`;
+function locAttr(node: BaseNode, ctx: RenderContext): string {
+  if (!ctx.sourceLocations || !node.loc || typeof node.loc.line !== "number") return "";
+  return ` data-orvi-loc="${escapeAttr(`${node.loc.line}:${node.loc.column}`)}"`;
 }
 
-function renderTable(headers: InlineNode[][], rows: InlineNode[][][]): string {
+function renderCode(language: string | undefined, filename: string | undefined, value: string, loc = ""): string {
+  const className = language ? ` class="language-${escapeAttr(language)}"` : "";
+  const title = filename ? `<div class="orvi-code-title">${escapeHtml(filename)}</div>\n` : "";
+  return `${title}<pre class="orvi-code"${loc}><code${className}>${escapeHtml(value)}</code></pre>`;
+}
+
+function renderTable(headers: InlineNode[][], rows: InlineNode[][][], loc = ""): string {
   const head = (headers ?? []).map((cell) => `<th>${renderInline(cell)}</th>`).join("");
   const body = (rows ?? [])
     .map((row) => `<tr>${(row ?? []).map((cell) => `<td>${renderInline(cell)}</td>`).join("")}</tr>`)
     .join("");
-  return `<table class="orvi-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  return `<table class="orvi-table"${loc}><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
-function renderList(ordered: boolean, items: InlineNode[][]): string {
+function renderList(ordered: boolean, items: InlineNode[][], loc = ""): string {
   const tag = ordered ? "ol" : "ul";
-  return `<${tag} class="orvi-list">${(items ?? []).map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
+  return `<${tag} class="orvi-list"${loc}>${(items ?? []).map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
 }
 
 function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   const options = node.options ?? {};
+  const loc = locAttr(node, ctx);
   if (node.name === "callout") {
     const type = options.type ?? "info";
     const label = `${calloutLabel(type)} callout`;
     return `<aside class="orvi-callout orvi-callout-${escapeAttr(type)}" role="note" aria-label="${escapeAttr(
       label
-    )}">${renderChildren(node.children, ctx)}</aside>`;
+    )}"${loc}>${renderChildren(node.children, ctx)}</aside>`;
   }
 
   if (node.name === "card") {
     const bg = options.bg ? ` orvi-bg-${escapeAttr(options.bg)}` : "";
-    return `<section class="orvi-card${bg}">${renderChildren(node.children, ctx)}</section>`;
+    return `<section class="orvi-card${bg}"${loc}>${renderChildren(node.children, ctx)}</section>`;
   }
 
   if (node.name === "grid") {
     const count = gridCount(node);
     const columns = node.columns ?? [];
-    return `<div class="orvi-grid orvi-grid-${count}">${columns
+    return `<div class="orvi-grid orvi-grid-${count}"${loc}>${columns
       .map((column) => `<div class="orvi-grid-column">${renderChildren(column, ctx)}</div>`)
       .join("")}</div>`;
   }
@@ -201,14 +247,14 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   if (node.name === "tabs") {
     const tabNodes = (node.children ?? []).filter(isTabNode);
     const group = `${ctx.idPrefix}orvi-tabs-${ctx.tabSet++}`;
-    return `<div class="orvi-tabs" role="tablist" aria-label="Tabs">${tabNodes
+    return `<div class="orvi-tabs" role="tablist" aria-label="Tabs"${loc}>${tabNodes
       .map((tab, index) => renderTab(tab, ctx, group, index))
       .join("")}</div>`;
   }
 
   if (node.name === "tab") {
     const label = options.label ?? "Tab";
-    return `<section class="orvi-tab-standalone" aria-label="${escapeAttr(label)}">${renderChildren(node.children, ctx)}</section>`;
+    return `<section class="orvi-tab-standalone" aria-label="${escapeAttr(label)}"${loc}>${renderChildren(node.children, ctx)}</section>`;
   }
 
   return "";
@@ -226,29 +272,29 @@ function renderTab(node: ComponentNode, ctx: RenderContext, group: string, index
     `<label class="orvi-tab-label" id="${tabId}" role="tab" for="${id}" aria-selected="${selected}" aria-controls="${panelId}">${escapeHtml(
       label
     )}</label>`,
-    `<div class="orvi-tab-panel" id="${panelId}" role="tabpanel" aria-labelledby="${tabId}">${renderChildren(
+    `<div class="orvi-tab-panel" id="${panelId}" role="tabpanel" aria-labelledby="${tabId}"${locAttr(node, ctx)}>${renderChildren(
       node.children,
       ctx
     )}</div>`
   ].join("");
 }
 
-function renderSemantic(node: SemanticNode): string {
-  if (node.name === "hr") return '<hr class="orvi-hr">';
-  if (node.name === "br") return "<br>";
+function renderSemantic(node: SemanticNode, loc = ""): string {
+  if (node.name === "hr") return `<hr class="orvi-hr"${loc}>`;
+  if (node.name === "br") return `<br${loc}>`;
 
   if (node.name === "btn") {
-    return `<a class="orvi-btn" href="${escapeAttr(safeUrl(node.target ?? "#"))}">${escapeHtml(node.value ?? "")}</a>`;
+    return `<a class="orvi-btn" href="${escapeAttr(safeUrl(node.target ?? "#"))}"${loc}>${escapeHtml(node.value ?? "")}</a>`;
   }
 
   if (node.name === "img") {
-    return `<figure class="orvi-image"><img src="${escapeAttr(safeUrl(node.value ?? ""))}" alt="${escapeAttr(
+    return `<figure class="orvi-image"${loc}><img src="${escapeAttr(safeUrl(node.value ?? ""))}" alt="${escapeAttr(
       node.alt ?? ""
     )}"></figure>`;
   }
 
   const type = (node.options ?? {}).type ?? "info";
-  return `<span class="orvi-badge orvi-badge-${escapeAttr(type)}">${escapeHtml(node.value ?? "")}</span>`;
+  return `<span class="orvi-badge orvi-badge-${escapeAttr(type)}"${loc}>${escapeHtml(node.value ?? "")}</span>`;
 }
 
 function renderChildren(children: BlockNode[], ctx: RenderContext): string {

@@ -5,6 +5,25 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 1.2.0
+
+Additive minor — existing behavior and the rendered output of existing input
+are unchanged when the new options are not used.
+
+- **`renderOrvi(source, { renderNode })`** — override the HTML for a block-level
+  node. The hook gets `(node, defaultRender)`; return a string to use it
+  verbatim, or `undefined` to fall back. `defaultRender(node)` renders the
+  built-in way with no hook re-entry, so a hook can wrap or post-process the
+  default output. Together with `walk()` over the AST, this is the supported
+  extension model — Orvi still has no plugin API by design (see
+  `docs/stability.md`). Exported type `RenderNodeHook`.
+- **`renderOrvi(source, { sourceLocations: true })`** — every block-level
+  element (including nested ones, e.g. a paragraph inside a callout) carries a
+  `data-orvi-loc="line:column"` attribute pointing at its source position. Off
+  by default; intended for editor click-to-source / scroll-sync. The attribute
+  value is escaped; a malformed AST without `loc` simply omits it.
+- No parser, formatter, or default-rendering changes.
+
 ## 1.1.0
 
 Additive minor — existing documents and the rendered output of existing input

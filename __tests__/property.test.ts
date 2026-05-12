@@ -123,6 +123,27 @@ describe("property: parser/renderer/formatter robustness", () => {
     );
   });
 
+  it("sourceLocations + a renderNode hook never throw and stay safe", () => {
+    fc.assert(
+      fc.property(documentSource, (source) => {
+        const passthrough = renderOrvi(source, { sourceLocations: true, renderNode: () => undefined }).html;
+        // The hook returning undefined must be identical to no hook.
+        expect(passthrough).toBe(renderOrvi(source, { sourceLocations: true }).html);
+        expect(hasLiveScript(passthrough)).toBe(false);
+        // Every emitted data-orvi-loc value is `digits:digits` (escaped, well-formed).
+        for (const m of passthrough.matchAll(/data-orvi-loc="([^"]*)"/g)) {
+          expect(m[1]).toMatch(/^\d+:\d+$/);
+        }
+        // A wrapping hook still can't introduce a live <script>.
+        const wrapped = renderOrvi(source, {
+          renderNode: (node, def) => `<div data-t="${node.type}">${def(node)}</div>`
+        }).html;
+        expect(hasLiveScript(wrapped)).toBe(false);
+      }),
+      { numRuns: RUNS }
+    );
+  });
+
   it("renderOrviArtifact never throws", () => {
     fc.assert(
       fc.property(documentSource, (source) => {

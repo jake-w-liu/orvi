@@ -128,6 +128,11 @@ Dark mode is a renderer/theme concern. It is selected with the renderer option
 `colorScheme: "dark"` or equivalent theme configuration; Orvi v0.1 has no
 document-level dark-mode syntax.
 
+Source-position annotation is an optional renderer feature: with it enabled,
+every block-level element carries a `data-orvi-loc="line:column"` attribute. The
+renderer may also accept a per-block override hook for custom output. Neither is
+part of the document syntax.
+
 ## Error Rules
 
 The parser never throws for syntax errors. It returns diagnostics with source

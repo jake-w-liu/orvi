@@ -68,7 +68,12 @@ extension points are the published functions:
 
 - Need custom output? `parseOrvi(source)` gives you the AST; `walk(ast, visit)`
   does a depth-first traversal.
-- Need to tweak the HTML? Post-process the string from `renderOrvi`.
+- Need to tweak the HTML? `renderOrvi(source, { renderNode })` overrides the
+  HTML for individual block nodes (with a `defaultRender` callback for
+  fall-through), or post-process the returned string.
+- Need source positions in the HTML (editor integrations)?
+  `renderOrvi(source, { sourceLocations: true })` adds `data-orvi-loc` to every
+  block element.
 - Need custom styling? Ship your own CSS instead of `orvi-base.css` (the class
   names — `orvi-*` — are part of the rendered-output contract above).
 

@@ -101,6 +101,15 @@ const links: string[] = [];
 walk(ast, (node) => {
   if (node.type === "link") links.push(node.href);
 });
+
+// Or override the HTML for specific block nodes (defaultRender has no hook re-entry):
+const wrapped = renderOrvi("# Title", {
+  renderNode: (node, defaultRender) =>
+    node.type === "heading" ? `<header>${defaultRender(node)}</header>` : undefined,
+}).html;
+
+// Editor integrations: tag every block element with its source position.
+const traced = renderOrvi("# Title", { sourceLocations: true }).html; // <h1 data-orvi-loc="1:1">…
 ```
 
 The package supports both CommonJS `require()` and ESM `import` exports, and
