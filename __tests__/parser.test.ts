@@ -138,6 +138,28 @@ Missing close
     expect(ast!.diagnostics.some((d) => d.code === "ORVI_MAX_NESTING_DEPTH")).toBe(true);
   });
 
+  it("ignores a nonsensical maxNestingDepth option (still caps deep nesting)", () => {
+    const deep = "[callout]\n".repeat(2000) + "x\n" + "[/callout]\n".repeat(2000);
+    for (const maxNestingDepth of [NaN, Infinity, -1, -7, 2.9] as number[]) {
+      let ast: ReturnType<typeof parseOrvi> | undefined;
+      expect(() => {
+        ast = parseOrvi(deep, { maxNestingDepth });
+      }).not.toThrow();
+      expect(ast!.diagnostics.some((d) => d.code === "ORVI_MAX_NESTING_DEPTH")).toBe(true);
+    }
+  });
+
+  it("treats a bare # marker as an empty heading", () => {
+    const ast = parseOrvi("#\nfollowing text\n\n### \nmore");
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children.map((node) => node.type)).toEqual(["heading", "paragraph", "heading", "paragraph"]);
+    const [h1, , h3] = ast.children as Array<{ depth: number; children: unknown[] }>;
+    expect(h1).toMatchObject({ depth: 1 });
+    expect(h1.children).toEqual([]);
+    expect(h3).toMatchObject({ depth: 3 });
+    expect(h3.children).toEqual([]);
+  });
+
   it("treats a bare list marker as an empty list item", () => {
     const ast = parseOrvi("- a\n-\n* b\n*\n1.\n2. c");
     expect(ast.diagnostics).toEqual([]);

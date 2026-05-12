@@ -1,6 +1,6 @@
 {
   "name": "orvi-lang",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
   "keywords": [

@@ -1,4 +1,13 @@
-import { renderOrvi } from "../src/renderer";
+import { renderOrvi, renderToHtml } from "../src/renderer";
+import type { DocumentNode, HeadingNode, InlineModifier } from "../src/ast";
+
+const LOC = { line: 1, column: 1 };
+function doc(children: DocumentNode["children"]): DocumentNode {
+  return { type: "document", loc: LOC, metadata: {}, children, diagnostics: [] };
+}
+function heading(depth: number): HeadingNode {
+  return { type: "heading", loc: LOC, depth, children: [{ type: "text", loc: LOC, value: "x" }] };
+}
 
 describe("renderOrvi", () => {
   it("renders escaped semantic HTML with Orvi classes", () => {
@@ -184,5 +193,41 @@ dir: rtl
     expect(result.html).toContain(".orvi-theme-dark {");
     expect(result.html).toContain("color-scheme: dark;");
     expect(result.html).toContain("--orvi-surface: #111827;");
+  });
+});
+
+describe("renderToHtml is robust to malformed/hostile input", () => {
+  it("clamps heading depth to 1..6 so the output is always valid HTML", () => {
+    const html = renderToHtml(doc([heading(0), heading(1), heading(3), heading(99), heading(2.7), heading(NaN)]));
+    expect(html).toContain("<h1>");
+    expect(html).toContain("<h3>");
+    expect(html).toContain("<h6>");
+    expect(html).not.toMatch(/<h(?:0|7|99|2\.7|NaN)\b/);
+  });
+
+  it("escapes a hostile inline-modifier value instead of letting it break out of the class attribute", () => {
+    const modifiers: InlineModifier[] = [{ kind: "color", value: '"><script>alert(1)</script>' }];
+    const html = renderToHtml(
+      doc([{ type: "paragraph", loc: LOC, children: [{ type: "scope", loc: LOC, modifiers, children: [{ type: "text", loc: LOC, value: "x" }] }] }])
+    );
+    expect(html).not.toMatch(/<script\b/i);
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("does not throw on a partially malformed AST (null/undefined children)", () => {
+    const malformed = {
+      type: "document",
+      loc: LOC,
+      metadata: {},
+      diagnostics: [],
+      children: [
+        { type: "paragraph", loc: LOC, children: null },
+        { type: "heading", loc: LOC, depth: 1, children: undefined },
+        { type: "component", loc: LOC, name: "callout", options: null, children: null },
+        { type: "list", loc: LOC, ordered: false, items: null },
+        { type: "table", loc: LOC, headers: null, rows: null }
+      ]
+    } as unknown as DocumentNode;
+    expect(() => renderToHtml(malformed, { fullDocument: true })).not.toThrow();
   });
 });

@@ -117,8 +117,11 @@ function formatBlocks(blocks: BlockNode[], depth: number, indent: string): strin
 
 function formatBlock(block: BlockNode, indent: string): string {
   switch (block.type) {
-    case "heading":
-      return `${"#".repeat(block.depth)} ${formatInline(block.children)}`;
+    case "heading": {
+      const hashes = "#".repeat(clampHeadingDepth(block.depth));
+      const content = formatInline(block.children);
+      return content ? `${hashes} ${content}` : hashes;
+    }
     case "paragraph":
       return formatInline(block.children).trim();
     case "thematicBreak":
@@ -220,6 +223,11 @@ function formatOptions(options: ComponentOptions): string {
 
 function quoteIfNeeded(value: string): string {
   return /\s/.test(value) ? JSON.stringify(value) : value;
+}
+
+function clampHeadingDepth(depth: number): number {
+  const n = Math.floor(depth);
+  return Number.isInteger(n) && n >= 1 ? Math.min(n, 6) : 1;
 }
 
 function indentLines(value: string, depth: number, indent: string): string {

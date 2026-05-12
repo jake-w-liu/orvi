@@ -1,4 +1,5 @@
 import { formatOrvi } from "../src/formatter";
+import { renderOrvi } from "../src/renderer";
 
 describe("formatOrvi", () => {
   it("formats block structure and nested components canonically", () => {
@@ -103,11 +104,19 @@ futurekey: keep me
     expect(result.formatted).not.toContain("futurekey");
   });
 
-  it("is idempotent for a paragraph whose source begins with a bare list marker", () => {
-    for (const source of ["*\nfoo", "5.\nfoo", "-\nbar", "1.\nbaz", "x\n*\ny"]) {
+  it("is idempotent for a paragraph whose source begins with a bare marker", () => {
+    for (const source of ["*\nfoo", "5.\nfoo", "-\nbar", "1.\nbaz", "x\n*\ny", "#\nfoo", "### \nbar", "#\n# x"]) {
       const once = formatOrvi(source).formatted;
       const twice = formatOrvi(once).formatted;
       expect(twice).toBe(once);
+    }
+  });
+
+  it("does not change what a document renders to (no semantic drift) for bare-marker inputs", () => {
+    for (const source of ["#\nfoo", "### text", "*\nfoo", "5.\nfoo", "-\nbar"]) {
+      const r = formatOrvi(source);
+      expect(r.diagnostics.filter((d) => d.code.startsWith("ORVI_FORMAT_"))).toEqual([]);
+      expect(renderOrvi(source).html).toBe(renderOrvi(r.formatted).html);
     }
   });
 

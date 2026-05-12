@@ -133,8 +133,10 @@ export { defaultCss };
 
 function renderBlock(node: BlockNode, ctx: RenderContext): string {
   switch (node.type) {
-    case "heading":
-      return `<h${node.depth}>${renderInline(node.children)}</h${node.depth}>`;
+    case "heading": {
+      const depth = clampHeadingDepth(node.depth);
+      return `<h${depth}>${renderInline(node.children)}</h${depth}>`;
+    }
     case "paragraph":
       return `<p>${renderInline(node.children)}</p>`;
     case "thematicBreak":
@@ -161,21 +163,22 @@ function renderCode(language: string | undefined, filename: string | undefined, 
 }
 
 function renderTable(headers: InlineNode[][], rows: InlineNode[][][]): string {
-  const head = headers.map((cell) => `<th>${renderInline(cell)}</th>`).join("");
-  const body = rows
-    .map((row) => `<tr>${row.map((cell) => `<td>${renderInline(cell)}</td>`).join("")}</tr>`)
+  const head = (headers ?? []).map((cell) => `<th>${renderInline(cell)}</th>`).join("");
+  const body = (rows ?? [])
+    .map((row) => `<tr>${(row ?? []).map((cell) => `<td>${renderInline(cell)}</td>`).join("")}</tr>`)
     .join("");
   return `<table class="orvi-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
 function renderList(ordered: boolean, items: InlineNode[][]): string {
   const tag = ordered ? "ol" : "ul";
-  return `<${tag} class="orvi-list">${items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
+  return `<${tag} class="orvi-list">${(items ?? []).map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
 }
 
 function renderComponent(node: ComponentNode, ctx: RenderContext): string {
+  const options = node.options ?? {};
   if (node.name === "callout") {
-    const type = node.options.type ?? "info";
+    const type = options.type ?? "info";
     const label = `${calloutLabel(type)} callout`;
     return `<aside class="orvi-callout orvi-callout-${escapeAttr(type)}" role="note" aria-label="${escapeAttr(
       label
@@ -183,7 +186,7 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   }
 
   if (node.name === "card") {
-    const bg = node.options.bg ? ` orvi-bg-${escapeAttr(node.options.bg)}` : "";
+    const bg = options.bg ? ` orvi-bg-${escapeAttr(options.bg)}` : "";
     return `<section class="orvi-card${bg}">${renderChildren(node.children, ctx)}</section>`;
   }
 
@@ -196,7 +199,7 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   }
 
   if (node.name === "tabs") {
-    const tabNodes = node.children.filter(isTabNode);
+    const tabNodes = (node.children ?? []).filter(isTabNode);
     const group = `${ctx.idPrefix}orvi-tabs-${ctx.tabSet++}`;
     return `<div class="orvi-tabs" role="tablist" aria-label="Tabs">${tabNodes
       .map((tab, index) => renderTab(tab, ctx, group, index))
@@ -204,7 +207,7 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   }
 
   if (node.name === "tab") {
-    const label = node.options.label ?? "Tab";
+    const label = options.label ?? "Tab";
     return `<section class="orvi-tab-standalone" aria-label="${escapeAttr(label)}">${renderChildren(node.children, ctx)}</section>`;
   }
 
@@ -215,7 +218,7 @@ function renderTab(node: ComponentNode, ctx: RenderContext, group: string, index
   const id = `${group}-${index}`;
   const tabId = `${id}-tab`;
   const panelId = `${id}-panel`;
-  const label = node.options.label ?? `Tab ${index + 1}`;
+  const label = (node.options ?? {}).label ?? `Tab ${index + 1}`;
   const checked = index === 0 ? " checked" : "";
   const selected = index === 0 ? "true" : "false";
   return [
@@ -244,16 +247,16 @@ function renderSemantic(node: SemanticNode): string {
     )}"></figure>`;
   }
 
-  const type = node.options.type ?? "info";
+  const type = (node.options ?? {}).type ?? "info";
   return `<span class="orvi-badge orvi-badge-${escapeAttr(type)}">${escapeHtml(node.value ?? "")}</span>`;
 }
 
 function renderChildren(children: BlockNode[], ctx: RenderContext): string {
-  return children.map((child) => renderBlock(child, ctx)).join("\n");
+  return (children ?? []).map((child) => renderBlock(child, ctx)).join("\n");
 }
 
 function renderInline(nodes: InlineNode[]): string {
-  return nodes
+  return (nodes ?? [])
     .map((node) => {
       switch (node.type) {
         case "text":
@@ -265,7 +268,7 @@ function renderInline(nodes: InlineNode[]): string {
         case "strike":
           return `<del>${renderInline(node.children)}</del>`;
         case "scope":
-          return `<span class="${node.modifiers.map(modifierClass).join(" ")}">${renderInline(node.children)}</span>`;
+          return `<span class="${escapeAttr((node.modifiers ?? []).map(modifierClass).join(" "))}">${renderInline(node.children)}</span>`;
         default:
           return "";
       }
@@ -285,9 +288,14 @@ function isTabNode(node: BlockNode): node is ComponentNode {
 }
 
 function gridCount(node: ComponentNode): number {
-  const declared = Number(node.args[0]);
+  const declared = Number((node.args ?? [])[0]);
   if (Number.isInteger(declared) && declared >= 1 && declared <= 6) return declared;
   return Math.min(Math.max(node.columns?.length ?? 1, 1), 6);
+}
+
+function clampHeadingDepth(depth: number): number {
+  const n = Math.floor(depth);
+  return Number.isInteger(n) && n >= 1 ? Math.min(n, 6) : 1;
 }
 
 function escapeHtml(value: string): string {

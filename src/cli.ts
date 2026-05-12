@@ -219,23 +219,29 @@ function serve(options: ServeArgs): void {
       return;
     }
 
-    const source = readFileSync(inputPath, "utf8");
-    const result = renderOrvi(source, {
-      fullDocument: true,
-      title: config.title,
-      fallbackTitle: basename(inputPath),
-      lang: config.lang,
-      dir: config.dir,
-      colorScheme: config.colorScheme,
-      includeCss: true,
-      liveReload: true,
-      theme: config.theme,
-      extraCss: config.css
-    });
-    response.writeHead(hasErrorDiagnostics(result.ast.diagnostics) ? 422 : 200, {
-      "Content-Type": "text/html; charset=utf-8"
-    });
-    response.end(withDiagnostics(result.html, result.ast.diagnostics));
+    try {
+      const source = readFileSync(inputPath, "utf8");
+      const result = renderOrvi(source, {
+        fullDocument: true,
+        title: config.title,
+        fallbackTitle: basename(inputPath),
+        lang: config.lang,
+        dir: config.dir,
+        colorScheme: config.colorScheme,
+        includeCss: true,
+        liveReload: true,
+        theme: config.theme,
+        extraCss: config.css
+      });
+      response.writeHead(hasErrorDiagnostics(result.ast.diagnostics) ? 422 : 200, {
+        "Content-Type": "text/html; charset=utf-8"
+      });
+      response.end(withDiagnostics(result.html, result.ast.diagnostics));
+    } catch (error) {
+      // e.g. the watched file was removed between requests — don't crash the server.
+      response.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end(`Orvi preview error: ${error instanceof Error ? error.message : String(error)}`);
+    }
   });
 
   server.listen(options.port, () => {

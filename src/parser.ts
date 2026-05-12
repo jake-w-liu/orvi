@@ -224,13 +224,14 @@ export class OrviParser {
         continue;
       }
 
-      const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
+      const heading = /^(#{1,6})(\s+(.*))?$/.exec(trimmed);
       if (heading) {
+        const content = heading[3] ?? "";
         children.push({
           type: "heading",
           loc: loc(line),
           depth: heading[1]!.length,
-          children: this.parseInline(heading[2]!, line.line, line.text.indexOf(heading[2]!) + 1)
+          children: this.parseInline(content, line.line, line.text.indexOf(content) + 1)
         });
         this.index += 1;
         continue;
@@ -883,7 +884,7 @@ export class OrviParser {
     if (trimmed === "" || trimmed.startsWith("//")) return true;
     if (trimmed.startsWith("```")) return true;
     if (parseCloseTag(trimmed) || parseOpenTag(trimmed)) return true;
-    if (/^(#{1,6})\s+/.test(trimmed)) return true;
+    if (/^(#{1,6})(\s+(.*))?$/.test(trimmed)) return true;
     if (trimmed === "---") return true;
     if (isListLine(trimmed)) return true;
     if (/^([a-z][a-z0-9-]*):(?:\s*(.*))?$/i.test(trimmed) && SEMANTIC_NAMES.has(trimmed.split(":")[0]!)) return true;
@@ -942,8 +943,13 @@ export class OrviParser {
 }
 
 function normalizeOptions(options: ParserOptions): Required<ParserOptions> {
+  const requested = options.maxNestingDepth;
+  const maxNestingDepth =
+    typeof requested === "number" && Number.isFinite(requested) && requested >= 0
+      ? Math.floor(requested)
+      : DEFAULT_MAX_NESTING_DEPTH;
   return {
-    maxNestingDepth: options.maxNestingDepth ?? DEFAULT_MAX_NESTING_DEPTH,
+    maxNestingDepth,
     supportedVersion: options.supportedVersion ?? DEFAULT_SUPPORTED_VERSION
   };
 }

@@ -4,6 +4,26 @@ All notable changes to the `orvi-lang` package. This project follows
 [Semantic Versioning](https://semver.org/) once it reaches `1.0.0`; pre-1.0
 minor versions may include behavior changes, which are noted below.
 
+## 0.2.3
+
+- **Formatter / parser:** `orvi format` no longer changes what a document
+  renders to. A bare `#`–`######` marker on its own line is now an empty heading
+  (matching common Markdown), so `# \nfoo` parses as "empty H1, then a paragraph
+  `foo`" — previously the paragraph's joined text was `# foo`, which re-parsed as
+  an H1, i.e. formatting silently turned a paragraph into a heading. Empty
+  headings format as just the hashes. (Verified by fuzzing: 0 render-drift over
+  120k random inputs.)
+- **Renderer hardening (`renderToHtml`):** clamps a heading node's `depth` to
+  1..6 so the output is always valid HTML; HTML-escapes inline-modifier class
+  names so a hostile modifier value can't break out of the `class` attribute;
+  and tolerates a partially malformed AST (null/undefined `children`, `options`,
+  `items`, …) instead of throwing.
+- **Parser:** a nonsensical `maxNestingDepth` option (`NaN`, `Infinity`,
+  negative) is ignored (falls back to the default) so the nesting cap can't be
+  disabled by a bad config.
+- **CLI:** `orvi serve` returns a 500 instead of crashing if the watched file is
+  removed mid-session.
+
 ## 0.2.2
 
 - **Parser hardening:** pathologically deep nesting no longer overflows the

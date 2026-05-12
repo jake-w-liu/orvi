@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.10
+
+- Bundled Orvi runtime updated to `orvi-lang` 0.2.3: `orvi format` no longer
+  changes what a document renders to (a bare `#` line is an empty heading now),
+  the renderer is hardened against malformed input, and `orvi serve` doesn't
+  crash if the watched file is removed. The preview surface is unchanged.
+
 ## 0.1.9
 
 - Bundled Orvi runtime updated to `orvi-lang` 0.2.2: deep nesting can no longer
