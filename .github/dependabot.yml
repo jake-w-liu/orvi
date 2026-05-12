@@ -18,6 +18,24 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # Major bumps of the build/test toolchain need a deliberate migration
+      # (TS module-resolution changes, ESLint flat-config churn, etc.) —
+      # handle those by hand, not as an auto PR.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: typescript-eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: "@typescript-eslint/*"
+        update-types: [version-update:semver-major]
+      - dependency-name: jest
+        update-types: [version-update:semver-major]
+      - dependency-name: ts-jest
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/*"
+        update-types: [version-update:semver-major]
 
   # VS Code extension workspace.
   - package-ecosystem: npm

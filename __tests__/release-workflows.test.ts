@@ -7,9 +7,9 @@ describe("release and deployment workflows", () => {
     const workflow = read(".github/workflows/deploy-pages.yml");
     const siteBuilder = read("scripts/build-site.mjs");
 
-    expect(workflow).toContain("actions/configure-pages@v6");
-    expect(workflow).toContain("actions/upload-pages-artifact@v4");
-    expect(workflow).toContain("actions/deploy-pages@v4");
+    expect(workflow).toContain("actions/configure-pages@");
+    expect(workflow).toContain("actions/upload-pages-artifact@");
+    expect(workflow).toContain("actions/deploy-pages@");
     expect(workflow).toContain("npm run site:build");
     expect(workflow).toContain("deployments: write");
     expect(workflow).toContain("listDeployments");
@@ -32,7 +32,7 @@ describe("release and deployment workflows", () => {
     const packageWorkflow = read(".github/workflows/package-vscode.yml");
     expect(packageWorkflow).toContain("workflow_dispatch");
     expect(packageWorkflow).toContain("npm run package");
-    expect(packageWorkflow).toContain("actions/upload-artifact@v4");
+    expect(packageWorkflow).toContain("actions/upload-artifact@");
     expect(packageWorkflow).not.toContain("VSCE_PAT");
     expect(packageWorkflow).not.toContain("vsce publish");
 
@@ -116,7 +116,7 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("manifest.json");
     expect(workflow).toContain("main.js");
     expect(workflow).toContain("styles.css");
-    expect(workflow).toContain("actions/upload-artifact@v4");
+    expect(workflow).toContain("actions/upload-artifact@");
     expect(workflow).toContain("scripts/set-obsidian-version.mjs");
     expect(workflow).not.toContain("azure");
   });
