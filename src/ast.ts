@@ -46,11 +46,17 @@ export type BlockNode =
   | SemanticNode
   | ListNode;
 
-export type InlineNode = TextNode | StrongNode | EmphasisNode | StrikeNode | InlineScopeNode;
+export type InlineNode = TextNode | StrongNode | EmphasisNode | StrikeNode | InlineScopeNode | LinkNode;
 
 export interface TextNode extends BaseNode {
   type: "text";
   value: string;
+}
+
+export interface LinkNode extends BaseNode {
+  type: "link";
+  href: string;
+  children: InlineNode[];
 }
 
 export interface StrongNode extends BaseNode {

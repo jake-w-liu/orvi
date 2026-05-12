@@ -167,6 +167,12 @@
   border-inline-start-color: var(--orvi-red);
 }
 
+.orvi-link {
+  color: var(--orvi-blue);
+  text-decoration: underline;
+  text-underline-offset: 0.125em;
+}
+
 .orvi-btn {
   align-items: center;
   background: var(--orvi-blue);

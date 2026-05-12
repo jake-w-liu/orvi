@@ -179,6 +179,26 @@ Modifiers can be:
 - Background: `bg=<color>` (uses the same color names)
 - Combined: `[red bold lg]`
 
+### 4.2.1 Inline Links
+
+> Added in `orvi-lang` 1.1.
+
+A bracketed run *immediately* followed by `(href)` is an inline hyperlink:
+
+```orvi
+See [the docs](https://example.com) for details.
+Read [the **getting-started** guide](./getting-started.ov).
+```
+
+The link text is parsed as inline markup (so it may contain `**bold**`, `_italic_`,
+`~~strike~~`, or a nested visual scope). A link is recognized only when the
+bracket content is **not** a valid modifier list, so `[red](x)` is still the
+scope opener `[red]` followed by the literal text `(x)` — not a link. The `href`
+is everything up to the first `)`; a URL containing `)` must be percent-encoded.
+The renderer sanitizes the URL the same way it does `btn:` / `img:` targets
+(non-`http(s)` / `mailto` / `tel` schemes are neutralized) and emits
+`<a class="orvi-link" …>`.
+
 ### 4.3 Block Components
 
 Block components use a `[component options]` open tag and `[/component]` close tag:

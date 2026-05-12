@@ -686,8 +686,30 @@ export class OrviParser {
               continue;
             }
             this.errorAt("ORVI_UNCLOSED_SCOPE", "Unclosed inline scope; expected [].", line, column + index);
-          } else if (value.indexOf("[]", bracketClose + 1) >= 0) {
-            this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
+          } else {
+            // `[label](href)` is an inline link when the bracket content is not
+            // a valid modifier list (so it can never shadow an `[mods]…[]` scope)
+            // and the label and href are both non-empty (an empty label would
+            // format back to `[]`, the scope-close sentinel, and not round-trip).
+            if (rawModifiers.length > 0 && value[bracketClose + 1] === "(") {
+              const parenClose = value.indexOf(")", bracketClose + 2);
+              if (parenClose > bracketClose + 1) {
+                const href = value.slice(bracketClose + 2, parenClose).trim();
+                if (href.length > 0) {
+                  nodes.push({
+                    type: "link",
+                    loc: { line, column: column + index },
+                    href,
+                    children: this.parseInline(rawModifiers, line, column + index + 1, false, depth + 1)
+                  });
+                  index = parenClose + 1;
+                  continue;
+                }
+              }
+            }
+            if (value.indexOf("[]", bracketClose + 1) >= 0) {
+              this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
+            }
           }
         }
       }

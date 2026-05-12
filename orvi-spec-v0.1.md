@@ -56,13 +56,20 @@ semantic        = semantic_name ":" [ semantic_payload ] newline ;
 
 paragraph       = inline_text { newline inline_text } ;
 
-inline_text     = { text | strong | emphasis | strike | inline_scope } ;
+inline_text     = { text | strong | emphasis | strike | inline_scope | link } ;
 strong          = "**" inline_text "**" ;
 emphasis        = "_" inline_text "_" ;
 strike          = "~~" inline_text "~~" ;
 inline_scope    = "[" modifier { whitespace modifier } "]" inline_text "[]" ;
+link            = "[" inline_text "]" "(" href ")" ;   ; added in orvi-lang 1.1
 modifier        = color | size | weight | "bg=" color ;
 ```
+
+A `link` is recognized only when the bracket content is **not** a valid
+`modifier` list (so it can never shadow an `inline_scope`): `[red](x)` is the
+scope opener `[red]` followed by the text `(x)`, while `[the docs](url)` is a
+link. The `href` is everything up to the first `)`; a URL containing `)` must be
+percent-encoded. The renderer applies the same URL sanitizing as `btn:`/`img:`.
 
 ## Built-In Components
 
@@ -113,8 +120,9 @@ Accessibility requirements:
 - `img` output includes the required alt text.
 - `callout` output includes an appropriate role and accessible label.
 - `tabs` output includes ARIA attributes that connect tab controls and panels.
-- Headings, lists, tables, thematic breaks, and semantic elements use native
-  HTML elements where available.
+- Headings, lists, tables, thematic breaks, links, and semantic elements use
+  native HTML elements where available (`link` → `<a class="orvi-link">` with a
+  sanitized `href`).
 
 Dark mode is a renderer/theme concern. It is selected with the renderer option
 `colorScheme: "dark"` or equivalent theme configuration; Orvi v0.1 has no

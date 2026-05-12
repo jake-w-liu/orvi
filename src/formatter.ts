@@ -203,6 +203,8 @@ function formatInline(nodes: InlineNode[]): string {
           return `~~${formatInline(node.children)}~~`;
         case "scope":
           return `[${node.modifiers.map(formatModifier).join(" ")}]${formatInline(node.children)}[]`;
+        case "link":
+          return `[${formatInline(node.children)}](${node.href})`;
         default:
           return "";
       }

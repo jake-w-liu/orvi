@@ -28,7 +28,7 @@ fails CI.
 
 | Import | Public surface |
 | --- | --- |
-| `orvi-lang` | `parseOrvi`, `renderOrvi`, `renderToHtml`, `formatOrvi`, `OrviParser`, `defaultCss`, and the AST / diagnostic / options TypeScript types |
+| `orvi-lang` | `parseOrvi`, `renderOrvi`, `renderToHtml`, `formatOrvi`, `walk`, `OrviParser`, `defaultCss`, and the AST / diagnostic / options TypeScript types |
 | `orvi-lang/parser` | `parseOrvi`, `OrviParser` |
 | `orvi-lang/renderer` | `renderOrvi`, `renderToHtml`, `defaultCss`, `RenderOptions` |
 | `orvi-lang/formatter` | `formatOrvi` |
@@ -66,7 +66,8 @@ both `orvi-spec-v0.1.md`'s successor and `CHANGELOG.md`.
 Orvi `1.0` has **no plugin or extension API** — this is deliberate. The
 extension points are the published functions:
 
-- Need custom output? `parseOrvi(source)` gives you the AST; walk it yourself.
+- Need custom output? `parseOrvi(source)` gives you the AST; `walk(ast, visit)`
+  does a depth-first traversal.
 - Need to tweak the HTML? Post-process the string from `renderOrvi`.
 - Need custom styling? Ship your own CSS instead of `orvi-base.css` (the class
   names — `orvi-*` — are part of the rendered-output contract above).

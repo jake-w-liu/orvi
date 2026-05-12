@@ -5,3 +5,4 @@ export * from "./artifact";
 export * from "./formatter";
 export * from "./parser";
 export * from "./renderer";
+export * from "./walk";

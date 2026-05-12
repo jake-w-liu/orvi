@@ -84,10 +84,10 @@ npm install orvi-lang
 ```
 
 ```ts
-import { formatOrvi, parseOrvi, renderOrvi } from "orvi-lang";
+import { formatOrvi, parseOrvi, renderOrvi, walk } from "orvi-lang";
 import { renderOrviArtifact } from "orvi-lang/artifact";
 
-const ast = parseOrvi("# Hello");
+const ast = parseOrvi("See [the docs](https://example.com).");
 const html = renderOrvi("# Hello", { fullDocument: true }).html;
 const darkHtml = renderOrvi("# Hello", {
   fullDocument: true,
@@ -95,6 +95,12 @@ const darkHtml = renderOrvi("# Hello", {
 }).html;
 const formatted = formatOrvi("[blue] Hi []").formatted;
 const artifact = renderOrviArtifact("# Hello", { fullDocument: true });
+
+// No plugin API by design — walk the AST to build custom output/analysis.
+const links: string[] = [];
+walk(ast, (node) => {
+  if (node.type === "link") links.push(node.href);
+});
 ```
 
 The package supports both CommonJS `require()` and ESM `import` exports, and
@@ -134,7 +140,7 @@ additions and removals are deliberate:
 
 | Import | Provides |
 | --- | --- |
-| `orvi-lang` | `parseOrvi`, `renderOrvi`, `renderToHtml`, `formatOrvi`, `OrviParser`, `defaultCss`, plus the AST/diagnostic types |
+| `orvi-lang` | `parseOrvi`, `renderOrvi`, `renderToHtml`, `formatOrvi`, `walk`, `OrviParser`, `defaultCss`, plus the AST/diagnostic types |
 | `orvi-lang/parser`, `/renderer`, `/formatter`, `/artifact` | the same functions, scoped |
 | `orvi-lang/react` | `OrviRenderer` (requires a `react` peer; the main entry does not) |
 | `orvi-lang/prettier-plugin` | the Prettier plugin |

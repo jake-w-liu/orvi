@@ -21,6 +21,8 @@ Weights: [light] light [] [regular] regular [] [medium] medium [] [bold] bold []
 
 Combined and nested: [red bold lg] red + bold + large [], and [bg=blue] outer background, [bold] with bold nested inside [] [].
 
+Inline links: see [the Orvi repository](https://github.com/jake-w-liu/orvi), and [**the language guide**](https://github.com/jake-w-liu/orvi/blob/main/orvi-language-guide.md) — link text takes inline markup too.
+
 ## Callouts
 
 [callout type=info]

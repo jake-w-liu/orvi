@@ -74,7 +74,8 @@ describe("package exports", () => {
       "parseOrvi",
       "renderOrvi",
       "renderOrviArtifact",
-      "renderToHtml"
+      "renderToHtml",
+      "walk"
     ]);
 
     const reactEntry = execFileSync(

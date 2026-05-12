@@ -5,6 +5,31 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 1.1.0
+
+Additive minor — existing documents and the rendered output of existing input
+are unchanged.
+
+- **Inline links — `[text](href)`.** A bracketed run *immediately* followed by
+  `(href)` is now an inline hyperlink, e.g. `See [the docs](https://example.com).`
+  The link text is parsed as inline markup, so `[**bold** link](url)` works.
+  This never shadows an `[modifiers]…[]` scope: it is a link only when the
+  bracket content is *not* a valid modifier list — so `[red](x)` is still the
+  scope opener `[red]` followed by the text `(x)`, exactly as before. The href
+  goes through the same `safeUrl` sanitizing as `btn:`/`img:` (non-`http(s)`/
+  `mailto`/`tel` schemes are neutralized) and is HTML-attribute-escaped. The
+  href is taken up to the first `)`; URLs containing `)` must be percent-encoded.
+  Renders as `<a class="orvi-link" …>`; `orvi-base.css` styles `.orvi-link`.
+  `orvi format` round-trips links and is idempotent on them.
+- **`walk(node, visit)`** — a depth-first AST traversal, exported from
+  `orvi-lang` (and the AST types it needs, `OrviNode`). This is the supported
+  way to build custom output/analysis on top of Orvi (there is no plugin API by
+  design — see `docs/stability.md`). Pure; tolerates a partially malformed AST.
+- New AST node `LinkNode` (`{ type: "link"; href: string; children: InlineNode[] }`),
+  added to the `InlineNode` union.
+- `examples/showcase.ov` gains an inline link; `orvi-spec-v0.1.md` and the
+  language guide document the syntax.
+
 ## 1.0.0 — Stable
 
 `orvi-lang` is now 1.0: the parser, AST, HTML renderer, formatter, CLI, React

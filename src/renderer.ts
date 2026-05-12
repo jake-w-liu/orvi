@@ -269,6 +269,8 @@ function renderInline(nodes: InlineNode[]): string {
           return `<del>${renderInline(node.children)}</del>`;
         case "scope":
           return `<span class="${escapeAttr((node.modifiers ?? []).map(modifierClass).join(" "))}">${renderInline(node.children)}</span>`;
+        case "link":
+          return `<a class="orvi-link" href="${escapeAttr(safeUrl(node.href ?? "#"))}">${renderInline(node.children)}</a>`;
         default:
           return "";
       }
