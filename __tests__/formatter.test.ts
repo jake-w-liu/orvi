@@ -103,6 +103,14 @@ futurekey: keep me
     expect(result.formatted).not.toContain("futurekey");
   });
 
+  it("is idempotent for a paragraph whose source begins with a bare list marker", () => {
+    for (const source of ["*\nfoo", "5.\nfoo", "-\nbar", "1.\nbaz", "x\n*\ny"]) {
+      const once = formatOrvi(source).formatted;
+      const twice = formatOrvi(once).formatted;
+      expect(twice).toBe(once);
+    }
+  });
+
   it("keeps pipes in img alt text and badge labels (round-trips)", () => {
     const source = `img: ./diagram.png | Flow: A | B | C
 

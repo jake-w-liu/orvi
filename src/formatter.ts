@@ -128,7 +128,13 @@ function formatBlock(block: BlockNode, indent: string): string {
     case "table":
       return formatTable(block.headers, block.rows);
     case "list":
-      return block.items.map((item, index) => `${block.ordered ? `${index + 1}.` : "-"} ${formatInline(item)}`).join("\n");
+      return block.items
+        .map((item, index) => {
+          const marker = block.ordered ? `${index + 1}.` : "-";
+          const content = formatInline(item);
+          return content ? `${marker} ${content}` : marker;
+        })
+        .join("\n");
     case "component":
       return formatComponent(block, indent);
     case "semantic":

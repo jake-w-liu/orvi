@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.9
+
+- Bundled Orvi runtime updated to `orvi-lang` 0.2.2: deep nesting can no longer
+  overflow the parser stack (it's reported and capped), a bare list marker on
+  its own line is an empty list item (so `orvi format` is idempotent on it), and
+  generated tab ids are sanitized. The preview surface is unchanged.
+
 ## 0.1.8
 
 - Bundled Orvi runtime updated to `orvi-lang` 0.2.1: the formatter no longer

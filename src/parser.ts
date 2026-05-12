@@ -62,6 +62,11 @@ const SIZE_NAMES = new Set(["xs", "sm", "md", "lg", "xl", "2xl"]);
 const WEIGHT_NAMES = new Set(["light", "regular", "medium", "bold"]);
 const CALLOUT_TYPES = new Set(["info", "warning", "success", "error"]);
 const DEFAULT_MAX_NESTING_DEPTH = 8;
+// Hard cap on inline-scope/emphasis nesting depth. Beyond this the remainder of
+// the run is kept as literal text — this only bounds adversarial inputs (a real
+// document never nests inline marks anywhere near this deep) and keeps the
+// renderer/formatter from recursing without limit.
+const MAX_INLINE_DEPTH = 24;
 const DEFAULT_SUPPORTED_VERSION = "0.1";
 const METADATA_KEYS = new Set(["orvi", "title", "lang", "dir"]);
 
@@ -260,14 +265,24 @@ export class OrviParser {
     };
 
     this.validateComponentOpen(node, line, parent);
+    this.index += 1;
+
+    // Past the nesting limit, report it once and consume the block's body
+    // without parsing it — recursing here is what risks a stack overflow on
+    // pathologically deep input, and the content is already rejected anyway.
     if (depth >= this.options.maxNestingDepth) {
       this.error(
         "ORVI_MAX_NESTING_DEPTH",
         `Component nesting exceeds max depth ${this.options.maxNestingDepth}.`,
         line
       );
+      if (node.name === "grid") node.columns = [];
+      const closed = this.skipBlockBody(node.name);
+      if (!closed) {
+        this.error("ORVI_UNCLOSED_BLOCK", `Unclosed [${node.name}] block.`, line);
+      }
+      return node;
     }
-    this.index += 1;
 
     if (node.name === "grid") {
       const { columns, closed } = this.parseGridColumns(line, depth);
@@ -286,6 +301,41 @@ export class OrviParser {
     }
     this.validateComponentChildren(node, line);
     return node;
+  }
+
+  // Consume lines up to the matching close tag for `name` (tracking nested
+  // [name]/[/name] pairs and skipping fenced code), discarding the content.
+  // Returns whether a matching close was found before end of input.
+  private skipBlockBody(name: string): boolean {
+    let depth = 1;
+    let inFence = false;
+
+    while (!this.isEnd()) {
+      const trimmed = this.current().text.trim();
+      if (trimmed.startsWith("```")) {
+        inFence = !inFence;
+        this.index += 1;
+        continue;
+      }
+      if (!inFence) {
+        const close = parseCloseTag(trimmed);
+        if (close && close.name === name) {
+          depth -= 1;
+          this.index += 1;
+          if (depth === 0) return true;
+          continue;
+        }
+        const open = parseOpenTag(trimmed);
+        if (open && open.name === name) {
+          depth += 1;
+          this.index += 1;
+          continue;
+        }
+      }
+      this.index += 1;
+    }
+
+    return false;
   }
 
   private parseGridColumns(openingLine: SourceLine, depth: number): { columns: BlockNode[][]; closed: boolean } {
@@ -430,17 +480,18 @@ export class OrviParser {
   private parseList(): BlockNode {
     const start = this.current();
     const first = start.text.trim();
-    const ordered = /^\d+\.\s+/.test(first);
+    const ordered = /^\d+\./.test(first);
     const items: InlineNode[][] = [];
 
     while (!this.isEnd()) {
       const line = this.current();
       const trimmed = line.text.trim();
-      const match = ordered ? /^\d+\.\s+(.+)$/.exec(trimmed) : /^[-*]\s+(.+)$/.exec(trimmed);
+      const match = ordered ? /^\d+\.(\s+(.+))?$/.exec(trimmed) : /^[-*](\s+(.+))?$/.exec(trimmed);
       if (!match) {
         break;
       }
-      items.push(this.parseInline(match[1]!, line.line, line.text.indexOf(match[1]!) + 1));
+      const content = match[2] ?? "";
+      items.push(this.parseInline(content, line.line, line.text.indexOf(content) + 1));
       this.index += 1;
     }
 
@@ -550,7 +601,13 @@ export class OrviParser {
     };
   }
 
-  private parseInline(value: string, line: number, column: number, validateDynamic = true): InlineNode[] {
+  private parseInline(
+    value: string,
+    line: number,
+    column: number,
+    validateDynamic = true,
+    depth = 0
+  ): InlineNode[] {
     const nodes: InlineNode[] = [];
     let index = 0;
 
@@ -564,6 +621,12 @@ export class OrviParser {
       }
     };
 
+    if (depth >= MAX_INLINE_DEPTH) {
+      this.errorAt("ORVI_MAX_NESTING_DEPTH", `Inline nesting exceeds max depth ${MAX_INLINE_DEPTH}.`, line, column);
+      pushText(value, 0);
+      return nodes;
+    }
+
     while (index < value.length) {
       if (value.startsWith("**", index)) {
         const close = value.indexOf("**", index + 2);
@@ -571,7 +634,7 @@ export class OrviParser {
           nodes.push({
             type: "strong",
             loc: { line, column: column + index },
-            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false)
+            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false, depth + 1)
           });
           index = close + 2;
           continue;
@@ -584,7 +647,7 @@ export class OrviParser {
           nodes.push({
             type: "strike",
             loc: { line, column: column + index },
-            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false)
+            children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false, depth + 1)
           });
           index = close + 2;
           continue;
@@ -597,7 +660,7 @@ export class OrviParser {
           nodes.push({
             type: "emphasis",
             loc: { line, column: column + index },
-            children: this.parseInline(value.slice(index + 1, close), line, column + index + 1, false)
+            children: this.parseInline(value.slice(index + 1, close), line, column + index + 1, false, depth + 1)
           });
           index = close + 1;
           continue;
@@ -616,7 +679,7 @@ export class OrviParser {
                 type: "scope",
                 loc: { line, column: column + index },
                 modifiers,
-                children: this.parseInline(value.slice(bracketClose + 1, scopeClose), line, column + bracketClose + 1, false)
+                children: this.parseInline(value.slice(bracketClose + 1, scopeClose), line, column + bracketClose + 1, false, depth + 1)
               });
               index = scopeClose + 2;
               continue;
@@ -993,7 +1056,8 @@ function splitTableRow(row: string): string[] {
 }
 
 function isListLine(trimmed: string): boolean {
-  return /^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed);
+  // A bullet/number marker, either alone (an empty item) or followed by content.
+  return /^[-*](\s+(.+))?$/.test(trimmed) || /^\d+\.(\s+(.+))?$/.test(trimmed);
 }
 
 function canOpenEmphasis(value: string, index: number): boolean {

@@ -90,7 +90,9 @@ export function renderOrvi(source: string, options: RenderOptions = {}): RenderR
 }
 
 export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): string {
-  const ctx: RenderContext = { tabSet: 0, idPrefix: options.idPrefix ?? "" };
+  // Sanitize the id prefix to id-safe characters so it can never break out of
+  // an attribute, regardless of what a caller passes.
+  const ctx: RenderContext = { tabSet: 0, idPrefix: (options.idPrefix ?? "").replace(/[^A-Za-z0-9_-]/g, "") };
   const documentClass = ["orvi-document", themeClass(options.colorScheme)].filter(Boolean).join(" ");
   const body = `<main class="${documentClass}">\n${ast.children.map((node) => renderBlock(node, ctx)).join("\n")}\n</main>`;
   if (!options.fullDocument) {

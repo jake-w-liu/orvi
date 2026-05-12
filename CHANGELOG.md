@@ -4,6 +4,24 @@ All notable changes to the `orvi-lang` package. This project follows
 [Semantic Versioning](https://semver.org/) once it reaches `1.0.0`; pre-1.0
 minor versions may include behavior changes, which are noted below.
 
+## 0.2.2
+
+- **Parser hardening:** pathologically deep nesting no longer overflows the
+  stack. A component nested past `maxNestingDepth` (default 8) is reported with
+  `ORVI_MAX_NESTING_DEPTH` and its body is skipped (not recursed into); inline
+  scope/emphasis nesting is capped at depth 24, beyond which the rest of the run
+  is kept as literal text with the same diagnostic. `parseOrvi`/`renderOrvi`/
+  `formatOrvi` now stay within their "diagnostics, never throw" contract on
+  adversarial input (verified by fuzzing).
+- **Lists:** a bare list marker on its own line (`-`, `*`, `1.`) is now an empty
+  list item, matching common Markdown behavior. As a result `orvi format` is
+  idempotent on a paragraph whose first source line is a bare marker (it used to
+  produce `* foo` which re-parsed as a list, then `- foo` on a second pass).
+  Empty list items format as just the marker (no trailing space).
+- **Renderer:** `RenderOptions.idPrefix` is sanitized to id-safe characters
+  internally, so it can't break out of a generated attribute regardless of what
+  a caller passes.
+
 ## 0.2.1
 
 ### Fixes

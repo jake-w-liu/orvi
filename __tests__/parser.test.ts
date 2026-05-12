@@ -120,6 +120,35 @@ Missing close
     );
   });
 
+  it("caps deep block nesting with a diagnostic instead of crashing", () => {
+    const deep = "[callout]\n".repeat(2000) + "x\n" + "[/callout]\n".repeat(2000);
+    let ast: ReturnType<typeof parseOrvi> | undefined;
+    expect(() => {
+      ast = parseOrvi(deep);
+    }).not.toThrow();
+    expect(ast!.diagnostics.some((d) => d.code === "ORVI_MAX_NESTING_DEPTH")).toBe(true);
+  });
+
+  it("caps deep inline-scope nesting with a diagnostic instead of crashing", () => {
+    const deep = "[red] ".repeat(2000) + "x " + "[] ".repeat(2000);
+    let ast: ReturnType<typeof parseOrvi> | undefined;
+    expect(() => {
+      ast = parseOrvi(deep);
+    }).not.toThrow();
+    expect(ast!.diagnostics.some((d) => d.code === "ORVI_MAX_NESTING_DEPTH")).toBe(true);
+  });
+
+  it("treats a bare list marker as an empty list item", () => {
+    const ast = parseOrvi("- a\n-\n* b\n*\n1.\n2. c");
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children.map((node) => node.type)).toEqual(["list", "list"]);
+    const [unordered, ordered] = ast.children as Array<{ ordered: boolean; items: unknown[][] }>;
+    expect(unordered).toMatchObject({ ordered: false });
+    expect(unordered.items.map((i) => i.length)).toEqual([1, 0, 1, 0]); // "a", empty, "b", empty
+    expect(ordered).toMatchObject({ ordered: true });
+    expect(ordered.items.map((i) => i.length)).toEqual([0, 1]); // empty, "c"
+  });
+
   it("validates strict table width and tabs structure", () => {
     const ast = parseOrvi(`| Name | Role |
 | --- | --- |
