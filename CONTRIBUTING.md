@@ -57,6 +57,16 @@ the VS Code extension.
   and the roadmap in `orvi-language-guide.md` when the language surface moves.
 - Run `npm run lint:fix` and `npm run verify` before opening a PR.
 
+## Stability (post-1.0)
+
+`orvi-lang` is `1.0` and under SemVer — read [`docs/stability.md`](docs/stability.md)
+before changing anything user-visible. In short: the public exports and the
+`orvi`/`ORVI_*` CLI surface are pinned by tests; a backwards-incompatible change
+(removal, renamed export, changed default, non-fix change to rendered HTML or to
+the `orvi-*` CSS class names) is a **major** release, and a removal must ship a
+deprecation warning in a prior minor first. There is intentionally no plugin
+API — the extension points are `parseOrvi` (AST) and `renderOrvi` (HTML).
+
 ## Releasing
 
 See `docs/release.md` for the npm and VS Code release runbooks. npm publishes

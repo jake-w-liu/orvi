@@ -97,16 +97,36 @@ describe("release and deployment workflows", () => {
     expect(notes).not.toContain(`## ${version}`);
   });
 
-  it("hardens CI with a Node matrix, an audit job, and Dependabot", () => {
+  it("hardens CI with a Node matrix, an audit job, an enforced browser smoke, and Dependabot", () => {
     const verify = read(".github/workflows/verify.yml");
     expect(verify).toContain("matrix:");
     expect(verify).toMatch(/node-version:\s*\[20,\s*22,\s*24\]/);
     expect(verify).toContain("npm audit --audit-level=high");
+    expect(verify).toContain("ORVI_REQUIRE_BROWSER");
 
     const dependabot = read(".github/dependabot.yml");
     expect(dependabot).toContain("package-ecosystem: github-actions");
     expect(dependabot).toContain("package-ecosystem: npm");
     expect(dependabot).toContain("/vscode/orvi");
+  });
+
+  it("commits to Semantic Versioning at 1.0+ with a written stability contract", () => {
+    const pkg = JSON.parse(read("package.json")) as { version: string };
+    const major = Number(pkg.version.split(".")[0]);
+    expect(major).toBeGreaterThanOrEqual(1);
+
+    const changelog = read("CHANGELOG.md");
+    expect(changelog).toContain("Semantic Versioning");
+    expect(changelog).toContain(`## ${pkg.version}`);
+
+    const stability = read("docs/stability.md");
+    expect(stability).toContain("Semantic Versioning");
+    expect(stability).toContain("Deprecation policy");
+    expect(stability).toContain("no plugin or extension API");
+    expect(stability).toContain("engines.node");
+
+    expect(read("README.md")).toContain("docs/stability.md");
+    expect(read("CONTRIBUTING.md")).toContain("docs/stability.md");
   });
 
   it("packages the Obsidian plugin as a downloadable bundle (community-store layout)", () => {

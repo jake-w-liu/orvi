@@ -55,6 +55,11 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage thresholds
+        env:
+          # Enforce the headless-Chrome render smokes here (Chrome is on the
+          # runner image and Node 24 has a global WebSocket): a missing browser
+          # fails the job instead of skipping.
+          ORVI_REQUIRE_BROWSER: "1"
         run: npm run test:coverage
 
   audit:

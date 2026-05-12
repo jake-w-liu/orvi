@@ -15,8 +15,9 @@ as text, then renders into visual structure. It is short for the CLI command
 rejected by npm's similarity guard). This is a product story, not a trademark or
 domain-ownership claim.
 
-This repo implements the v0.1 prototype from `orvi-language-guide.md`.
-Implementation progress is tracked in the roadmap section of that guide.
+This repo implements the Orvi `v0.1` language (`orvi-spec-v0.1.md`,
+`orvi-language-guide.md`). The `orvi-lang` package is `1.0` and stable under
+Semantic Versioning — see [`docs/stability.md`](docs/stability.md).
 
 ## Try Orvi
 
@@ -121,14 +122,15 @@ From a clone of this repo, point `--plugin` at the built file
 
 ## Versioning and stability
 
-`orvi-lang` is pre-1.0. Until `1.0.0` it follows Semantic Versioning loosely:
-patch releases are fixes only, and a minor release may include a documented
-behavior change (each one is called out in `CHANGELOG.md`). The `orvi: 0.1`
-metadata version names the language spec (`orvi-spec-v0.1.md`); the package
-version is independent of it.
+`orvi-lang` is `1.0` and follows [Semantic Versioning](https://semver.org/):
+the public API changes incompatibly only in a major release, and removals are
+preceded by a deprecation warning in a prior minor. The full contract — what is
+public, the deprecation policy, the language-spec version (`orvi: 0.1`, which
+versions independently of the package), the supported Node range, and the
+security and maintainership notes — is in [`docs/stability.md`](docs/stability.md).
 
-The public API surface is the documented exports below — these are pinned by a
-test, so additions and removals are deliberate:
+The public API surface is the documented exports below — pinned by a test, so
+additions and removals are deliberate:
 
 | Import | Provides |
 | --- | --- |
@@ -137,6 +139,11 @@ test, so additions and removals are deliberate:
 | `orvi-lang/react` | `OrviRenderer` (requires a `react` peer; the main entry does not) |
 | `orvi-lang/prettier-plugin` | the Prettier plugin |
 | `orvi-lang/orvi-base.css` | the default stylesheet |
+
+Orvi `1.0` has no plugin/extension API by design: consume the AST from
+`parseOrvi`, or post-process the HTML from `renderOrvi`. Keeping the surface
+small is what makes the SemVer guarantee tractable; a plugin API may come in a
+future major if there's demand.
 
 The package targets Node `>=20` (`engines.node`), is side-effect-free
 (`sideEffects: false`), and ships both CommonJS `require()` and ESM `import`

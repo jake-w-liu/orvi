@@ -1,8 +1,35 @@
 # Changelog
 
-All notable changes to the `orvi-lang` package. This project follows
-[Semantic Versioning](https://semver.org/) once it reaches `1.0.0`; pre-1.0
-minor versions may include behavior changes, which are noted below.
+All notable changes to the `orvi-lang` package. As of `1.0.0` this project
+follows [Semantic Versioning](https://semver.org/): the public API (see
+`docs/stability.md`) only changes in a backwards-incompatible way in a major
+release, and removals are preceded by a deprecation warning in a prior minor.
+
+## 1.0.0 — Stable
+
+`orvi-lang` is now 1.0: the parser, AST, HTML renderer, formatter, CLI, React
+binding, Prettier plugin, artifact format, and default stylesheet are a stable
+API under Semantic Versioning. See `docs/stability.md` for exactly what is
+covered, the deprecation policy, the language-spec version (`orvi: 0.1`, which
+versions independently of the package), and the supported Node range.
+
+No code changes from `0.2.4` — this release is the stability commitment plus:
+
+- **Docs:** `docs/stability.md` (SemVer policy, frozen public surface,
+  deprecation process, spec versioning, supported runtimes, security/
+  maintainership notes). README and `CONTRIBUTING.md` link to it; the README no
+  longer describes the package as a "prototype".
+- **Extension model, stated:** Orvi v1 intentionally has no plugin/extension
+  API. The extension points are the published functions — consume the AST from
+  `parseOrvi`, or post-process the HTML from `renderOrvi`. A plugin API may
+  arrive in a future major if there is demand.
+- **Perf gate:** `__tests__/perf.test.ts` parses and renders a large synthetic
+  document under a fixed time budget, so a major performance regression fails
+  CI.
+- **Browser correctness, enforced:** the headless-Chrome render smoke now *fails*
+  (rather than skips) when `ORVI_REQUIRE_BROWSER` is set, and CI sets it on the
+  coverage job — so "the generated HTML renders correctly in a real browser" is
+  checked on every CI run, not just opportunistically.
 
 ## 0.2.4 — Industrial release engineering
 

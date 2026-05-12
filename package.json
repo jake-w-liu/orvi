@@ -1,6 +1,6 @@
 {
   "name": "orvi-lang",
-  "version": "0.2.4",
+  "version": "1.0.0",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
   "sideEffects": false,
@@ -71,7 +71,8 @@
     "schemas",
     "orvi-spec-v0.1.md",
     "orvi.config.example.js",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "docs/stability.md"
   ],
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",

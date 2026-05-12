@@ -18,11 +18,11 @@ describe("installed browser launch smoke", () => {
   it("renders generated Orvi HTML in headless Chrome when installed", async () => {
     const chrome = findChrome();
     if (!chrome) {
-      console.warn("Skipping Chrome smoke test; Chrome executable not found.");
+      reportBrowserUnavailable("Chrome executable not found");
       return;
     }
     if (typeof (globalThis as { WebSocket?: unknown }).WebSocket !== "function") {
-      console.warn("Skipping Chrome smoke test; global WebSocket is unavailable (Node < 21).");
+      reportBrowserUnavailable("global WebSocket is unavailable (Node < 21)");
       return;
     }
 
@@ -286,4 +286,14 @@ function removeTempWorkspace(workspace: string): void {
       }`
     );
   }
+}
+
+function reportBrowserUnavailable(reason: string): void {
+  // CI sets ORVI_REQUIRE_BROWSER so "renders correctly in a real browser" is
+  // enforced; locally (or where the browser/automation is missing) the smoke
+  // skips instead of failing.
+  if (process.env.ORVI_REQUIRE_BROWSER) {
+    throw new Error(`ORVI_REQUIRE_BROWSER is set but the browser smoke cannot run: ${reason}.`);
+  }
+  console.warn(`Skipping Chrome smoke test; ${reason}.`);
 }
