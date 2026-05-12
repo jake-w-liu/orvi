@@ -18,14 +18,23 @@ Re-publishing a new version:
 - Owner: `jake-w-liu`. An npm automation/granular token with publish rights for
   `orvi-lang` must be saved as the `NPM_TOKEN` repository secret.
 - Bump the version first (`npm version patch|minor|major`, or pass the version as
-  the workflow input).
+  the workflow input), and add the matching `## <version>` section to
+  `CHANGELOG.md`.
 
-Automated publish — `.github/workflows/publish-npm.yml` (`workflow_dispatch`):
-checks out, `npm ci`, optionally `npm version <input>`, runs `npm run verify`
-(which rebuilds `dist/`), verifies `NPM_TOKEN`, then
-`npm publish --provenance --access public`. `--access public` is the default for
-unscoped packages and harmless here; `--provenance` needs the workflow's
-`id-token: write` permission and the `repository` field (both in place).
+Tag-driven release (preferred): commit the version bump, then push a tag
+`v<version>` (e.g. `git tag v0.2.4 && git push origin v0.2.4`).
+`.github/workflows/publish-npm.yml` triggers on `v*` tags: it checks that the
+tag matches `package.json`'s version, runs `npm run verify` (which rebuilds
+`dist/`), verifies `NPM_TOKEN`, runs `npm publish --provenance --access public`,
+then creates a GitHub Release for the tag with the matching `CHANGELOG.md`
+section (extracted by `scripts/extract-changelog.mjs`).
+
+Manual `workflow_dispatch` is still available: it optionally runs
+`npm version <input>` first, then the same verify + publish (it does not create
+a Git tag or GitHub Release — use the tag path for that). `--access public` is
+the default for unscoped packages and harmless here; `--provenance` needs the
+workflow's `id-token: write` permission and the `repository` field (both in
+place); the GitHub Release step needs `contents: write` (also in place).
 
 Manual publish:
 
@@ -101,6 +110,22 @@ npx --yes ovsx publish orvi-language-0.1.10.vsix -p "$OVSX_PAT"
 After `OVSX_PAT` and the Open VSX account/namespace prerequisites are
 configured, `.github/workflows/publish-open-vsx.yml` packages and publishes the
 exact VSIX it uploads as a workflow artifact.
+
+## Obsidian plugin
+
+The Obsidian plugin lives in `integrations/obsidian-orvi`. It is distributed as
+a downloadable bundle (`manifest.json`, `main.js`, `styles.css`, `versions.json`,
+`runtime/`) — Azure-free, like everything else here.
+
+- Bump the version: `node scripts/set-obsidian-version.mjs <major.minor.patch>`
+  (updates `manifest.json` and adds the `version -> minAppVersion` entry to
+  `versions.json`, the layout Obsidian's community store requires).
+- Build the runtime: `npm run obsidian:build`.
+- `.github/workflows/package-obsidian.yml` (`workflow_dispatch`, with an optional
+  `version` input) does both and uploads the bundle as a workflow artifact.
+
+Submitting to the Obsidian community store is a manual PR to
+`obsidianmd/obsidian-releases` and is not automated here.
 
 ## GitHub Pages
 

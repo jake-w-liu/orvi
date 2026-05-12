@@ -4,6 +4,35 @@ All notable changes to the `orvi-lang` package. This project follows
 [Semantic Versioning](https://semver.org/) once it reaches `1.0.0`; pre-1.0
 minor versions may include behavior changes, which are noted below.
 
+## 0.2.4 — Industrial release engineering
+
+- **Packaging:** `package.json` now declares `engines.node` (`>=20`),
+  `sideEffects: false` (safe — every published module is pure; the `orvi` CLI
+  bin is unaffected), and marks the `react` peer dependency `optional`. The main
+  entry (`orvi-lang` / `require("orvi-lang")`) no longer re-exports the React
+  binding, so it has no `react` dependency — import `OrviRenderer` from
+  `orvi-lang/react` instead (the documented path; the exports map is unchanged).
+- **Public API surface:** a test pins the runtime exports of every published
+  entry point and checks each exports-map subpath ships a declaration file, so
+  an accidental addition/removal to the public surface fails CI.
+- **Release automation:** pushing a `v<version>` tag now publishes that version
+  to npm (the tag must match `package.json`) and cuts a GitHub Release with the
+  matching `CHANGELOG.md` section (`scripts/extract-changelog.mjs`). The manual
+  `workflow_dispatch` path is unchanged.
+- **CI hardening:** `verify` now runs on a Node 20 / 22 / 24 matrix, a new
+  `audit` job runs `npm audit --audit-level=high` on the root and the VS Code
+  extension, and a `.github/dependabot.yml` keeps GitHub Actions and npm
+  dependencies (root + `vscode/orvi`) current.
+- **Property tests:** the ad-hoc fuzzing used during hardening is now an in-repo,
+  CI-run `fast-check` suite — parser/renderer/formatter never throw, the renderer
+  never emits a live `<script>`, the formatter is idempotent, and formatting
+  never changes what a document renders to when it reports no content loss.
+- **Obsidian:** a `package-obsidian` workflow builds the plugin and uploads the
+  community-store bundle (`manifest.json`, `main.js`, `styles.css`, `runtime/`)
+  as an artifact; `scripts/set-obsidian-version.mjs` bumps `manifest.json` and
+  `versions.json` together.
+- No changes to the parser, renderer, formatter, or CLI behavior.
+
 ## 0.2.3
 
 - **Formatter / parser:** `orvi format` no longer changes what a document

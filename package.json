@@ -1,8 +1,12 @@
 {
   "name": "orvi-lang",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
   "keywords": [
     "orvi",
     "markup",
@@ -97,6 +101,7 @@
     "@types/node": "^25.0.0",
     "@types/react": "^19.2.14",
     "eslint": "^10.3.0",
+    "fast-check": "^4.8.0",
     "globals": "^17.6.0",
     "jest": "^30.0.5",
     "prettier": "^3.8.3",
@@ -108,5 +113,10 @@
   },
   "peerDependencies": {
     "react": ">=18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   }
 }

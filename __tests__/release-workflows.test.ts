@@ -1,3 +1,4 @@
+import { execFileSync } from "child_process";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -63,6 +64,14 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("id-token: write");
     expect(workflow).not.toContain("azure");
 
+    // Tag-driven release: `v*` tags publish, the tag must match package.json,
+    // and a GitHub Release is cut with the matching CHANGELOG.md section.
+    expect(workflow).toMatch(/tags:\s*\n\s*-\s*["']?v\*/);
+    expect(workflow).toContain("does not match package.json version");
+    expect(workflow).toContain("contents: write");
+    expect(workflow).toContain("scripts/extract-changelog.mjs");
+    expect(workflow).toContain("gh release create");
+
     const rootPackage = JSON.parse(read("package.json")) as {
       name?: string;
       bin?: Record<string, string>;
@@ -73,6 +82,43 @@ describe("release and deployment workflows", () => {
     expect(rootPackage.bin).toMatchObject({ orvi: "dist/cli.js" });
     expect(rootPackage.repository?.url).toContain("github.com/jake-w-liu/orvi");
     expect(rootPackage.files).toEqual(expect.arrayContaining(["dist"]));
+  });
+
+  it("extracts the release notes for a version from CHANGELOG.md", () => {
+    const changelog = read("CHANGELOG.md");
+    const version = (JSON.parse(read("package.json")) as { version: string }).version;
+    expect(changelog).toContain(`## ${version}`);
+
+    const notes = execFileSync(process.execPath, ["scripts/extract-changelog.mjs", version], {
+      cwd: process.cwd(),
+      encoding: "utf8"
+    });
+    expect(notes.trim().length).toBeGreaterThan(0);
+    expect(notes).not.toContain(`## ${version}`);
+  });
+
+  it("hardens CI with a Node matrix, an audit job, and Dependabot", () => {
+    const verify = read(".github/workflows/verify.yml");
+    expect(verify).toContain("matrix:");
+    expect(verify).toMatch(/node-version:\s*\[20,\s*22,\s*24\]/);
+    expect(verify).toContain("npm audit --audit-level=high");
+
+    const dependabot = read(".github/dependabot.yml");
+    expect(dependabot).toContain("package-ecosystem: github-actions");
+    expect(dependabot).toContain("package-ecosystem: npm");
+    expect(dependabot).toContain("/vscode/orvi");
+  });
+
+  it("packages the Obsidian plugin as a downloadable bundle (community-store layout)", () => {
+    const workflow = read(".github/workflows/package-obsidian.yml");
+    expect(workflow).toContain("workflow_dispatch");
+    expect(workflow).toContain("npm run obsidian:build");
+    expect(workflow).toContain("manifest.json");
+    expect(workflow).toContain("main.js");
+    expect(workflow).toContain("styles.css");
+    expect(workflow).toContain("actions/upload-artifact@v4");
+    expect(workflow).toContain("scripts/set-obsidian-version.mjs");
+    expect(workflow).not.toContain("azure");
   });
 
   it("records the release runbook and the native GitHub rendering decision", () => {

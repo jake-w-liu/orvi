@@ -12,9 +12,13 @@ permissions:
 
 jobs:
   verify:
-    name: npm run verify
+    name: npm run verify (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22, 24]
 
     steps:
       - name: Checkout
@@ -23,7 +27,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
       - name: Install dependencies
@@ -52,6 +56,38 @@ jobs:
 
       - name: Run tests with coverage thresholds
         run: npm run test:coverage
+
+  audit:
+    name: npm audit (high+)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            vscode/orvi/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Audit root dependencies
+        run: npm audit --audit-level=high
+
+      - name: Install extension dependencies
+        working-directory: vscode/orvi
+        run: npm ci
+
+      - name: Audit extension dependencies
+        working-directory: vscode/orvi
+        run: npm audit --audit-level=high
 
   vscode-package:
     name: Package VS Code extension

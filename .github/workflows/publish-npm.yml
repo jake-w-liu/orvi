@@ -1,6 +1,13 @@
 name: Publish npm Package
 
 on:
+  # Tag-driven release: push a tag like `v0.2.4` and this publishes that version
+  # (the tag must match `package.json`'s version) and creates a GitHub Release
+  # with the matching section of CHANGELOG.md.
+  push:
+    tags:
+      - "v*"
+  # Manual release: optionally bump the version first (e.g. `patch`, `0.2.4`).
   workflow_dispatch:
     inputs:
       version:
@@ -9,7 +16,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -32,8 +39,21 @@ jobs:
         run: npm ci
 
       - name: Apply requested version
-        if: ${{ inputs.version != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.version != '' }}
         run: npm version "${{ inputs.version }}" --no-git-tag-version
+
+      - name: Resolve and check version
+        id: version
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+            if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+              echo "Tag $GITHUB_REF_NAME does not match package.json version $PKG_VERSION." >&2
+              exit 1
+            fi
+          fi
 
       - name: Verify
         run: npm run verify
@@ -51,3 +71,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
+
+      - name: Extract changelog section
+        id: changelog
+        run: node scripts/extract-changelog.mjs "${{ steps.version.outputs.version }}" > release-notes.md
+
+      - name: Create GitHub Release
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "orvi-lang ${{ steps.version.outputs.version }}" \
+            --notes-file release-notes.md

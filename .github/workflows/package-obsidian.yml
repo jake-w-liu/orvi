@@ -1,0 +1,52 @@
+name: Package Obsidian Plugin
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional plugin version to package (updates manifest.json and versions.json)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply requested version
+        if: ${{ inputs.version != '' }}
+        run: node scripts/set-obsidian-version.mjs "${{ inputs.version }}"
+
+      - name: Build plugin runtime
+        run: npm run obsidian:build
+
+      - name: Assemble release bundle
+        run: |
+          mkdir -p obsidian-orvi-dist
+          cp integrations/obsidian-orvi/manifest.json obsidian-orvi-dist/
+          cp integrations/obsidian-orvi/main.js obsidian-orvi-dist/
+          cp integrations/obsidian-orvi/styles.css obsidian-orvi-dist/
+          cp -r integrations/obsidian-orvi/runtime obsidian-orvi-dist/runtime
+
+      - name: Upload plugin bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: obsidian-orvi-plugin
+          path: obsidian-orvi-dist
+          if-no-files-found: error

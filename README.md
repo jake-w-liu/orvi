@@ -1,5 +1,10 @@
 # Orvi
 
+[![Verify](https://github.com/jake-w-liu/orvi/actions/workflows/verify.yml/badge.svg)](https://github.com/jake-w-liu/orvi/actions/workflows/verify.yml)
+[![npm](https://img.shields.io/npm/v/orvi-lang.svg)](https://www.npmjs.com/package/orvi-lang)
+[![node](https://img.shields.io/node/v/orvi-lang.svg)](https://www.npmjs.com/package/orvi-lang)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Orvi is a strict, human-writable markup language that keeps Markdown-like text
 simple while adding native visual scopes, layout components, and semantic
 elements.
@@ -114,6 +119,29 @@ prettier --plugin orvi-lang/prettier-plugin --write "**/*.ov"
 From a clone of this repo, point `--plugin` at the built file
 (`./dist/prettier-plugin.js`), as `npm run format:check` does.
 
+## Versioning and stability
+
+`orvi-lang` is pre-1.0. Until `1.0.0` it follows Semantic Versioning loosely:
+patch releases are fixes only, and a minor release may include a documented
+behavior change (each one is called out in `CHANGELOG.md`). The `orvi: 0.1`
+metadata version names the language spec (`orvi-spec-v0.1.md`); the package
+version is independent of it.
+
+The public API surface is the documented exports below — these are pinned by a
+test, so additions and removals are deliberate:
+
+| Import | Provides |
+| --- | --- |
+| `orvi-lang` | `parseOrvi`, `renderOrvi`, `renderToHtml`, `formatOrvi`, `OrviParser`, `defaultCss`, plus the AST/diagnostic types |
+| `orvi-lang/parser`, `/renderer`, `/formatter`, `/artifact` | the same functions, scoped |
+| `orvi-lang/react` | `OrviRenderer` (requires a `react` peer; the main entry does not) |
+| `orvi-lang/prettier-plugin` | the Prettier plugin |
+| `orvi-lang/orvi-base.css` | the default stylesheet |
+
+The package targets Node `>=20` (`engines.node`), is side-effect-free
+(`sideEffects: false`), and ships both CommonJS `require()` and ESM `import`
+builds with declaration files for every entry point.
+
 ## Playground
 
 The static playground lives in `playground/` and uses the built ESM renderer.
@@ -171,7 +199,10 @@ npm run obsidian:build
 ```
 
 Then copy `manifest.json`, `main.js`, `styles.css`, `versions.json`, and
-`runtime/` into a vault at `.obsidian/plugins/orvi/`.
+`runtime/` into a vault at `.obsidian/plugins/orvi/`. The
+`.github/workflows/package-obsidian.yml` workflow builds and uploads that
+bundle as an artifact (no Azure); `scripts/set-obsidian-version.mjs` bumps
+`manifest.json` and `versions.json` together for a release.
 
 ## Benchmarks
 
@@ -215,10 +246,16 @@ model-neutral prompt in `prompts/orvi-authoring-system.md`.
 - root package build
 - Prettier fixture format check
 
-CI additionally runs `npm run test:coverage` (per-metric coverage thresholds)
-and packages the VS Code extension.
+CI runs `verify` on a Node 20 / 22 / 24 matrix, plus `npm run test:coverage`
+(per-metric coverage thresholds), `npm audit --audit-level=high` (root and the
+VS Code extension), and the VS Code extension package smoke. Dependabot
+(`.github/dependabot.yml`) keeps GitHub Actions and npm dependencies current.
 
-Tests include parser/renderer/formatter behavior, React export behavior, VS Code
-extension JSON, and every fenced `orvi` example in `orvi-language-guide.md`.
+Tests include parser/renderer/formatter behavior, `fast-check` property tests
+(parser/renderer/formatter never throw, the renderer never emits a live
+`<script>`, the formatter is idempotent and never changes what a document
+renders to when it reports no loss), React export behavior, the published
+package surface and tarball contents, VS Code extension JSON, the release
+workflows, and every fenced `orvi` example in `orvi-language-guide.md`.
 Contributor docs: `CONTRIBUTING.md`. Security notes: `SECURITY.md`. Release
-notes: `CHANGELOG.md`.
+notes and the release runbook: `CHANGELOG.md`, `docs/release.md`.
