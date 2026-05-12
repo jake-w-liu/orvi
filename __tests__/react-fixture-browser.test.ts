@@ -113,7 +113,7 @@ describe("React fixture browser smoke", () => {
         await stopProcess(chromeProcess);
       }
     } finally {
-      rmSync(workspace, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      removeTempWorkspace(workspace);
     }
   }, 20000);
 });
@@ -311,4 +311,19 @@ function stopProcess(chromeProcess: ChildProcessWithoutNullStreams): Promise<voi
 
     chromeProcess.kill("SIGTERM");
   });
+}
+
+function removeTempWorkspace(workspace: string): void {
+  // Chrome's sandbox/zygote helpers can keep writing into the profile dir for a
+  // moment after the main process exits, racing the cleanup. A failed temp-dir
+  // removal is not a test failure — the OS reaps /tmp anyway.
+  try {
+    rmSync(workspace, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  } catch (cleanupError) {
+    console.warn(
+      `Could not remove temp workspace ${workspace}: ${
+        cleanupError instanceof Error ? cleanupError.message : String(cleanupError)
+      }`
+    );
+  }
 }
