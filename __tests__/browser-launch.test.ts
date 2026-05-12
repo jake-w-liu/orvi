@@ -21,6 +21,10 @@ describe("installed browser launch smoke", () => {
       console.warn("Skipping Chrome smoke test; Chrome executable not found.");
       return;
     }
+    if (typeof (globalThis as { WebSocket?: unknown }).WebSocket !== "function") {
+      console.warn("Skipping Chrome smoke test; global WebSocket is unavailable (Node < 21).");
+      return;
+    }
 
     const workspace = mkdtempSync(join(tmpdir(), "orvi-chrome-"));
     try {

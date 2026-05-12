@@ -44,6 +44,10 @@ describe("React fixture browser smoke", () => {
       console.warn("Skipping React fixture browser smoke; Chrome executable not found.");
       return;
     }
+    if (typeof (globalThis as { WebSocket?: unknown }).WebSocket !== "function") {
+      console.warn("Skipping React fixture browser smoke; global WebSocket is unavailable (Node < 21).");
+      return;
+    }
 
     const workspace = mkdtempSync(join(tmpdir(), "orvi-react-fixture-"));
     try {
