@@ -161,14 +161,7 @@ function formatBlock(block: BlockNode, indent: string): string {
       return content ? `${hashes} ${content}` : hashes;
     }
     case "paragraph":
-      // Each line of a paragraph (it may span lines via a hard break) must not
-      // begin with a block marker, or it would re-parse as a heading/list/
-      // comment/table/etc. Inline markers are already escaped by formatInline.
-      return formatInline(block.children)
-        .trim()
-        .split("\n")
-        .map(escapeLeadingBlockMarker)
-        .join("\n");
+      return formatParagraph(block.children);
     case "thematicBreak":
       return "---";
     case "code":
@@ -251,10 +244,14 @@ function formatSemantic(node: SemanticNode): string {
   return `badge: ${node.value ?? ""}${options ? ` | ${options}` : ""}`;
 }
 
-function formatInline(nodes: InlineNode[]): string {
+// `inLabel` is true when formatting the children of an explicit `[label](href)`
+// link, where a literal `]` in text must also be escaped so it does not close
+// the label early. (`]` is NOT escaped in ordinary text — doing so globally
+// breaks formatter idempotence — only inside a link label.)
+function formatInline(nodes: InlineNode[], inLabel = false): string {
   return nodes
     .map((node, index) => {
-      const text = formatInlineNode(node);
+      const text = formatInlineNode(node, inLabel);
       // A bare autolink is greedy on its right edge: a following text node whose
       // first character is URL-valid punctuation would extend the URL on
       // re-parse. Escaping that leading punctuation inserts a `\`, which the
@@ -285,27 +282,52 @@ function extendsAutolink(text: string): boolean {
   return false; // the whole absorbed run is trimmed back off
 }
 
-function formatInlineNode(node: InlineNode): string {
+// Format a paragraph's inline content. A block-level line start (the paragraph
+// start, or the line right after a hard break) must not begin with a block
+// marker, or it would re-parse as a heading/list/comment/etc. The escaping is
+// done per node — NOT by splitting the output on `\n` — because an inline-code
+// span can itself contain a newline, and that line is code content, not a new
+// block line.
+function formatParagraph(children: InlineNode[]): string {
+  let out = "";
+  let blockLineStart = true;
+  for (let index = 0; index < children.length; index += 1) {
+    const node = children[index]!;
+    let piece = formatInlineNode(node, false);
+    const prev = children[index - 1];
+    if (prev?.type === "link" && prev.auto === true && node.type === "text" && extendsAutolink(piece)) {
+      piece = `\\${piece}`;
+    } else if (blockLineStart && node.type === "text") {
+      piece = escapeLeadingBlockMarker(piece);
+    }
+    out += piece;
+    blockLineStart = node.type === "hardBreak";
+  }
+  return out.trim();
+}
+
+function formatInlineNode(node: InlineNode, inLabel: boolean): string {
   switch (node.type) {
     case "text":
-      return escapeInlineText(node.value);
+      return escapeInlineText(node.value, inLabel);
     case "strong":
-      return `**${formatInline(node.children)}**`;
+      return `**${formatInline(node.children, inLabel)}**`;
     case "emphasis":
-      return `${node.marker ?? "_"}${formatInline(node.children)}${node.marker ?? "_"}`;
+      return `${node.marker ?? "_"}${formatInline(node.children, inLabel)}${node.marker ?? "_"}`;
     case "strike":
-      return `~~${formatInline(node.children)}~~`;
+      return `~~${formatInline(node.children, inLabel)}~~`;
     case "inlineCode":
       return `\`${node.value}\``;
     case "hardBreak":
       // A trailing backslash before the newline re-parses as a hard break.
       return "\\\n";
     case "scope":
-      return `[${node.modifiers.map(formatModifier).join(" ")}]${formatInline(node.children)}[]`;
+      return `[${node.modifiers.map(formatModifier).join(" ")}]${formatInline(node.children, inLabel)}[]`;
     case "link":
       // An autolinked bare URL re-emits as the bare URL so it round-trips
-      // (wrapping it in `[url](url)` would also work but is noisier).
-      return node.auto ? node.href : `[${formatInline(node.children)}](${node.href})`;
+      // (wrapping it in `[url](url)` would also work but is noisier). The label
+      // of an explicit link is formatted with `]` escaping.
+      return node.auto ? node.href : `[${formatInline(node.children, true)}](${node.href})`;
     default:
       return "";
   }
@@ -319,11 +341,13 @@ function isAsciiPunctuation(ch: string): boolean {
 // text run can never be re-parsed as a construct (e.g. a literal backtick must
 // not pair into an inline-code span, a literal `[` must not open a scope/link).
 // Over-escaping is render-neutral (`\x` renders as `x`) and keeps the formatter
-// idempotent.
-function escapeInlineText(value: string): string {
+// idempotent. Inside a link label, `]` is escaped too so it cannot close the
+// label early; elsewhere `]` is left literal (global `]` escaping is not
+// idempotent).
+function escapeInlineText(value: string, inLabel = false): string {
   // Escape inline markers FIRST. The scheme-neutralization below must run after,
   // or the inserted backslash would itself be escaped (doubled) by this pass.
-  const escaped = value.replace(/[\\`*_~[]/g, (ch) => `\\${ch}`);
+  const escaped = value.replace(inLabel ? /[\\`*_~[\]]/g : /[\\`*_~[]/g, (ch) => `\\${ch}`);
   // Neutralize a literal `http(s)://` at an autolink boundary (start or after a
   // non-alphanumeric) so a round-trip renders it as text, not a link.
   return escaped.replace(/(^|[^A-Za-z0-9])(https?):\/\//gi, (_m, prefix: string, scheme: string) => `${prefix}${scheme}\\://`);
@@ -336,8 +360,20 @@ function escapeInlineText(value: string): string {
 function escapeTableCellPipes(cell: string): string {
   let out = "";
   let inCode = false;
-  for (const char of cell) {
-    if (char === "`") inCode = !inCode;
+  for (let i = 0; i < cell.length; i += 1) {
+    const char = cell[i]!;
+    // A backslash-escaped character (including `` \` ``) is literal — it does not
+    // toggle code state — matching splitTableRow and the parser.
+    if (char === "\\" && i + 1 < cell.length) {
+      out += char + cell[i + 1];
+      i += 1;
+      continue;
+    }
+    if (char === "`") {
+      inCode = !inCode;
+      out += char;
+      continue;
+    }
     out += char === "|" && !inCode ? "\\|" : char;
   }
   return out;
