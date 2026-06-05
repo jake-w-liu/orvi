@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from "child_process";
 import { createServer, ServerResponse } from "http";
-import { existsSync, readFileSync, watch, writeFileSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, watch, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { basename, dirname, extname, join, resolve } from "path";
 import { defaultCss, OrviColorScheme, OrviDirection, OrviTheme, renderOrvi } from "./renderer";
@@ -88,7 +88,10 @@ function build(options: BuildArgs): void {
 function view(options: ViewArgs): void {
   const inputPath = resolve(options.input);
   const html = renderDocument(inputPath, options.config);
-  const outputPath = join(tmpdir(), `orvi-view-${basename(inputPath, extname(inputPath))}-${process.pid}.html`);
+  // A fresh temp directory per invocation avoids cross-run collisions when two
+  // documents share a basename.
+  const outputDir = mkdtempSync(join(tmpdir(), "orvi-view-"));
+  const outputPath = join(outputDir, `${basename(inputPath, extname(inputPath))}.html`);
   writeFileSync(outputPath, html);
   console.log(`Built ${outputPath}`);
 
@@ -183,13 +186,27 @@ function format(options: FormatArgs): void {
 function serve(options: ServeArgs): void {
   const inputPath = resolve(options.input);
   assertReadable(inputPath);
-  const config = loadConfig(inputPath, options.config);
+  // Validate the config once up front (a bad --config path should fail loudly);
+  // it is re-read per request so edits take effect without a restart.
+  loadConfig(inputPath, options.config);
   const clients = new Set<ServerResponse>();
 
-  watch(inputPath, { persistent: true }, () => {
-    for (const client of clients) {
-      client.write("data: reload\n\n");
-    }
+  const notifyReload = (): void => {
+    for (const client of clients) client.write("data: reload\n\n");
+  };
+
+  // Watch the containing directory rather than the file inode: editors that
+  // save by atomic rename/replace (VS Code, vim `:w`) would otherwise stop the
+  // watch after the first save. Filter to the target file and debounce bursts.
+  let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+  const targetName = basename(inputPath);
+  const watcher = watch(dirname(inputPath), { persistent: true }, (_event, filename) => {
+    if (filename && basename(filename.toString()) !== targetName) return;
+    if (reloadTimer) clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(notifyReload, 50);
+  });
+  watcher.on("error", (error) => {
+    console.error(`Orvi preview watch error: ${error instanceof Error ? error.message : String(error)}`);
   });
 
   const server = createServer((request, response) => {
@@ -203,7 +220,12 @@ function serve(options: ServeArgs): void {
       });
       response.write("\n");
       clients.add(response);
-      request.on("close", () => clients.delete(response));
+      // SSE comment heartbeat keeps proxies and idle browsers from dropping the stream.
+      const heartbeat = setInterval(() => response.write(": ping\n\n"), 30000);
+      request.on("close", () => {
+        clearInterval(heartbeat);
+        clients.delete(response);
+      });
       return;
     }
 
@@ -220,6 +242,7 @@ function serve(options: ServeArgs): void {
     }
 
     try {
+      const config = loadConfig(inputPath, options.config, true);
       const source = readFileSync(inputPath, "utf8");
       const result = renderOrvi(source, {
         fullDocument: true,
@@ -242,6 +265,15 @@ function serve(options: ServeArgs): void {
       response.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
       response.end(`Orvi preview error: ${error instanceof Error ? error.message : String(error)}`);
     }
+  });
+
+  server.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.code === "EADDRINUSE") {
+      console.error(`Orvi preview port ${options.port} is already in use. Pass --port <number> to choose another.`);
+    } else {
+      console.error(`Orvi preview server error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    process.exit(1);
   });
 
   server.listen(options.port, () => {
@@ -388,7 +420,7 @@ function assertReadable(path: string): void {
   }
 }
 
-function loadConfig(inputPath: string, configOverride?: string): OrviConfig {
+function loadConfig(inputPath: string, configOverride?: string, reload = false): OrviConfig {
   const configPath = configOverride
     ? resolve(configOverride)
     : resolve(dirname(inputPath), "orvi.config.js");
@@ -398,6 +430,14 @@ function loadConfig(inputPath: string, configOverride?: string): OrviConfig {
   if (!existsSync(configPath)) return {};
 
   // Loading a project's orvi.config.js requires a dynamic, path-based require.
+  // `reload` drops the require cache so `orvi serve` picks up config edits.
+  if (reload) {
+    try {
+      delete require.cache[require.resolve(configPath)];
+    } catch {
+      // ignore — fall through to a normal require
+    }
+  }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const loaded = require(configPath) as OrviConfig | { default?: OrviConfig };
   if ("default" in loaded && loaded.default) return loaded.default;
