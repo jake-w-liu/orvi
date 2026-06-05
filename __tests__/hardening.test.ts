@@ -91,3 +91,77 @@ describe("formatter loss diagnostics (A3)", () => {
     expect(result.diagnostics.filter((d) => d.code.startsWith("ORVI_FORMAT_"))).toEqual([]);
   });
 });
+
+describe("round-trip after the deep bug hunt", () => {
+  const roundTrips = (source: string): void => {
+    const formatted = formatOrvi(source).formatted;
+    expect(formatOrvi(source).diagnostics.filter((d) => d.code.startsWith("ORVI_FORMAT_"))).toEqual([]);
+    expect(renderOrvi(formatted).html).toBe(renderOrvi(source).html);
+    expect(formatOrvi(formatted).formatted).toBe(formatted);
+  };
+
+  it("escapes a paragraph that begins with a block marker (FMT-1/FMT-2)", () => {
+    for (const source of [
+      "\\# not a heading\n",
+      "\\- not a list\n",
+      "1\\. not a list\n",
+      "\\---\n",
+      "\\// not a comment\n",
+      "btn\\: not a button\n"
+    ]) {
+      roundTrips(source);
+      // and the escaped form must still render as a paragraph, not the block
+      expect(renderOrvi(source).html).toContain("<p>");
+    }
+  });
+
+  it("neutralizes a literal URL in text so it does not autolink on re-parse (F1)", () => {
+    roundTrips("see http\\://e.com here\n");
+    expect(renderOrvi("see http\\://e.com here").html).not.toMatch(/<a /);
+  });
+
+  it("keeps a bare autolink boundary against following punctuation", () => {
+    roundTrips("[red](http://x)\\|\n");
+    roundTrips("link https://e.com\\#frag tail\n");
+  });
+
+  it("round-trips escaped and code-span pipes in table cells (F3)", () => {
+    roundTrips("| a | b |\n| --- | --- |\n| x \\| y | z |\n");
+    roundTrips("| a | b |\n| --- | --- |\n| `x|y` | z |\n");
+  });
+});
+
+describe("table parsing regressions", () => {
+  it("keeps one table when a divider-shaped row appears among body rows (TABLE-LOOKAHEAD-SPLIT)", () => {
+    const ast = parseOrvi("| H1 | H2 |\n| --- | --- |\n| x | y |\n| --- | --- |\n| z | w |");
+    expect(ast.children.map((n) => n.type)).toEqual(["table"]);
+    const table = ast.children[0] as { rows: unknown[] };
+    expect(table.rows).toHaveLength(3);
+  });
+
+  it("keeps an inline-code span with a pipe inside one table cell (F3)", () => {
+    const ast = parseOrvi("| Name | Code |\n| --- | --- |\n| x | `a|b` |");
+    expect(ast.children[0]?.type).toBe("table");
+    expect(renderOrvi("| Name | Code |\n| --- | --- |\n| x | `a|b` |").html).toContain(
+      '<code class="orvi-code-inline">a|b</code>'
+    );
+  });
+});
+
+describe("inline scope matching regressions", () => {
+  it("matches a valid scope regardless of preceding unclosed openers (INLINE-2)", () => {
+    const html = renderOrvi("[red]".repeat(100) + "[red]Important[]").html;
+    expect(html).toContain('<span class="orvi-text-red">Important</span>');
+  });
+
+  it("ignores an escaped bracket inside a scope (INLINE-3)", () => {
+    const html = renderOrvi("[red]a \\[blue] b[]").html;
+    expect(html).toContain('<span class="orvi-text-red">a [blue] b</span>');
+  });
+
+  it("ignores a bracket inside an inline-code span when matching scopes", () => {
+    const html = renderOrvi("[red] x `[blue]` y[]").html;
+    expect(html).toContain('<span class="orvi-text-red">');
+    expect(html).toContain('<code class="orvi-code-inline">[blue]</code>');
+  });
+});
