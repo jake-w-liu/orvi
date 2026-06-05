@@ -283,7 +283,12 @@ function serve(options: ServeArgs): void {
 
 function parseBuildArgs(values: string[]): BuildArgs {
   const input = firstPositional(values);
-  if (!input) throw new Error("Usage: orvi build <input.ov> [-o output.html] [--config orvi.config.js]");
+  if (!input) {
+    // A trailing value-flag with no value is a clearer error than the usage line.
+    const last = values[values.length - 1];
+    if (last !== undefined && FLAGS_WITH_VALUES.has(last)) throw new Error(`Missing value for ${last}.`);
+    throw new Error("Usage: orvi build <input.ov> [-o output.html] [--config orvi.config.js]");
+  }
 
   let output: string | undefined;
   for (let index = 0; index < values.length; index += 1) {
@@ -439,9 +444,13 @@ function loadConfig(inputPath: string, configOverride?: string, reload = false):
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const loaded = require(configPath) as OrviConfig | { default?: OrviConfig };
-  if ("default" in loaded && loaded.default) return loaded.default;
-  return loaded as OrviConfig;
+  const loaded = require(configPath) as unknown;
+  if (loaded === null || typeof loaded !== "object") {
+    throw new Error(`Config file must export an object: ${configPath}`);
+  }
+  const withDefault = loaded as { default?: OrviConfig };
+  if ("default" in withDefault && withDefault.default) return withDefault.default;
+  return loaded;
 }
 
 function defaultOutputPath(inputPath: string): string {
