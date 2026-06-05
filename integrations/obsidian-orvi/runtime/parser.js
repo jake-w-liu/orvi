@@ -562,7 +562,7 @@ class OrviParser {
                     continue;
                 }
                 if (c === "[") {
-                    const bracketClose = value.indexOf("]", scan + 1);
+                    const bracketClose = indexOfUnescapedBracket(value, scan + 1);
                     if (bracketClose > scan + 1 && parseMods(value.slice(scan + 1, bracketClose).trim(), ZERO_LOC)) {
                         openers.push(scan);
                         scan = bracketClose + 1;
@@ -669,9 +669,10 @@ class OrviParser {
                 index += 1;
                 continue;
             }
-            // Inline scope `[mods]…[]` or link `[label](href)`.
+            // Inline scope `[mods]…[]` or link `[label](href)`. The label may contain
+            // an escaped `\]`, so the closing bracket is the first UNESCAPED `]`.
             if (ch === "[" && hasBracketClose && !value.startsWith("[]", index)) {
-                const bracketClose = value.indexOf("]", index + 1);
+                const bracketClose = indexOfUnescapedBracket(value, index + 1);
                 if (bracketClose > index + 1) {
                     const rawModifiers = value.slice(index + 1, bracketClose).trim();
                     const modifiers = parseMods(rawModifiers, { line, column: column + index + 1 });
@@ -1143,6 +1144,24 @@ function findEmphasisClose(value, start, marker) {
 function isEscapablePunctuation(ch) {
     return /^[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]$/.test(ch);
 }
+// The first `]` at or after `start` that is not backslash-escaped (an odd run
+// of preceding backslashes makes it a literal `\]`). Used to close a scope or
+// link bracket so a link label can contain an escaped `\]`.
+function indexOfUnescapedBracket(value, start) {
+    let from = start;
+    while (from < value.length) {
+        const at = value.indexOf("]", from);
+        if (at < 0)
+            return -1;
+        let backslashes = 0;
+        while (at - 1 - backslashes >= 0 && value[at - 1 - backslashes] === "\\")
+            backslashes += 1;
+        if (backslashes % 2 === 0)
+            return at;
+        from = at + 1;
+    }
+    return -1;
+}
 // A bare autolink may start only at a word boundary and only with an http(s)
 // scheme (mailto/tel/bare-domain/email autolinking is intentionally excluded).
 function canStartAutolink(value, index) {
@@ -1153,9 +1172,11 @@ function canStartAutolink(value, index) {
     return head.startsWith("http://") || head.startsWith("https://");
 }
 function matchAutolink(value, index) {
-    // Exclude `|` (and `\`): a bare URL never contains a raw pipe, and stopping at
-    // it keeps an adjacent literal `|` from being swallowed (round-trip safety).
-    const match = /^https?:\/\/[^\s<>"`\\|]+/i.exec(value.slice(index));
+    // Exclude the markup-structural characters `\ | [ ]` from a bare URL (a real
+    // URL percent-encodes them). This keeps an adjacent literal pipe or bracket
+    // from being swallowed, and — since a URL then never contains a bracket — the
+    // scope matcher (which scans brackets) can never be confused by URL content.
+    const match = /^https?:\/\/[^\s<>"`\\|[\]]+/i.exec(value.slice(index));
     if (!match)
         return "";
     let url = match[0];
