@@ -9,13 +9,23 @@ export type OrviNode = DocumentNode | BlockNode | InlineNode;
  * grid columns, table header/row cells, list items). Pure — never throws on a
  * well-formed AST, and tolerates missing optional arrays.
  *
+ * Uses an explicit stack rather than recursion so an arbitrarily deep AST (for
+ * example one assembled by a transformer rather than the depth-capped parser)
+ * cannot overflow the call stack.
+ *
  * This is the supported way to build custom output or analysis on top of Orvi
  * (Orvi has no plugin API by design — see `docs/stability.md`).
  */
 export function walk(node: OrviNode, visit: (node: OrviNode) => void): void {
-  visit(node);
-  for (const child of childNodes(node)) {
-    walk(child, visit);
+  const stack: OrviNode[] = [node];
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    visit(current);
+    const children = childNodes(current);
+    // Push in reverse so siblings are visited left-to-right (pre-order).
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      stack.push(children[index]!);
+    }
   }
 }
 
@@ -38,6 +48,8 @@ function childNodes(node: OrviNode): OrviNode[] {
     case "list":
       return (node.items ?? []).flat();
     case "text":
+    case "inlineCode":
+    case "hardBreak":
     case "thematicBreak":
     case "code":
     case "semantic":

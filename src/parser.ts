@@ -1,5 +1,6 @@
 import {
   BlockNode,
+  ColumnAlignment,
   ComponentName,
   ComponentNode,
   ComponentOptions,
@@ -12,6 +13,7 @@ import {
   SourceLocation,
   TableNode
 } from "./ast";
+import { CALLOUT_TYPES, COLOR_NAMES, COMPONENT_NAMES, SEMANTIC_NAMES, SIZE_NAMES, WEIGHT_NAMES } from "./constants";
 
 export interface ParserOptions {
   maxNestingDepth?: number;
@@ -42,33 +44,21 @@ interface TokenizedOptions {
   options: ComponentOptions;
 }
 
-const COMPONENT_NAMES = new Set(["callout", "grid", "card", "tabs", "tab"]);
-const SEMANTIC_NAMES = new Set(["btn", "img", "hr", "br", "badge"]);
-const COLOR_NAMES = new Set([
-  "red",
-  "blue",
-  "green",
-  "gray",
-  "muted",
-  "yellow",
-  "purple",
-  "orange",
-  "pink",
-  "cyan",
-  "white",
-  "black"
-]);
-const SIZE_NAMES = new Set(["xs", "sm", "md", "lg", "xl", "2xl"]);
-const WEIGHT_NAMES = new Set(["light", "regular", "medium", "bold"]);
-const CALLOUT_TYPES = new Set(["info", "warning", "success", "error"]);
 const DEFAULT_MAX_NESTING_DEPTH = 8;
 // Hard cap on inline-scope/emphasis nesting depth. Beyond this the remainder of
 // the run is kept as literal text — this only bounds adversarial inputs (a real
 // document never nests inline marks anywhere near this deep) and keeps the
 // renderer/formatter from recursing without limit.
 const MAX_INLINE_DEPTH = 24;
-const DEFAULT_SUPPORTED_VERSION = "0.1";
+const DEFAULT_SUPPORTED_VERSION = "0.2";
+// Spec versions this parser accepts. 0.2 is a backward-compatible superset of
+// 0.1 (it only adds inline constructs), so a document marked `orvi: 0.1` keeps
+// validating.
+const SUPPORTED_VERSIONS = new Set(["0.1", "0.2"]);
 const METADATA_KEYS = new Set(["orvi", "title", "lang", "dir"]);
+// Placeholder location for inline-modifier probes that never surface a
+// diagnostic (the scope-close scan only needs the boolean validity result).
+const ZERO_LOC: SourceLocation = { line: 0, column: 0 };
 
 export function parseOrvi(source: string, options: ParserOptions = {}): DocumentNode {
   const parser = OrviParser.fromSource(source, options);
@@ -449,6 +439,8 @@ export class OrviParser {
     const start = this.current();
     const headerCells = splitTableRow(start.text);
     const width = headerCells.length;
+    const dividerLine = this.lines[this.index + 1]?.text ?? "";
+    const aligns = splitTableRow(dividerLine).map(dividerAlignment);
     this.index += 2;
 
     const rows: InlineNode[][][] = [];
@@ -474,7 +466,8 @@ export class OrviParser {
       type: "table",
       loc: loc(start),
       headers: headerCells.map((cell) => this.parseInline(cell, start.line, start.text.indexOf(cell) + 1)),
-      rows
+      rows,
+      aligns
     };
   }
 
@@ -521,7 +514,9 @@ export class OrviParser {
       this.validateDynamicContent(line.text, line.line, 1);
     }
 
-    const value = collected.map((line) => line.text.trim()).join(" ");
+    // Join with newlines (not spaces) so the inline scanner can turn a
+    // trailing `\` into a hard break and a plain wrap into a soft space.
+    const value = collected.map((line) => line.text.trim()).join("\n");
     return {
       type: "paragraph",
       loc: loc(start),
@@ -602,6 +597,12 @@ export class OrviParser {
     };
   }
 
+  // Single-pass inline scanner. Each iteration either consumes a construct
+  // (strong/strike/emphasis/inline-code/scope/link/autolink/escape/break) or
+  // extends the pending text run; literal text is flushed lazily. This avoids
+  // the per-character re-scans of the previous implementation, and the
+  // precomputed scope-close positions plus a scan budget bound adversarial
+  // bracket/asterisk inputs to linear time (see __tests__/perf.test.ts).
   private parseInline(
     value: string,
     line: number,
@@ -610,72 +611,192 @@ export class OrviParser {
     depth = 0
   ): InlineNode[] {
     const nodes: InlineNode[] = [];
-    let index = 0;
 
     if (validateDynamic) {
       this.validateDynamicContent(value, line, column);
     }
 
-    const pushText = (text: string, offset: number): void => {
-      if (text.length > 0) {
-        nodes.push({ type: "text", loc: { line, column: column + offset }, value: text });
-      }
+    const appendText = (text: string, offset: number): void => {
+      if (text.length === 0) return;
+      const last = nodes[nodes.length - 1];
+      if (last && last.type === "text") last.value += text;
+      else nodes.push({ type: "text", loc: { line, column: column + offset }, value: text });
     };
 
     if (depth >= MAX_INLINE_DEPTH) {
       this.errorAt("ORVI_MAX_NESTING_DEPTH", `Inline nesting exceeds max depth ${MAX_INLINE_DEPTH}.`, line, column);
-      pushText(value, 0);
+      appendText(value, 0);
       return nodes;
     }
 
+    let index = 0;
+    let textStart = 0;
+    const flushText = (end: number): void => {
+      if (end > textStart) appendText(value.slice(textStart, end), textStart);
+    };
+
+    // Perf guards: skip all `[` work when no `]` exists; track whether any `[]`
+    // scope-close remains ahead of the cursor (monotonic pointer); cap total
+    // scope-close scanning so deeply-nested unclosed input stays linear.
+    const hasBracketClose = value.includes("]");
+    const scopeClosePositions = allIndexes(value, "[]");
+    let scopeClosePtr = 0;
+    const scopeCloseAhead = (from: number): boolean => {
+      while (scopeClosePtr < scopeClosePositions.length && scopeClosePositions[scopeClosePtr]! < from) {
+        scopeClosePtr += 1;
+      }
+      return scopeClosePtr < scopeClosePositions.length;
+    };
+    const modMemo = new Map<string, InlineModifier[] | undefined>();
+    const parseMods = (raw: string, at: SourceLocation): InlineModifier[] | undefined => {
+      if (modMemo.has(raw)) return modMemo.get(raw);
+      const parsed = raw.includes("[") ? undefined : this.parseInlineModifiers(raw, at, false);
+      modMemo.set(raw, parsed);
+      return parsed;
+    };
+    const scopeScanBudget = { remaining: value.length * 2 + 1000 };
+    const findScopeClose = (start: number): number => {
+      let scopeDepth = 1;
+      let i = start;
+      while (i < value.length) {
+        if ((scopeScanBudget.remaining -= 1) <= 0) return -1;
+        if (value.startsWith("[]", i)) {
+          scopeDepth -= 1;
+          if (scopeDepth === 0) return i;
+          i += 2;
+          continue;
+        }
+        if (value[i] === "[") {
+          const bracketClose = value.indexOf("]", i + 1);
+          if (bracketClose > i + 1) {
+            const raw = value.slice(i + 1, bracketClose).trim();
+            if (parseMods(raw, ZERO_LOC)) {
+              scopeDepth += 1;
+              i = bracketClose + 1;
+              continue;
+            }
+          }
+        }
+        i += 1;
+      }
+      return -1;
+    };
+
     while (index < value.length) {
-      if (value.startsWith("**", index)) {
+      const ch = value[index]!;
+
+      // Backslash: hard line break (before a soft newline), escape of the next
+      // punctuation character, or a literal backslash.
+      if (ch === "\\") {
+        const next = value[index + 1];
+        if (next === "\n") {
+          flushText(index);
+          nodes.push({ type: "hardBreak", loc: { line, column: column + index } });
+          index += 2;
+          textStart = index;
+          continue;
+        }
+        if (next !== undefined && isEscapablePunctuation(next)) {
+          flushText(index);
+          appendText(next, index);
+          index += 2;
+          textStart = index;
+          continue;
+        }
+        index += 1;
+        continue;
+      }
+
+      // Soft line break inside a multi-line paragraph renders as a space.
+      if (ch === "\n") {
+        flushText(index);
+        appendText(" ", index);
+        index += 1;
+        textStart = index;
+        continue;
+      }
+
+      // Inline code span: `code`. Content is verbatim; a missing close is literal.
+      if (ch === "`") {
+        const close = value.indexOf("`", index + 1);
+        if (close > index) {
+          flushText(index);
+          nodes.push({ type: "inlineCode", loc: { line, column: column + index }, value: value.slice(index + 1, close) });
+          index = close + 1;
+          textStart = index;
+          continue;
+        }
+        index += 1;
+        continue;
+      }
+
+      // Strong: **…**
+      if (ch === "*" && value[index + 1] === "*") {
         const close = value.indexOf("**", index + 2);
         if (close >= 0) {
+          flushText(index);
           nodes.push({
             type: "strong",
             loc: { line, column: column + index },
             children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false, depth + 1)
           });
           index = close + 2;
+          textStart = index;
           continue;
         }
+        index += 2;
+        continue;
       }
 
-      if (value.startsWith("~~", index)) {
+      // Strike: ~~…~~
+      if (ch === "~" && value[index + 1] === "~") {
         const close = value.indexOf("~~", index + 2);
         if (close >= 0) {
+          flushText(index);
           nodes.push({
             type: "strike",
             loc: { line, column: column + index },
             children: this.parseInline(value.slice(index + 2, close), line, column + index + 2, false, depth + 1)
           });
           index = close + 2;
+          textStart = index;
           continue;
         }
+        index += 2;
+        continue;
       }
 
-      if (value[index] === "_" && canOpenEmphasis(value, index)) {
-        const close = findEmphasisClose(value, index + 1);
+      // Emphasis: _…_ or *…* (single marker). `**` is handled above, so a `*`
+      // reaching here is a lone marker.
+      if ((ch === "_" || ch === "*") && canOpenEmphasis(value, index)) {
+        const close = findEmphasisClose(value, index + 1, ch);
         if (close > index + 1) {
+          flushText(index);
           nodes.push({
             type: "emphasis",
             loc: { line, column: column + index },
+            marker: ch,
             children: this.parseInline(value.slice(index + 1, close), line, column + index + 1, false, depth + 1)
           });
           index = close + 1;
+          textStart = index;
           continue;
         }
+        index += 1;
+        continue;
       }
 
-      if (value[index] === "[" && !value.startsWith("[]", index)) {
+      // Inline scope `[mods]…[]` or link `[label](href)`.
+      if (ch === "[" && hasBracketClose && !value.startsWith("[]", index)) {
         const bracketClose = value.indexOf("]", index + 1);
         if (bracketClose > index + 1) {
           const rawModifiers = value.slice(index + 1, bracketClose).trim();
-          const modifiers = this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, false);
+          const modifiers = parseMods(rawModifiers, { line, column: column + index + 1 });
           if (modifiers) {
-            const scopeClose = this.findScopeClose(value, bracketClose + 1);
+            const closeAhead = scopeCloseAhead(index);
+            const scopeClose = closeAhead ? findScopeClose(bracketClose + 1) : -1;
             if (scopeClose >= 0) {
+              flushText(index);
               nodes.push({
                 type: "scope",
                 loc: { line, column: column + index },
@@ -683,42 +804,69 @@ export class OrviParser {
                 children: this.parseInline(value.slice(bracketClose + 1, scopeClose), line, column + bracketClose + 1, false, depth + 1)
               });
               index = scopeClose + 2;
+              textStart = index;
               continue;
             }
             this.errorAt("ORVI_UNCLOSED_SCOPE", "Unclosed inline scope; expected [].", line, column + index);
-          } else {
-            // `[label](href)` is an inline link when the bracket content is not
-            // a valid modifier list (so it can never shadow an `[mods]…[]` scope)
-            // and the label and href are both non-empty (an empty label would
-            // format back to `[]`, the scope-close sentinel, and not round-trip).
-            if (rawModifiers.length > 0 && value[bracketClose + 1] === "(") {
-              const parenClose = value.indexOf(")", bracketClose + 2);
-              if (parenClose > bracketClose + 1) {
-                const href = value.slice(bracketClose + 2, parenClose).trim();
-                if (href.length > 0) {
-                  nodes.push({
-                    type: "link",
-                    loc: { line, column: column + index },
-                    href,
-                    children: this.parseInline(rawModifiers, line, column + index + 1, false, depth + 1)
-                  });
-                  index = parenClose + 1;
-                  continue;
-                }
+            index += 1;
+            continue;
+          }
+          // `[label](href)` is an inline link when the bracket content is not a
+          // valid modifier list (so it can never shadow an `[mods]…[]` scope)
+          // and the label and href are both non-empty (an empty label would
+          // format back to `[]`, the scope-close sentinel, and not round-trip).
+          if (rawModifiers.length > 0 && value[bracketClose + 1] === "(") {
+            const parenClose = value.indexOf(")", bracketClose + 2);
+            if (parenClose > bracketClose + 1) {
+              const href = value.slice(bracketClose + 2, parenClose).trim();
+              if (href.length > 0) {
+                flushText(index);
+                nodes.push({
+                  type: "link",
+                  loc: { line, column: column + index },
+                  href,
+                  children: this.parseInline(rawModifiers, line, column + index + 1, false, depth + 1)
+                });
+                index = parenClose + 1;
+                textStart = index;
+                continue;
               }
             }
-            if (value.indexOf("[]", bracketClose + 1) >= 0) {
-              this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
-            }
           }
+          // Looked like an attempted scope (a `[]` close exists ahead) but the
+          // modifiers are invalid — report it.
+          if (scopeCloseAhead(index)) {
+            this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
+          }
+          index += 1;
+          continue;
+        }
+        index += 1;
+        continue;
+      }
+
+      // Bare autolink: http(s)://… written directly in the text.
+      if ((ch === "h" || ch === "H") && canStartAutolink(value, index)) {
+        const url = matchAutolink(value, index);
+        if (url) {
+          flushText(index);
+          nodes.push({
+            type: "link",
+            loc: { line, column: column + index },
+            href: url,
+            auto: true,
+            children: [{ type: "text", loc: { line, column: column + index }, value: url }]
+          });
+          index += url.length;
+          textStart = index;
+          continue;
         }
       }
 
-      const next = this.nextInlineToken(value, index + 1);
-      pushText(value.slice(index, next), index);
-      index = next;
+      index += 1;
     }
 
+    flushText(index);
     return nodes;
   }
 
@@ -746,43 +894,6 @@ export class OrviParser {
     }
 
     return modifiers;
-  }
-
-  private findScopeClose(value: string, start: number): number {
-    let depth = 1;
-    let index = start;
-
-    while (index < value.length) {
-      if (value.startsWith("[]", index)) {
-        depth -= 1;
-        if (depth === 0) return index;
-        index += 2;
-        continue;
-      }
-
-      if (value[index] === "[") {
-        const bracketClose = value.indexOf("]", index + 1);
-        if (bracketClose > index + 1) {
-          const raw = value.slice(index + 1, bracketClose).trim();
-          if (this.parseInlineModifiers(raw, { line: 0, column: 0 }, false)) {
-            depth += 1;
-            index = bracketClose + 1;
-            continue;
-          }
-        }
-      }
-
-      index += 1;
-    }
-
-    return -1;
-  }
-
-  private nextInlineToken(value: string, start: number): number {
-    const candidates = ["**", "~~", "_", "["]
-      .map((token) => value.indexOf(token, start))
-      .filter((candidate) => candidate >= 0);
-    return candidates.length === 0 ? value.length : Math.min(...candidates);
   }
 
   private validateComponentOpen(node: ComponentNode, line: SourceLine, parent: ComponentName | undefined): void {
@@ -865,7 +976,7 @@ export class OrviParser {
 
   private validateMetadata(metadata: DocumentMetadata, line: SourceLine): void {
     if (!metadata.orvi) return;
-    if (metadata.orvi !== this.options.supportedVersion) {
+    if (metadata.orvi !== this.options.supportedVersion && !SUPPORTED_VERSIONS.has(metadata.orvi)) {
       this.error(
         "ORVI_UNSUPPORTED_VERSION",
         `Unsupported Orvi version '${metadata.orvi}'; expected '${this.options.supportedVersion}'.`,
@@ -889,16 +1000,7 @@ export class OrviParser {
 
   private isTableStart(): boolean {
     if (this.index + 1 >= this.lines.length) return false;
-    const current = this.current().text.trim();
-    if (!current.includes("|")) return false;
-    const next = this.lines[this.index + 1]!.text.trim();
-    const headerCells = splitTableRow(current);
-    const dividerCells = splitTableRow(next);
-    return (
-      headerCells.length >= 1 &&
-      headerCells.length === dividerCells.length &&
-      dividerCells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()))
-    );
+    return looksLikeTable(this.current().text, this.lines[this.index + 1]!.text);
   }
 
   private isBlockBoundary(line: SourceLine): boolean {
@@ -910,6 +1012,10 @@ export class OrviParser {
     if (trimmed === "---") return true;
     if (isListLine(trimmed)) return true;
     if (/^([a-z][a-z0-9-]*):(?:\s*(.*))?$/i.test(trimmed) && SEMANTIC_NAMES.has(trimmed.split(":")[0]!)) return true;
+    // A table that begins on the next line ends the current block (so a
+    // paragraph immediately before a table is not absorbed into it).
+    const next = this.lines[this.index + 1];
+    if (next && looksLikeTable(line.text, next.text)) return true;
     return false;
   }
 
@@ -1083,26 +1189,103 @@ function splitTableRow(row: string): string[] {
   return value.split("|").map((cell) => cell.trim());
 }
 
+function isDividerCell(cell: string): boolean {
+  return /^:?-{3,}:?$/.test(cell.trim());
+}
+
+function dividerAlignment(cell: string): ColumnAlignment {
+  const trimmed = cell.trim();
+  const left = trimmed.startsWith(":");
+  const right = trimmed.endsWith(":");
+  if (left && right) return "center";
+  if (right) return "right";
+  if (left) return "left";
+  return "none";
+}
+
+// A header line followed by a divider line is a table only when BOTH lines
+// carry a pipe (so a single-cell `| Note |` over a bare `---` stays a paragraph
+// plus a thematic break) and every divider cell is `:?---:?`.
+function looksLikeTable(headerLine: string, dividerLine: string): boolean {
+  const header = headerLine.trim();
+  const divider = dividerLine.trim();
+  if (!header.includes("|") || !divider.includes("|")) return false;
+  const headerCells = splitTableRow(header);
+  const dividerCells = splitTableRow(divider);
+  return headerCells.length >= 1 && headerCells.length === dividerCells.length && dividerCells.every(isDividerCell);
+}
+
 function isListLine(trimmed: string): boolean {
   // A bullet/number marker, either alone (an empty item) or followed by content.
   return /^[-*](\s+(.+))?$/.test(trimmed) || /^\d+\.(\s+(.+))?$/.test(trimmed);
 }
 
+// An emphasis run opens only when it is not intra-word (no preceding word
+// character) and is left-flanking (immediately followed by a non-space), so
+// `a _ b _ c` and `2 * 3 * 4` stay literal.
 function canOpenEmphasis(value: string, index: number): boolean {
   const prev = index === 0 ? "" : value[index - 1]!;
-  return !/[A-Za-z0-9_]/.test(prev);
+  const next = index + 1 < value.length ? value[index + 1]! : "";
+  return !/[A-Za-z0-9_]/.test(prev) && next !== "" && !/\s/.test(next);
 }
 
-function findEmphasisClose(value: string, start: number): number {
+// The close must be right-flanking (preceded by a non-space) and not land
+// inside a word (next char is not a word character).
+function findEmphasisClose(value: string, start: number, marker: string): number {
   let index = start;
   while (index < value.length) {
-    const candidate = value.indexOf("_", index);
+    const candidate = value.indexOf(marker, index);
     if (candidate < 0) return -1;
+    const prev = candidate > 0 ? value[candidate - 1]! : "";
     const next = candidate + 1 < value.length ? value[candidate + 1]! : "";
-    if (!/[A-Za-z0-9_]/.test(next)) return candidate;
+    if (prev !== "" && !/\s/.test(prev) && !/[A-Za-z0-9_]/.test(next)) return candidate;
     index = candidate + 1;
   }
   return -1;
+}
+
+// CommonMark's escapable set: any ASCII punctuation character. A backslash
+// before one of these yields the literal character; before anything else the
+// backslash stays literal.
+function isEscapablePunctuation(ch: string): boolean {
+  return /^[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]$/.test(ch);
+}
+
+function allIndexes(value: string, needle: string): number[] {
+  const out: number[] = [];
+  let index = value.indexOf(needle);
+  while (index >= 0) {
+    out.push(index);
+    index = value.indexOf(needle, index + needle.length);
+  }
+  return out;
+}
+
+// A bare autolink may start only at a word boundary and only with an http(s)
+// scheme (mailto/tel/bare-domain/email autolinking is intentionally excluded).
+function canStartAutolink(value: string, index: number): boolean {
+  const prev = index === 0 ? "" : value[index - 1]!;
+  if (/[A-Za-z0-9]/.test(prev)) return false;
+  const head = value.slice(index, index + 8).toLowerCase();
+  return head.startsWith("http://") || head.startsWith("https://");
+}
+
+function matchAutolink(value: string, index: number): string {
+  const match = /^https?:\/\/[^\s<>"`]+/i.exec(value.slice(index));
+  if (!match) return "";
+  let url = match[0];
+  // Trailing punctuation is usually sentence punctuation, not part of the URL.
+  // A trailing `)` is kept only when it balances a `(` inside the URL.
+  while (url.length > 0 && /[.,;:!?'")\]]/.test(url[url.length - 1]!)) {
+    if (url[url.length - 1] === ")") {
+      const opens = (url.match(/\(/g) ?? []).length;
+      const closes = (url.match(/\)/g) ?? []).length;
+      if (closes <= opens) break;
+    }
+    url = url.slice(0, -1);
+  }
+  const schemeEnd = url.indexOf("://");
+  return schemeEnd >= 0 && url.length > schemeEnd + 3 ? url : "";
 }
 
 function loc(line: SourceLine): SourceLocation {

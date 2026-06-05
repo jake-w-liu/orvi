@@ -1,12 +1,14 @@
 import {
   BaseNode,
   BlockNode,
+  ColumnAlignment,
   ComponentNode,
   DocumentNode,
   InlineModifier,
   InlineNode,
   SemanticNode
 } from "./ast";
+import { CALLOUT_TYPES, COLOR_NAMES } from "./constants";
 import { parseOrvi } from "./parser";
 import { defaultCss } from "./styles";
 
@@ -184,7 +186,7 @@ function renderBlockDefault(node: BlockNode, ctx: RenderContext): string {
     case "code":
       return renderCode(node.language, node.filename, node.value, loc);
     case "table":
-      return renderTable(node.headers, node.rows, loc);
+      return renderTable(node.headers, node.rows, node.aligns, loc);
     case "list":
       return renderList(node.ordered, node.items, loc);
     case "component":
@@ -207,10 +209,14 @@ function renderCode(language: string | undefined, filename: string | undefined, 
   return `${title}<pre class="orvi-code"${loc}><code${className}>${escapeHtml(value)}</code></pre>`;
 }
 
-function renderTable(headers: InlineNode[][], rows: InlineNode[][][], loc = ""): string {
-  const head = (headers ?? []).map((cell) => `<th>${renderInline(cell)}</th>`).join("");
+function renderTable(headers: InlineNode[][], rows: InlineNode[][][], aligns: ColumnAlignment[] | undefined, loc = ""): string {
+  const alignAttr = (column: number): string => {
+    const align = (aligns ?? [])[column] ?? "none";
+    return align === "none" ? "" : ` class="orvi-align-${align}"`;
+  };
+  const head = (headers ?? []).map((cell, column) => `<th${alignAttr(column)}>${renderInline(cell)}</th>`).join("");
   const body = (rows ?? [])
-    .map((row) => `<tr>${(row ?? []).map((cell) => `<td>${renderInline(cell)}</td>`).join("")}</tr>`)
+    .map((row) => `<tr>${(row ?? []).map((cell, column) => `<td${alignAttr(column)}>${renderInline(cell)}</td>`).join("")}</tr>`)
     .join("");
   return `<table class="orvi-table"${loc}><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
@@ -224,15 +230,17 @@ function renderComponent(node: ComponentNode, ctx: RenderContext): string {
   const options = node.options ?? {};
   const loc = locAttr(node, ctx);
   if (node.name === "callout") {
-    const type = options.type ?? "info";
+    // Coerce to a known type at render time so an invalid value (which the
+    // parser already flags) can never inject extra class tokens.
+    const type = CALLOUT_TYPES.has(options.type ?? "") ? options.type! : "info";
     const label = `${calloutLabel(type)} callout`;
-    return `<aside class="orvi-callout orvi-callout-${escapeAttr(type)}" role="note" aria-label="${escapeAttr(
+    return `<aside class="orvi-callout orvi-callout-${type}" role="note" aria-label="${escapeAttr(
       label
     )}"${loc}>${renderChildren(node.children, ctx)}</aside>`;
   }
 
   if (node.name === "card") {
-    const bg = options.bg ? ` orvi-bg-${escapeAttr(options.bg)}` : "";
+    const bg = COLOR_NAMES.has(options.bg ?? "") ? ` orvi-bg-${options.bg}` : "";
     return `<section class="orvi-card${bg}"${loc}>${renderChildren(node.children, ctx)}</section>`;
   }
 
@@ -293,8 +301,9 @@ function renderSemantic(node: SemanticNode, loc = ""): string {
     )}"></figure>`;
   }
 
-  const type = (node.options ?? {}).type ?? "info";
-  return `<span class="orvi-badge orvi-badge-${escapeAttr(type)}"${loc}>${escapeHtml(node.value ?? "")}</span>`;
+  const requestedType = (node.options ?? {}).type ?? "info";
+  const type = CALLOUT_TYPES.has(requestedType) ? requestedType : "info";
+  return `<span class="orvi-badge orvi-badge-${type}"${loc}>${escapeHtml(node.value ?? "")}</span>`;
 }
 
 function renderChildren(children: BlockNode[], ctx: RenderContext): string {
@@ -313,6 +322,10 @@ function renderInline(nodes: InlineNode[]): string {
           return `<em>${renderInline(node.children)}</em>`;
         case "strike":
           return `<del>${renderInline(node.children)}</del>`;
+        case "inlineCode":
+          return `<code class="orvi-code-inline">${escapeHtml(node.value)}</code>`;
+        case "hardBreak":
+          return "<br>";
         case "scope":
           return `<span class="${escapeAttr((node.modifiers ?? []).map(modifierClass).join(" "))}">${renderInline(node.children)}</span>`;
         case "link":

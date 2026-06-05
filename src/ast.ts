@@ -46,7 +46,15 @@ export type BlockNode =
   | SemanticNode
   | ListNode;
 
-export type InlineNode = TextNode | StrongNode | EmphasisNode | StrikeNode | InlineScopeNode | LinkNode;
+export type InlineNode =
+  | TextNode
+  | StrongNode
+  | EmphasisNode
+  | StrikeNode
+  | InlineCodeNode
+  | InlineScopeNode
+  | LinkNode
+  | HardBreakNode;
 
 export interface TextNode extends BaseNode {
   type: "text";
@@ -57,6 +65,12 @@ export interface LinkNode extends BaseNode {
   type: "link";
   href: string;
   children: InlineNode[];
+  /**
+   * True when the link came from a bare autolinked URL (`https://…` written
+   * directly in the text) rather than the explicit `[label](href)` form. The
+   * formatter re-emits these as the bare URL so the source round-trips.
+   */
+  auto?: boolean;
 }
 
 export interface StrongNode extends BaseNode {
@@ -67,6 +81,21 @@ export interface StrongNode extends BaseNode {
 export interface EmphasisNode extends BaseNode {
   type: "emphasis";
   children: InlineNode[];
+  /**
+   * The source delimiter the emphasis was written with (`_` or `*`). Both
+   * render to `<em>`; the formatter re-emits the original marker so a document
+   * round-trips. Defaults to `_` when absent.
+   */
+  marker?: "_" | "*";
+}
+
+export interface InlineCodeNode extends BaseNode {
+  type: "inlineCode";
+  value: string;
+}
+
+export interface HardBreakNode extends BaseNode {
+  type: "hardBreak";
 }
 
 export interface StrikeNode extends BaseNode {
@@ -109,10 +138,19 @@ export interface CodeBlockNode extends BaseNode {
   value: string;
 }
 
+export type ColumnAlignment = "none" | "left" | "center" | "right";
+
 export interface TableNode extends BaseNode {
   type: "table";
   headers: InlineNode[][];
   rows: InlineNode[][][];
+  /**
+   * Per-column alignment parsed from the divider row (`:--`, `:-:`, `--:`).
+   * One entry per header cell; `"none"` when the column has no colon marker.
+   * Optional so hand-built table nodes stay valid (renderer treats a missing
+   * or short array as `"none"`).
+   */
+  aligns?: ColumnAlignment[];
 }
 
 export interface ListNode extends BaseNode {

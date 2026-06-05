@@ -1,5 +1,6 @@
 import {
   BlockNode,
+  ColumnAlignment,
   ComponentNode,
   ComponentOptions,
   DocumentMetadata,
@@ -10,6 +11,7 @@ import {
   SemanticNode
 } from "./ast";
 import { parseOrvi } from "./parser";
+import { walk } from "./walk";
 
 export interface FormatOptions {
   indent?: string;
@@ -28,7 +30,7 @@ export function formatOrvi(source: string, options: FormatOptions = {}): FormatR
   const metadata = formatMetadata(ast.metadata);
   const body = [metadata, formatBlocks(ast.children, 0, indent).trimEnd()].filter(Boolean).join("\n\n");
   const formatted = options.finalNewline === false ? body : `${body}\n`;
-  const diagnostics = [...ast.diagnostics, ...formatLossDiagnostics(source)];
+  const diagnostics = [...ast.diagnostics, ...formatLossDiagnostics(source), ...badgeLossDiagnostics(ast)];
 
   return {
     formatted,
@@ -93,6 +95,41 @@ function metadataLossDiagnostics(lines: string[]): OrviDiagnostic[] {
   return diagnostics;
 }
 
+// A badge whose text contains a `|` immediately followed by a `key=value`
+// token would, when re-emitted, be re-parsed as options (the parser treats the
+// last `|` as the option separator) — truncating the text. Rather than emit a
+// silently-different document, warn so callers know the source can't round-trip.
+function badgeLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
+  const diagnostics: OrviDiagnostic[] = [];
+  walk(ast, (node) => {
+    if (node.type === "semantic" && node.name === "badge" && badgeWouldLoseContent(node)) {
+      diagnostics.push({
+        severity: "warning",
+        code: "ORVI_FORMAT_BADGE_VALUE_DROPPED",
+        message: "The formatter cannot preserve this badge text; its `| key=value` pattern re-parses as options.",
+        line: node.loc.line,
+        column: node.loc.column,
+        endLine: node.loc.line,
+        endColumn: node.loc.column + "badge".length
+      });
+    }
+  });
+  return diagnostics;
+}
+
+function badgeWouldLoseContent(node: SemanticNode): boolean {
+  const value = node.value ?? "";
+  const options = formatOptions(node.options ?? {});
+  const payload = options ? `${value} | ${options}` : value;
+  // Mirror the parser's badge payload split: only the last `|` introduces
+  // options, and only when its trailing segment looks like `key=value`.
+  const lastPipe = payload.lastIndexOf("|");
+  const trailing = lastPipe < 0 ? "" : payload.slice(lastPipe + 1).trim();
+  const hasOptions = lastPipe >= 0 && /\S=\S/.test(trailing);
+  const reparsedText = (hasOptions ? payload.slice(0, lastPipe) : payload).trim();
+  return reparsedText !== value;
+}
+
 function formatMetadata(metadata: DocumentMetadata): string {
   const entries: string[] = [];
   if (metadata.orvi) entries.push(`orvi: ${metadata.orvi}`);
@@ -129,7 +166,7 @@ function formatBlock(block: BlockNode, indent: string): string {
     case "code":
       return formatCode(block.language, block.filename, block.value);
     case "table":
-      return formatTable(block.headers, block.rows);
+      return formatTable(block.headers, block.rows, block.aligns);
     case "list":
       return block.items
         .map((item, index) => {
@@ -167,17 +204,33 @@ function formatCode(language: string | undefined, filename: string | undefined, 
   return [`\`\`\`${metadata}`, value, "```"].join("\n");
 }
 
-function formatTable(headers: InlineNode[][], rows: InlineNode[][][]): string {
+function formatTable(headers: InlineNode[][], rows: InlineNode[][][], aligns: ColumnAlignment[] | undefined): string {
   const stringHeaders = headers.map(formatInline);
   const stringRows = rows.map((row) => row.map(formatInline));
+  const columnAlign = (index: number): ColumnAlignment => (aligns ?? [])[index] ?? "none";
   const widths = stringHeaders.map((header, index) =>
-    Math.max(header.length, ...stringRows.map((row) => row[index]?.length ?? 0), 3)
+    Math.max(header.length, ...stringRows.map((row) => row[index]?.length ?? 0), minDividerWidth(columnAlign(index)))
   );
 
   const row = (cells: string[]): string => `| ${cells.map((cell, index) => cell.padEnd(widths[index] ?? 0)).join(" | ")} |`;
-  const divider = `| ${widths.map((width) => "-".repeat(width)).join(" | ")} |`;
+  const divider = `| ${widths.map((width, index) => dividerCell(width, columnAlign(index))).join(" | ")} |`;
 
   return [row(stringHeaders), divider, ...stringRows.map(row)].join("\n");
+}
+
+// A colon-decorated divider cell still needs at least three dashes, so an
+// aligned column reserves room for its colon(s).
+function minDividerWidth(align: ColumnAlignment): number {
+  if (align === "center") return 5;
+  if (align === "left" || align === "right") return 4;
+  return 3;
+}
+
+function dividerCell(width: number, align: ColumnAlignment): string {
+  if (align === "center") return `:${"-".repeat(width - 2)}:`;
+  if (align === "left") return `:${"-".repeat(width - 1)}`;
+  if (align === "right") return `${"-".repeat(width - 1)}:`;
+  return "-".repeat(width);
 }
 
 function formatSemantic(node: SemanticNode): string {
@@ -194,22 +247,38 @@ function formatInline(nodes: InlineNode[]): string {
     .map((node) => {
       switch (node.type) {
         case "text":
-          return node.value;
+          return escapeInlineText(node.value);
         case "strong":
           return `**${formatInline(node.children)}**`;
         case "emphasis":
-          return `_${formatInline(node.children)}_`;
+          return `${node.marker ?? "_"}${formatInline(node.children)}${node.marker ?? "_"}`;
         case "strike":
           return `~~${formatInline(node.children)}~~`;
+        case "inlineCode":
+          return `\`${node.value}\``;
+        case "hardBreak":
+          // A trailing backslash before the newline re-parses as a hard break.
+          return "\\\n";
         case "scope":
           return `[${node.modifiers.map(formatModifier).join(" ")}]${formatInline(node.children)}[]`;
         case "link":
-          return `[${formatInline(node.children)}](${node.href})`;
+          // An autolinked bare URL re-emits as the bare URL so it round-trips
+          // (wrapping it in `[url](url)` would also work but is noisier).
+          return node.auto ? node.href : `[${formatInline(node.children)}](${node.href})`;
         default:
           return "";
       }
     })
     .join("");
+}
+
+// Re-escape the inline-significant characters in literal text so a formatted
+// text run can never be re-parsed as a construct (e.g. a literal backtick must
+// not pair into an inline-code span, a literal `[` must not open a scope/link).
+// Over-escaping is render-neutral (`\x` renders as `x`) and keeps the formatter
+// idempotent.
+function escapeInlineText(value: string): string {
+  return value.replace(/[\\`*_~[]/g, (ch) => `\\${ch}`);
 }
 
 function formatModifier(modifier: InlineModifier): string {
