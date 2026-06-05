@@ -56,6 +56,21 @@ Correctness, security, and robustness fixes from a full audit:
   watcher has an error handler, the SSE stream sends a keep-alive heartbeat, and
   `orvi.config.js` is re-read per request so edits take effect without a restart.
 
+Additional fixes from a follow-up deep bug hunt (round-trip / parse correctness):
+
+- The formatter escapes a paragraph line that begins with a block marker
+  (`#`, `-`, `1.`, `---`, `//`, `name:`) and neutralizes a literal `http(s)://`
+  in text, so neither silently re-parses as a different block or autolink.
+- A bare autolink no longer absorbs a following literal character (e.g. an
+  escaped `\#`/`\|`) on re-parse; pipes are excluded from autolink URLs.
+- Table cells honor `\|` and inline-code spans containing `|` (the splitter is
+  code-span- and escape-aware on both the parse and format sides).
+- A divider-shaped row among table body rows no longer splits one table in two.
+- Inline-scope matching is a single linear stack pass: a valid `[mods]…[]` scope
+  is matched independent of preceding unclosed openers, and it honors backslash
+  escapes and inline-code spans.
+- A backslash-escaped emphasis marker (`*a \* b*`) no longer closes the emphasis.
+
 No public JS export was added or removed (the new AST nodes are matched inside
 existing switch statements), so this remains a minor.
 
