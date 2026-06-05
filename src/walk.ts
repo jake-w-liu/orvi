@@ -32,6 +32,7 @@ export function walk(node: OrviNode, visit: (node: OrviNode) => void): void {
 function childNodes(node: OrviNode): OrviNode[] {
   switch (node.type) {
     case "document":
+    case "blockquote":
       return node.children ?? [];
     case "heading":
     case "paragraph":

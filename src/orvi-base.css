@@ -66,8 +66,23 @@
 .orvi-card,
 .orvi-callout,
 .orvi-grid,
-.orvi-tabs {
+.orvi-tabs,
+.orvi-quote {
   margin: 1rem 0;
+}
+
+.orvi-quote {
+  border-inline-start: 0.25rem solid var(--orvi-border);
+  color: var(--orvi-muted);
+  padding: 0.25rem 0 0.25rem 1rem;
+}
+
+.orvi-quote > :first-child {
+  margin-top: 0;
+}
+
+.orvi-quote > :last-child {
+  margin-bottom: 0;
 }
 
 .orvi-hr {

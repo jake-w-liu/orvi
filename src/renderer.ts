@@ -189,6 +189,8 @@ function renderBlockDefault(node: BlockNode, ctx: RenderContext): string {
       return renderTable(node.headers, node.rows, node.aligns, loc);
     case "list":
       return renderList(node.ordered, node.items, loc);
+    case "blockquote":
+      return `<blockquote class="orvi-quote"${loc}>${renderChildren(node.children, ctx)}</blockquote>`;
     case "component":
       return renderComponent(node, ctx);
     case "semantic":

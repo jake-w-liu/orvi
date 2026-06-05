@@ -44,7 +44,8 @@ export type BlockNode =
   | TableNode
   | ComponentNode
   | SemanticNode
-  | ListNode;
+  | ListNode
+  | BlockquoteNode;
 
 export type InlineNode =
   | TextNode
@@ -157,6 +158,11 @@ export interface ListNode extends BaseNode {
   type: "list";
   ordered: boolean;
   items: InlineNode[][];
+}
+
+export interface BlockquoteNode extends BaseNode {
+  type: "blockquote";
+  children: BlockNode[];
 }
 
 export type ComponentName = "callout" | "grid" | "card" | "tabs" | "tab";

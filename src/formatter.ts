@@ -176,6 +176,15 @@ function formatBlock(block: BlockNode, indent: string): string {
           return content ? `${marker} ${content}` : marker;
         })
         .join("\n");
+    case "blockquote": {
+      // Prefix every line of the formatted body with `> ` (a bare `>` for a
+      // blank line). Nested quotes compose to the canonical `> > ` per level.
+      const body = formatBlocks(block.children, 0, indent);
+      return body
+        .split("\n")
+        .map((line) => (line.length > 0 ? `> ${line}` : ">"))
+        .join("\n");
+    }
     case "component":
       return formatComponent(block, indent);
     case "semantic":
@@ -387,6 +396,7 @@ function escapeLeadingBlockMarker(line: string): string {
   if (/^#{1,6}(\s|$)/.test(line)) return `\\${line}`; // heading
   if (line === "---") return `\\${line}`; // thematic break / grid separator
   if (/^-(\s|$)/.test(line)) return `\\${line}`; // unordered list (`*` is already inline-escaped)
+  if (line.startsWith(">")) return `\\${line}`; // blockquote
   if (line.startsWith("//")) return `\\${line}`; // comment
   if (line.startsWith("```")) return `\\${line}`; // code fence
   const ordered = /^(\d+)\./.exec(line);
