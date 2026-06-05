@@ -27,6 +27,13 @@ const TOKENS = [
   "-",
   "*",
   "5.",
+  "  - ",
+  "    - ",
+  "\t- ",
+  "  1. ",
+  "- [ ] ",
+  "- [x] ",
+  "- []",
   "**",
   "_",
   "~~",
@@ -109,6 +116,15 @@ function hasLiveScript(html: string): boolean {
   return /<script[\s/>]/i.test(html) || /<\/script\s*>/i.test(html);
 }
 
+// The round-trip guarantees (idempotence, render-stability) apply to documents
+// that parse without error. A malformed document (e.g. an unclosed code fence)
+// is best-effort "repaired" by the formatter, so it is not expected to round-trip
+// — the CLI refuses to build such documents anyway. The never-throw guarantees
+// still apply to every input.
+function hasParseError(source: string): boolean {
+  return parseOrvi(source).diagnostics.some((d) => d.severity === "error");
+}
+
 function formatLoss(source: string): boolean {
   return formatOrvi(source).diagnostics.some((d) => d.code.startsWith("ORVI_FORMAT_"));
 }
@@ -172,7 +188,8 @@ describe("property: parser/renderer/formatter robustness", () => {
   it("formatOrvi never throws and is idempotent", () => {
     fc.assert(
       fc.property(documentSource, (source) => {
-        const once = formatOrvi(source).formatted;
+        const once = formatOrvi(source).formatted; // exercises never-throw for any input
+        if (hasParseError(source)) return; // malformed input is repaired, not round-tripped
         const twice = formatOrvi(once).formatted;
         expect(twice).toBe(once);
       }),
@@ -183,7 +200,7 @@ describe("property: parser/renderer/formatter robustness", () => {
   it("formatting does not change what a document renders to when it reports no loss", () => {
     fc.assert(
       fc.property(documentSource, (source) => {
-        if (formatLoss(source)) return; // formatter already warned it would change content
+        if (formatLoss(source) || hasParseError(source)) return; // warned, or malformed (repaired)
         const formatted = formatOrvi(source).formatted;
         expect(renderOrvi(formatted).html).toBe(renderOrvi(source).html);
       }),

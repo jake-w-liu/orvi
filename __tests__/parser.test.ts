@@ -164,11 +164,11 @@ Missing close
     const ast = parseOrvi("- a\n-\n* b\n*\n1.\n2. c");
     expect(ast.diagnostics).toEqual([]);
     expect(ast.children.map((node) => node.type)).toEqual(["list", "list"]);
-    const [unordered, ordered] = ast.children as Array<{ ordered: boolean; items: unknown[][] }>;
+    const [unordered, ordered] = ast.children as Array<{ ordered: boolean; items: Array<{ children: unknown[] }> }>;
     expect(unordered).toMatchObject({ ordered: false });
-    expect(unordered.items.map((i) => i.length)).toEqual([1, 0, 1, 0]); // "a", empty, "b", empty
+    expect(unordered.items.map((i) => i.children.length)).toEqual([1, 0, 1, 0]); // "a", empty, "b", empty
     expect(ordered).toMatchObject({ ordered: true });
-    expect(ordered.items.map((i) => i.length)).toEqual([0, 1]); // empty, "c"
+    expect(ordered.items.map((i) => i.children.length)).toEqual([0, 1]); // empty, "c"
   });
 
   it("validates strict table width and tabs structure", () => {
