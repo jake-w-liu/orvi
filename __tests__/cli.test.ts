@@ -167,7 +167,7 @@ describe("Orvi CLI", () => {
 
     expect(result.status).toBe(0);
     const builtLine = result.stdout.toString().trim();
-    expect(builtLine).toMatch(/^Built .*orvi-view-viewable-\d+\.html$/);
+    expect(builtLine).toMatch(/^Built .*orvi-view-.*[/\\]viewable\.html$/);
     const outputPath = builtLine.replace(/^Built /, "");
     const html = readFileSync(outputPath, "utf8");
     expect(html).toContain("<h1>Viewable</h1>");

@@ -89,4 +89,26 @@ describe("performance (regression gate)", () => {
     expect(formatted.length).toBeGreaterThan(0);
     expect(elapsed).toBeLessThan(BUDGET_MS);
   });
+
+  it("stays linear on adversarial inline input (no quadratic blow-up)", () => {
+    // These shapes drove the old per-character re-scans super-linear. The
+    // single-pass scanner with bounded scope-close scanning keeps them fast.
+    const attacks = [
+      "[red]".repeat(4000), // many scope openers, no close
+      "word_".repeat(40000), // many emphasis-`_` candidates
+      "**".repeat(40000), // many strong delimiters
+      "[".repeat(80000), // many unmatched brackets, no `]`
+      "[red]".repeat(4000) + " []" // openers plus a single distant close
+    ];
+
+    for (const attack of attacks) {
+      const start = performance.now();
+      const ast = parseOrvi(attack);
+      renderOrvi(attack);
+      formatOrvi(attack);
+      const elapsed = performance.now() - start;
+      expect(Array.isArray(ast.children)).toBe(true);
+      expect(elapsed).toBeLessThan(BUDGET_MS);
+    }
+  });
 });

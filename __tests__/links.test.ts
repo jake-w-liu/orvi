@@ -71,20 +71,26 @@ describe("inline links — [text](href)", () => {
 
   it("does NOT treat `[modifiers](...)` as a link — a valid modifier list stays a scope opener", () => {
     // `[red]` is a scope opener; followed by `(x)` text and no `[]`, that's an
-    // unclosed scope (the pre-1.1 behavior), not a link.
+    // unclosed scope (the pre-1.1 behavior), not a link. The bare URL after it
+    // autolinks (added in 1.3 / orvi 0.2), but `[red]` is never a link label.
     const ast = parseOrvi("[red](https://x) text");
     expect(ast.diagnostics.map((d) => d.code)).toContain("ORVI_UNCLOSED_SCOPE");
-    expect(renderOrvi("[red](https://x) text").html).toContain("[red](https://x) text");
+    const html = renderOrvi("[red](https://x) text").html;
+    expect(html).toContain("[red](");
+    expect(html).not.toMatch(/>red<\/a>/);
+    expect(html).toContain('<a class="orvi-link" href="https://x">https://x</a>');
   });
 
   it("requires a non-empty label, a non-empty href, and a closing paren", () => {
     expect(renderOrvi("[label]() not a link").html).toContain("[label]() not a link");
     expect(renderOrvi("[label](no close").html).toContain("[label](no close");
-    // An empty (whitespace-only) label would format back to `[]` (the scope-close
-    // sentinel) and not round-trip, so it is not a link.
-    expect(renderOrvi("[ ](https://x) tail").html).toContain("[ ](https://x) tail");
+    // A whitespace-only label is not a link; the bare URL still autolinks, and
+    // the literal `[` re-escapes to `\[` through the formatter so it round-trips.
+    const spaced = renderOrvi("[ ](https://x) tail").html;
+    expect(spaced).toContain("[ ](");
+    expect(spaced).toContain('<a class="orvi-link" href="https://x">https://x</a>');
     expect(parseOrvi("[   ](u)").children[0]?.type).toBe("paragraph");
-    expect(formatOrvi("[ ](https://x)\n").formatted).toBe("[ ](https://x)\n");
+    expect(formatOrvi("[ ](https://x)\n").formatted).toBe("\\[ ](https://x)\n");
   });
 
   it("keeps text after the link when the href contains parentheses (stops at the first `)`)", () => {
