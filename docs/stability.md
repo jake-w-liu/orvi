@@ -1,6 +1,15 @@
 # Stability and compatibility
 
-`orvi-lang` is `1.0`. This document is the contract.
+`orvi-lang` is `2.x`. This document is the contract.
+
+## 2.0.0 — list AST change
+
+`2.0.0` is the first major break since `1.0`. The only incompatible change is the
+type of `ListNode.items`, which went from `InlineNode[][]` to `ListItemNode[]` so
+that a list item can hold full block content (nested lists, code, quotes) and a
+task flag. The runtime function exports are unchanged. To migrate, read
+`item.children` instead of treating an item as inline; a tight single-paragraph
+item's inline content is `item.children[0].children`. See `CHANGELOG.md`.
 
 ## Semantic Versioning
 

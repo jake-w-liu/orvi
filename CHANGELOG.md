@@ -5,6 +5,46 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 2.0.0
+
+Major release implementing **Orvi language spec `0.4`** — richer lists. The only
+breaking change is the AST shape of `ListNode`; the rendered HTML of existing
+flat, single-paragraph lists is unchanged.
+
+**Breaking (AST):** `ListNode.items` changed from `InlineNode[][]` to
+`ListItemNode[]`. Each item is now a node with block `children` (so an item can
+hold paragraphs, sub-lists, code, components, and quotes) and an optional `task`
+flag. New exported types `ListItemNode` and a `ListNode` that also carries
+optional `start` (first ordered number) and `loose` (loose vs tight).
+
+*Migration:* read `item.children` instead of treating an item as inline; a tight
+single-paragraph item's inline content is `item.children[0].children`. The
+runtime function exports (`parseOrvi`, `renderOrvi`, `formatOrvi`, `walk`, …) are
+unchanged — only the `ListNode` type changed.
+
+**New language features (spec 0.4):**
+
+- **Nested lists / block content in items** — indentation-based nesting; an
+  item's content column is the marker width plus one space (plus the task box).
+  Leading tabs expand to 4-column stops; no lazy continuation (an under-indented
+  line ends the item); nesting is depth-capped.
+- **Loose vs tight** — a blank line between items (or an item's blocks) makes the
+  list loose (`<p>`-wrapped items); otherwise tight (inline content directly in
+  `<li>`, byte-identical to before). Stored as `ListNode.loose`.
+- **Ordered `start`** — an ordered list keeps its first number (`<ol start>`),
+  stored as `ListNode.start`; the formatter renumbers sequentially from it.
+- **Task lists** — `- [ ]` / `- [x]` render a disabled, accessible checkbox;
+  allowed on ordered lists too. Stored as `ListItemNode.task`. New
+  `.orvi-task-list` / `.orvi-task` / `.orvi-task-box` styles.
+
+The formatter regenerates indentation canonically (so `orvi format` is a fixed
+point), preserves loose/tight/start/task, and reports
+`ORVI_FORMAT_LIST_AMBIGUOUS_NESTING` when irregular source indentation would
+merge adjacent same-type sub-lists. Round-trip is verified by the property
+fuzzer (now with list/blockquote/escape tokens) across tens of thousands of
+generated documents; the round-trip guarantees are scoped to documents that
+parse without error.
+
 ## 1.4.0
 
 Additive minor implementing **Orvi language spec `0.3`** (a backwards-compatible

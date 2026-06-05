@@ -154,6 +154,19 @@ exports.defaultCss = `:root {
 .orvi-table .orvi-align-center { text-align: center; }
 .orvi-table .orvi-align-right { text-align: right; }
 
+.orvi-list .orvi-list {
+  margin: 0.25rem 0;
+}
+
+.orvi-task-list {
+  list-style: none;
+  padding-inline-start: 1.25rem;
+}
+
+.orvi-task-box {
+  margin-inline-end: 0.4rem;
+}
+
 .orvi-grid {
   display: grid;
   gap: 1rem;

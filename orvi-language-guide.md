@@ -314,6 +314,26 @@ Same as Markdown with optional filename annotation:
     ```
 ````
 
+### 4.5.1 Lists
+
+> Nesting, block content, loose/tight, and task lists were added in `orvi-lang`
+> 2.0 (spec `0.4`).
+
+Bullet (`-`/`*`) and ordered (`1.`) lists nest by indentation, and an item can
+hold block content. Add `[ ]`/`[x]` for task checkboxes:
+
+```orvi
+- Top level
+  - Nested by indentation
+    1. Ordered inside
+    2. Two
+- [ ] A task to do
+- [x] A finished task
+```
+
+A blank line between items makes a list _loose_ (each item is wrapped in a
+paragraph); without blank lines it stays tight.
+
 ### 4.6 Tables
 
 GFM-style tables. A divider cell may carry a leading and/or trailing colon to

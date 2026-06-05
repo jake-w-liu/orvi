@@ -15,10 +15,10 @@ as text, then renders into visual structure. It is short for the CLI command
 rejected by npm's similarity guard). This is a product story, not a trademark or
 domain-ownership claim.
 
-This repo implements the Orvi `v0.3` language (`orvi-spec-v0.3.md`, a
-backwards-compatible superset of [`orvi-spec-v0.2.md`](orvi-spec-v0.2.md) and
-[`orvi-spec-v0.1.md`](orvi-spec-v0.1.md); `orvi-language-guide.md`). The
-`orvi-lang` package is `1.x` and stable under Semantic Versioning — see
+This repo implements the Orvi `v0.4` language (`orvi-spec-v0.4.md`, a
+backwards-compatible superset of the earlier specs;
+`orvi-language-guide.md`). The `orvi-lang` package follows
+[Semantic Versioning](https://semver.org/) — see
 [`docs/stability.md`](docs/stability.md).
 
 ## Try Orvi

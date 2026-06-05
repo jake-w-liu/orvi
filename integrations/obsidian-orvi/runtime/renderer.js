@@ -96,7 +96,7 @@ function renderBlockDefault(node, ctx) {
         case "table":
             return renderTable(node.headers, node.rows, node.aligns, loc);
         case "list":
-            return renderList(node.ordered, node.items, loc);
+            return renderList(node, ctx, loc);
         case "blockquote":
             return `<blockquote class="orvi-quote"${loc}>${renderChildren(node.children, ctx)}</blockquote>`;
         case "component":
@@ -128,9 +128,26 @@ function renderTable(headers, rows, aligns, loc = "") {
         .join("");
     return `<table class="orvi-table"${loc}><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
-function renderList(ordered, items, loc = "") {
-    const tag = ordered ? "ol" : "ul";
-    return `<${tag} class="orvi-list"${loc}>${(items ?? []).map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
+function renderList(node, ctx, loc = "") {
+    const tag = node.ordered ? "ol" : "ul";
+    const items = node.items ?? [];
+    const hasTask = items.some((item) => item.task !== undefined);
+    const className = `orvi-list${hasTask ? " orvi-task-list" : ""}`;
+    const start = node.ordered && node.start && node.start > 1 ? ` start="${node.start}"` : "";
+    const body = items.map((item) => renderListItem(item, ctx, node.loose === true)).join("");
+    return `<${tag} class="${className}"${start}${loc}>${body}</${tag}>`;
+}
+function renderListItem(item, ctx, loose) {
+    const liClass = item.task !== undefined ? ` class="orvi-task"` : "";
+    const checkbox = item.task !== undefined
+        ? `<input class="orvi-task-box" type="checkbox" disabled${item.task ? " checked" : ""} aria-label="${item.task ? "Completed" : "To do"}"> `
+        : "";
+    // In a tight list a single-paragraph item renders its inline content directly
+    // (no <p>), matching plain Markdown; a loose list keeps the <p> wrappers.
+    const inner = (item.children ?? [])
+        .map((child) => (!loose && child.type === "paragraph" ? renderInline(child.children) : renderBlock(child, ctx)))
+        .join("\n");
+    return `<li${liClass}>${checkbox}${inner}</li>`;
 }
 function renderComponent(node, ctx) {
     const options = node.options ?? {};

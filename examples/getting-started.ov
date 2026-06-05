@@ -34,10 +34,10 @@ Modifiers cover colors, sizes from xs to 2xl, weights, and a bg= background.
   ---
   ## Semantic lines
 
-  - btn: Label -> url
-  - img: ./picture.png | alt text
-  - badge: Text | type=info
-  - hr: and br:
+  - `btn: Label -> url`
+  - `img: ./picture.png | alt text`
+  - `badge: Text | type=info`
+  - `hr:` and `br:`
 [/grid]
 
 [callout type=info]

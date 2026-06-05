@@ -9,11 +9,12 @@ const DEFAULT_MAX_NESTING_DEPTH = 8;
 // document never nests inline marks anywhere near this deep) and keeps the
 // renderer/formatter from recursing without limit.
 const MAX_INLINE_DEPTH = 24;
-const DEFAULT_SUPPORTED_VERSION = "0.3";
+const DEFAULT_SUPPORTED_VERSION = "0.4";
 // Spec versions this parser accepts. Each is a backward-compatible superset of
-// the previous (0.2 adds inline constructs, 0.3 adds blockquotes), so a document
-// marked with an older version keeps validating.
-const SUPPORTED_VERSIONS = new Set(["0.1", "0.2", "0.3"]);
+// the previous (0.2 adds inline constructs, 0.3 adds blockquotes, 0.4 adds
+// nested/loose lists and task lists), so a document marked with an older version
+// keeps validating.
+const SUPPORTED_VERSIONS = new Set(["0.1", "0.2", "0.3", "0.4"]);
 const METADATA_KEYS = new Set(["orvi", "title", "lang", "dir"]);
 // Placeholder location for inline-modifier probes that never surface a
 // diagnostic (the scope-close scan only needs the boolean validity result).
@@ -29,7 +30,10 @@ class OrviParser {
     options;
     static fromSource(source, options = {}) {
         const lines = source.replace(/\r\n?/g, "\n").split("\n");
-        return new OrviParser(lines.map((text, index) => ({ text, line: index + 1 })), [], normalizeOptions(options));
+        return new OrviParser(
+        // Expand leading tabs to 4-column tab stops so indentation-based nesting is
+        // consistent; content (and the formatter's output) only ever uses spaces.
+        lines.map((text, index) => ({ text: expandLeadingTabs(text), line: index + 1 })), [], normalizeOptions(options));
     }
     constructor(lines, diagnostics, options) {
         this.lines = lines;
@@ -175,7 +179,7 @@ class OrviParser {
                 continue;
             }
             if (isListLine(trimmed)) {
-                children.push(this.parseList());
+                children.push(this.parseList(depth));
                 continue;
             }
             children.push(this.parseParagraph());
@@ -340,7 +344,11 @@ class OrviParser {
         };
     }
     parseNestedLines(lines, depth) {
-        const parser = new OrviParser(lines, this.diagnostics, this.options);
+        // Re-expand leading tabs: a line can pick up a leading tab here that was not
+        // at the start of the original source line (e.g. a tab after a `>` prefix),
+        // and indentation-based nesting must see spaces.
+        const expanded = lines.map((line) => ({ text: expandLeadingTabs(line.text), line: line.line }));
+        const parser = new OrviParser(expanded, this.diagnostics, this.options);
         return parser.parseBlocks(undefined, depth).children;
     }
     parseCodeBlock() {
@@ -409,28 +417,121 @@ class OrviParser {
             aligns
         };
     }
-    parseList() {
+    // Indentation-aware list parser. Items at one marker indent are siblings;
+    // lines indented to an item's content column are that item's block content
+    // (parsed recursively, so sub-lists/quotes/code/components nest). A blank line
+    // that the list spans makes it loose. `*` bullets normalize to `-`; ordered
+    // lists keep their first number as `start`. Task boxes (`[ ]`/`[x]`) are read
+    // here, before the inline scanner ever sees the `[`.
+    parseList(depth) {
         const start = this.current();
-        const first = start.text.trim();
-        const ordered = /^\d+\./.test(first);
+        // Derive the list indent from the marker match (not a separate space count)
+        // so the first item always matches listIndent and the loop makes progress —
+        // otherwise a mismatch would return an empty list without advancing.
+        const firstMarker = matchListMarker(start.text);
+        const listIndent = firstMarker ? firstMarker.indent : indentWidth(start.text);
+        const ordered = isOrderedListLine(start.text);
         const items = [];
+        let startNumber;
+        let loose = false;
         while (!this.isEnd()) {
-            const line = this.current();
-            const trimmed = line.text.trim();
-            const match = ordered ? /^\d+\.(\s+(.+))?$/.exec(trimmed) : /^[-*](\s+(.+))?$/.exec(trimmed);
-            if (!match) {
+            const marker = matchListMarker(this.current().text);
+            if (!marker || marker.indent !== listIndent || marker.ordered !== ordered)
+                break;
+            const itemLine = this.current();
+            if (ordered && startNumber === undefined)
+                startNumber = marker.number;
+            this.index += 1;
+            const body = [];
+            if (marker.content !== "")
+                body.push({ text: marker.content, line: itemLine.line });
+            let itemLoose = false;
+            // Track fenced-code state so a blank line inside a code block is treated as
+            // code content, not a list-looseness signal.
+            let inFence = isFenceLine(marker.content);
+            while (!this.isEnd()) {
+                const line = this.current();
+                const blank = line.text.trim() === "";
+                if (inFence) {
+                    if (blank) {
+                        body.push({ text: "", line: line.line });
+                        this.index += 1;
+                        continue;
+                    }
+                    if (indentWidth(line.text) >= marker.contentCol) {
+                        const dedented = dedentBy(line.text, marker.contentCol);
+                        body.push({ text: dedented, line: line.line });
+                        if (isFenceLine(dedented))
+                            inFence = false;
+                        this.index += 1;
+                        continue;
+                    }
+                    break; // an under-indented line leaves the fence unclosed; end the item
+                }
+                if (blank) {
+                    const next = this.peekNonBlank();
+                    // A blank only continues an item that already has content; a blank
+                    // right after an empty marker ends the item (the indented content
+                    // below becomes a separate block), which keeps the list round-trippable.
+                    if (body.length > 0 && next && indentWidth(next.text) >= marker.contentCol) {
+                        // Blank line interior to the item (it has more block content).
+                        for (let i = this.index; i < next.index; i += 1)
+                            body.push({ text: "", line: this.lines[i].line });
+                        this.index = next.index;
+                        itemLoose = true;
+                        continue;
+                    }
+                    const sibling = next && matchListMarker(next.text);
+                    if (sibling && sibling.indent === listIndent && sibling.ordered === ordered) {
+                        // Blank line(s) between two items ⇒ loose list; consume and continue.
+                        this.index = next.index;
+                        loose = true;
+                    }
+                    break;
+                }
+                if (indentWidth(line.text) >= marker.contentCol) {
+                    const dedented = dedentBy(line.text, marker.contentCol);
+                    body.push({ text: dedented, line: line.line });
+                    if (isFenceLine(dedented))
+                        inFence = true;
+                    this.index += 1;
+                    continue;
+                }
                 break;
             }
-            const content = match[2] ?? "";
-            items.push(this.parseInline(content, line.line, line.text.indexOf(content) + 1));
-            this.index += 1;
+            if (itemLoose)
+                loose = true;
+            let children;
+            if (depth >= this.options.maxNestingDepth) {
+                this.error("ORVI_MAX_NESTING_DEPTH", `List nesting exceeds max depth ${this.options.maxNestingDepth}.`, itemLine);
+                const text = body.map((line) => line.text.trim()).filter(Boolean).join("\n");
+                children = text ? [{ type: "paragraph", loc: loc(itemLine), children: this.parseInline(text, itemLine.line, 1, false) }] : [];
+            }
+            else {
+                children = this.parseNestedLines(body, depth + 1);
+            }
+            items.push({
+                type: "listItem",
+                loc: loc(itemLine),
+                children,
+                ...(marker.task !== undefined ? { task: marker.task } : {})
+            });
         }
         return {
             type: "list",
             loc: loc(start),
             ordered,
-            items
+            items,
+            ...(startNumber !== undefined && startNumber !== 1 ? { start: startNumber } : {}),
+            ...(loose ? { loose: true } : {})
         };
+    }
+    // Index of the next non-blank line (with its absolute index), or undefined.
+    peekNonBlank() {
+        let i = this.index;
+        while (i < this.lines.length && this.lines[i].text.trim() === "")
+            i += 1;
+        return i < this.lines.length ? { text: this.lines[i].text, index: i } : undefined;
     }
     parseParagraph() {
         const start = this.current();
@@ -1134,6 +1235,56 @@ function looksLikeTable(headerLine, dividerLine) {
 function isListLine(trimmed) {
     // A bullet/number marker, either alone (an empty item) or followed by content.
     return /^[-*](\s+(.+))?$/.test(trimmed) || /^\d+\.(\s+(.+))?$/.test(trimmed);
+}
+function isOrderedListLine(text) {
+    return /^\s*\d+\./.test(text);
+}
+function isFenceLine(text) {
+    return text.trim().startsWith("```");
+}
+// Expand leading tabs to 4-column tab stops; only the leading whitespace run is
+// touched, so content (including inline code) is unchanged.
+function expandLeadingTabs(text) {
+    let index = 0;
+    let column = 0;
+    while (index < text.length && (text[index] === " " || text[index] === "\t")) {
+        column += text[index] === "\t" ? 4 - (column % 4) : 1;
+        index += 1;
+    }
+    return index === 0 ? text : " ".repeat(column) + text.slice(index);
+}
+function indentWidth(text) {
+    let index = 0;
+    while (text[index] === " ")
+        index += 1;
+    return index;
+}
+function dedentBy(text, count) {
+    let index = 0;
+    while (index < count && text[index] === " ")
+        index += 1;
+    return text.slice(index);
+}
+// Parse a list marker line: `-`/`*`/`N.`, an optional `[ ]`/`[x]` task box, and
+// the first-line content. `contentCol` is the column where the item's content
+// (and any continuation/child line) begins.
+function matchListMarker(text) {
+    const match = /^(\s*)([-*]|\d+\.)(?:[ \t]+(.*))?$/.exec(text);
+    if (!match)
+        return undefined;
+    const indent = match[1].length;
+    const markerText = match[2];
+    const ordered = /\d/.test(markerText);
+    let content = match[3] ?? "";
+    let contentCol = indent + markerText.length + 1;
+    let task;
+    const taskMatch = /^\[([ xX])\](?:[ \t]+(.*)|$)/.exec(content);
+    if (taskMatch) {
+        task = taskMatch[1] !== " ";
+        content = taskMatch[2] ?? "";
+        contentCol += 4; // the canonical `[x] ` box width
+    }
+    return { indent, ordered, number: ordered ? Number.parseInt(markerText, 10) : undefined, contentCol, content, task };
 }
 // An emphasis run opens only when it is not intra-word (no preceding word
 // character) and is left-flanking (immediately followed by a non-space), so

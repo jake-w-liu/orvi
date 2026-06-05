@@ -1,6 +1,6 @@
 {
   "name": "orvi-lang",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
   "sideEffects": false,
@@ -72,6 +72,7 @@
     "orvi-spec-v0.1.md",
     "orvi-spec-v0.2.md",
     "orvi-spec-v0.3.md",
+    "orvi-spec-v0.4.md",
     "orvi.config.example.js",
     "CHANGELOG.md",
     "docs/stability.md"
