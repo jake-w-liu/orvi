@@ -10,6 +10,7 @@ import {
   OrviDiagnostic,
   SemanticNode
 } from "./ast";
+import { SEMANTIC_NAMES } from "./constants";
 import { parseOrvi } from "./parser";
 import { walk } from "./walk";
 
@@ -160,7 +161,14 @@ function formatBlock(block: BlockNode, indent: string): string {
       return content ? `${hashes} ${content}` : hashes;
     }
     case "paragraph":
-      return formatInline(block.children).trim();
+      // Each line of a paragraph (it may span lines via a hard break) must not
+      // begin with a block marker, or it would re-parse as a heading/list/
+      // comment/table/etc. Inline markers are already escaped by formatInline.
+      return formatInline(block.children)
+        .trim()
+        .split("\n")
+        .map(escapeLeadingBlockMarker)
+        .join("\n");
     case "thematicBreak":
       return "---";
     case "code":
@@ -205,8 +213,9 @@ function formatCode(language: string | undefined, filename: string | undefined, 
 }
 
 function formatTable(headers: InlineNode[][], rows: InlineNode[][][], aligns: ColumnAlignment[] | undefined): string {
-  const stringHeaders = headers.map(formatInline);
-  const stringRows = rows.map((row) => row.map(formatInline));
+  const cell = (nodes: InlineNode[]): string => escapeTableCellPipes(formatInline(nodes));
+  const stringHeaders = headers.map(cell);
+  const stringRows = rows.map((row) => row.map(cell));
   const columnAlign = (index: number): ColumnAlignment => (aligns ?? [])[index] ?? "none";
   const widths = stringHeaders.map((header, index) =>
     Math.max(header.length, ...stringRows.map((row) => row[index]?.length ?? 0), minDividerWidth(columnAlign(index)))
@@ -244,32 +253,66 @@ function formatSemantic(node: SemanticNode): string {
 
 function formatInline(nodes: InlineNode[]): string {
   return nodes
-    .map((node) => {
-      switch (node.type) {
-        case "text":
-          return escapeInlineText(node.value);
-        case "strong":
-          return `**${formatInline(node.children)}**`;
-        case "emphasis":
-          return `${node.marker ?? "_"}${formatInline(node.children)}${node.marker ?? "_"}`;
-        case "strike":
-          return `~~${formatInline(node.children)}~~`;
-        case "inlineCode":
-          return `\`${node.value}\``;
-        case "hardBreak":
-          // A trailing backslash before the newline re-parses as a hard break.
-          return "\\\n";
-        case "scope":
-          return `[${node.modifiers.map(formatModifier).join(" ")}]${formatInline(node.children)}[]`;
-        case "link":
-          // An autolinked bare URL re-emits as the bare URL so it round-trips
-          // (wrapping it in `[url](url)` would also work but is noisier).
-          return node.auto ? node.href : `[${formatInline(node.children)}](${node.href})`;
-        default:
-          return "";
+    .map((node, index) => {
+      const text = formatInlineNode(node);
+      // A bare autolink is greedy on its right edge: a following text node whose
+      // first character is URL-valid punctuation would extend the URL on
+      // re-parse. Escaping that leading punctuation inserts a `\`, which the
+      // autolink scanner stops at — preserving the boundary (round-trip safety).
+      const prev = nodes[index - 1];
+      if (
+        prev?.type === "link" &&
+        prev.auto === true &&
+        node.type === "text" &&
+        text.length > 0 &&
+        extendsAutolink(text[0]!)
+      ) {
+        return `\\${text}`;
       }
+      return text;
     })
     .join("");
+}
+
+// True for a character that a preceding bare URL would absorb: a URL-class
+// character (so not whitespace / `<>"\`\\|`, which stop the scan) that the
+// trailing-punctuation trim does NOT remove. Only such a leading character
+// needs escaping to keep the autolink boundary; letters/digits would have
+// extended the URL in the source too, so they are not a round-trip hazard.
+function extendsAutolink(ch: string): boolean {
+  if (/[\s<>"`\\|]/.test(ch)) return false;
+  if (/[.,;:!?'")\]]/.test(ch)) return false;
+  return isAsciiPunctuation(ch);
+}
+
+function formatInlineNode(node: InlineNode): string {
+  switch (node.type) {
+    case "text":
+      return escapeInlineText(node.value);
+    case "strong":
+      return `**${formatInline(node.children)}**`;
+    case "emphasis":
+      return `${node.marker ?? "_"}${formatInline(node.children)}${node.marker ?? "_"}`;
+    case "strike":
+      return `~~${formatInline(node.children)}~~`;
+    case "inlineCode":
+      return `\`${node.value}\``;
+    case "hardBreak":
+      // A trailing backslash before the newline re-parses as a hard break.
+      return "\\\n";
+    case "scope":
+      return `[${node.modifiers.map(formatModifier).join(" ")}]${formatInline(node.children)}[]`;
+    case "link":
+      // An autolinked bare URL re-emits as the bare URL so it round-trips
+      // (wrapping it in `[url](url)` would also work but is noisier).
+      return node.auto ? node.href : `[${formatInline(node.children)}](${node.href})`;
+    default:
+      return "";
+  }
+}
+
+function isAsciiPunctuation(ch: string): boolean {
+  return /^[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]$/.test(ch);
 }
 
 // Re-escape the inline-significant characters in literal text so a formatted
@@ -278,7 +321,45 @@ function formatInline(nodes: InlineNode[]): string {
 // Over-escaping is render-neutral (`\x` renders as `x`) and keeps the formatter
 // idempotent.
 function escapeInlineText(value: string): string {
-  return value.replace(/[\\`*_~[]/g, (ch) => `\\${ch}`);
+  // Escape inline markers FIRST. The scheme-neutralization below must run after,
+  // or the inserted backslash would itself be escaped (doubled) by this pass.
+  const escaped = value.replace(/[\\`*_~[]/g, (ch) => `\\${ch}`);
+  // Neutralize a literal `http(s)://` at an autolink boundary (start or after a
+  // non-alphanumeric) so a round-trip renders it as text, not a link.
+  return escaped.replace(/(^|[^A-Za-z0-9])(https?):\/\//gi, (_m, prefix: string, scheme: string) => `${prefix}${scheme}\\://`);
+}
+
+// In a table cell, a `|` outside an inline-code span is a column delimiter, so
+// the formatter escapes it to keep the cell intact on re-parse. A `|` inside a
+// `` `code` `` span is content (splitTableRow already ignores it), so it is left
+// alone — escaping inside code would change the code text.
+function escapeTableCellPipes(cell: string): string {
+  let out = "";
+  let inCode = false;
+  for (const char of cell) {
+    if (char === "`") inCode = !inCode;
+    out += char === "|" && !inCode ? "\\|" : char;
+  }
+  return out;
+}
+
+// Prevent a formatted paragraph line from re-parsing as a non-paragraph block.
+// Inline markers (`*`, `_`, `` ` ``, `[`, …) are already escaped upstream, so
+// this only covers the block-level line starts the parser recognizes.
+function escapeLeadingBlockMarker(line: string): string {
+  if (line === "") return line;
+  if (/^#{1,6}(\s|$)/.test(line)) return `\\${line}`; // heading
+  if (line === "---") return `\\${line}`; // thematic break / grid separator
+  if (/^-(\s|$)/.test(line)) return `\\${line}`; // unordered list (`*` is already inline-escaped)
+  if (line.startsWith("//")) return `\\${line}`; // comment
+  if (line.startsWith("```")) return `\\${line}`; // code fence
+  const ordered = /^(\d+)\./.exec(line);
+  if (ordered) return `${ordered[1]}\\${line.slice(ordered[1]!.length)}`; // `1.` -> `1\.`
+  const semantic = /^([a-z][a-z0-9-]*):/i.exec(line);
+  if (semantic && SEMANTIC_NAMES.has(semantic[1]!.toLowerCase())) {
+    return `${semantic[1]}\\${line.slice(semantic[1]!.length)}`; // `btn:` -> `btn\:`
+  }
+  return line;
 }
 
 function formatModifier(modifier: InlineModifier): string {
