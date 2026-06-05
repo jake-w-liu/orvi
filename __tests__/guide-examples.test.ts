@@ -10,7 +10,7 @@ describe("orvi-language-guide examples", () => {
     );
     const examples = extractOrviFences(guide);
 
-    expect(examples).toHaveLength(13);
+    expect(examples).toHaveLength(14);
 
     for (const example of examples) {
       const ast = parseOrvi(example.source);
