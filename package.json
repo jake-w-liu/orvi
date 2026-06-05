@@ -1,6 +1,6 @@
 {
   "name": "orvi-lang",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
   "sideEffects": false,
@@ -70,6 +70,7 @@
     "src/orvi-base.css",
     "schemas",
     "orvi-spec-v0.1.md",
+    "orvi-spec-v0.2.md",
     "orvi.config.example.js",
     "CHANGELOG.md",
     "docs/stability.md"
@@ -85,6 +86,7 @@
     "lint:fix": "eslint . --fix",
     "css:sync": "node scripts/sync-css.mjs",
     "css:sync:check": "node scripts/sync-css.mjs --check",
+    "runtime:sync:check": "node scripts/check-runtime-sync.mjs",
     "format:check": "prettier --plugin ./dist/prettier-plugin.js --parser orvi \"examples/*.ov\" --check",
     "finetune:corpus": "node scripts/build-fine-tuning-corpus.mjs",
     "finetune:corpus:check": "node scripts/build-fine-tuning-corpus.mjs --check",
@@ -93,7 +95,7 @@
     "playground:test": "node --test playground/playground.test.mjs",
     "obsidian:build": "npm run build && node integrations/obsidian-orvi/build.mjs",
     "site:build": "npm run build && node dist/cli.js build examples/welcome.ov -o examples/welcome.html && node scripts/build-site.mjs",
-    "verify": "npm run check && npm run lint && npm run css:sync:check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run format:check",
+    "verify": "npm run check && npm run lint && npm run css:sync:check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run runtime:sync:check && npm run format:check",
     "vscode:package": "npm --prefix vscode/orvi run package --"
   },
   "devDependencies": {

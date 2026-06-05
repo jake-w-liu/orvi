@@ -128,8 +128,20 @@
     "inline-markup": {
       "patterns": [
         {
+          "name": "constant.character.escape.ov",
+          "match": "\\\\[-!-/:-@\\[-`{-~]"
+        },
+        {
+          "name": "markup.inline.raw.ov",
+          "match": "`[^`]+`"
+        },
+        {
           "name": "markup.bold.ov",
           "match": "\\*\\*[^*]+\\*\\*"
+        },
+        {
+          "name": "markup.italic.ov",
+          "match": "\\*[^*\\s][^*]*\\*"
         },
         {
           "name": "markup.italic.ov",
@@ -138,6 +150,10 @@
         {
           "name": "markup.strikethrough.ov",
           "match": "~~[^~]+~~"
+        },
+        {
+          "name": "markup.underline.link.ov",
+          "match": "https?://[^\\s<>\"`]+"
         }
       ]
     }

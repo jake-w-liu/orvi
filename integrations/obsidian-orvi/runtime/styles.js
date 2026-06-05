@@ -111,6 +111,14 @@ exports.defaultCss = `:root {
   background: #161b22;
 }
 
+.orvi-code-inline {
+  background: var(--orvi-soft);
+  border-radius: calc(var(--orvi-radius) * 0.5);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+  padding: 0.125em 0.375em;
+}
+
 .orvi-table {
   border-collapse: collapse;
   width: 100%;
@@ -126,6 +134,10 @@ exports.defaultCss = `:root {
 .orvi-table th {
   background: var(--orvi-soft);
 }
+
+.orvi-table .orvi-align-left { text-align: left; }
+.orvi-table .orvi-align-center { text-align: center; }
+.orvi-table .orvi-align-right { text-align: right; }
 
 .orvi-grid {
   display: grid;
@@ -170,6 +182,12 @@ exports.defaultCss = `:root {
 .orvi-callout-error {
   background: var(--orvi-callout-error-bg);
   border-inline-start-color: var(--orvi-red);
+}
+
+.orvi-link {
+  color: var(--orvi-blue);
+  text-decoration: underline;
+  text-underline-offset: 0.125em;
 }
 
 .orvi-btn {
