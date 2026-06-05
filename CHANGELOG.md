@@ -70,6 +70,20 @@ Additional fixes from a follow-up deep bug hunt (round-trip / parse correctness)
   is matched independent of preceding unclosed openers, and it honors backslash
   escapes and inline-code spans.
 - A backslash-escaped emphasis marker (`*a \* b*`) no longer closes the emphasis.
+- A link label may contain an escaped `\]` (`[a\]b](url)`); the bracket search
+  finds the first unescaped `]`, and the formatter escapes `]` inside a link
+  label (only there — global `]` escaping is not idempotent).
+- A bare autolink excludes `[ ]` (as well as `\ |`) so it cannot swallow markup
+  brackets, which also keeps the bracket-based scope matcher unconfused.
+- Block-marker escaping is applied per inline node (paragraph start / after a
+  hard break), so a newline inside a multi-line inline-code span is never
+  mistaken for a new block line and its content stays verbatim.
+- Table-cell `|`-escaping and splitting both skip backslash-escaped backticks,
+  so an escaped backtick plus a pipe in a cell round-trips.
+
+These round-trip fixes were driven by adding backslash, escape-sequence, and
+URL tokens to the property fuzzer, which now runs clean across tens of
+thousands of generated documents.
 
 No public JS export was added or removed (the new AST nodes are matched inside
 existing switch statements), so this remains a minor.

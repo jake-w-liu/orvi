@@ -170,3 +170,37 @@ describe("inline scope matching regressions", () => {
     expect(html).toContain('<code class="orvi-code-inline">[blue]</code>');
   });
 });
+
+describe("escaped ] in link labels (F4) and round-trip edge cases", () => {
+  const roundTrips = (source: string): void => {
+    const formatted = formatOrvi(source).formatted;
+    expect(formatOrvi(source).diagnostics.filter((d) => d.code.startsWith("ORVI_FORMAT_"))).toEqual([]);
+    expect(renderOrvi(formatted).html).toBe(renderOrvi(source).html);
+    expect(formatOrvi(formatted).formatted).toBe(formatted);
+  };
+
+  it("parses an escaped ] inside a link label", () => {
+    const html = renderOrvi("[a\\]b](https://e.com)").html;
+    expect(html).toContain('<a class="orvi-link" href="https://e.com">a]b</a>');
+    roundTrips("[a\\]b](https://e.com)\n");
+    roundTrips("see [the \\] guide](./x.ov) ok\n");
+  });
+
+  it("does not escape ] in ordinary text (global ] escaping is not idempotent)", () => {
+    // `[red](http://x)[/grid]` has a literal `]` outside any link label.
+    roundTrips("[red](http://x)[/grid]\n");
+  });
+
+  it("does not corrupt code content when an inline-code span spans a soft break", () => {
+    // The `5.` is inside a multi-line code span, not a list marker on a new line.
+    roundTrips("text```ts | a.ts\n5.\\`\n");
+  });
+
+  it("does not let a bare autolink swallow brackets (round-trips nested scopes)", () => {
+    roundTrips("[red](http://x)[red]1. [][]\n");
+  });
+
+  it("round-trips an escaped backtick and pipe together in a table cell", () => {
+    roundTrips("| h |\n| --- |\n| a \\` b \\| c |\n");
+  });
+});
