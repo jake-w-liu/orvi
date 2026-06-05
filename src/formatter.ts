@@ -260,13 +260,7 @@ function formatInline(nodes: InlineNode[]): string {
       // re-parse. Escaping that leading punctuation inserts a `\`, which the
       // autolink scanner stops at — preserving the boundary (round-trip safety).
       const prev = nodes[index - 1];
-      if (
-        prev?.type === "link" &&
-        prev.auto === true &&
-        node.type === "text" &&
-        text.length > 0 &&
-        extendsAutolink(text[0]!)
-      ) {
+      if (prev?.type === "link" && prev.auto === true && node.type === "text" && extendsAutolink(text)) {
         return `\\${text}`;
       }
       return text;
@@ -274,15 +268,21 @@ function formatInline(nodes: InlineNode[]): string {
     .join("");
 }
 
-// True for a character that a preceding bare URL would absorb: a URL-class
-// character (so not whitespace / `<>"\`\\|`, which stop the scan) that the
-// trailing-punctuation trim does NOT remove. Only such a leading character
-// needs escaping to keep the autolink boundary; letters/digits would have
-// extended the URL in the source too, so they are not a round-trip hazard.
-function extendsAutolink(ch: string): boolean {
-  if (/[\s<>"`\\|]/.test(ch)) return false;
-  if (/[.,;:!?'")\]]/.test(ch)) return false;
-  return isAsciiPunctuation(ch);
+// True when `text`, placed right after a bare autolink, would extend that URL
+// on re-parse. The URL absorbs the leading run of URL-class characters (it stops
+// at whitespace / `<>"\`\\|`); the autolink scanner then strips trailing
+// punctuation. So a drift occurs only if that absorbed run contains a character
+// the trailing-trim does NOT remove — then the leading character must be escaped
+// to break the URL. The leading character must be punctuation for the escape to
+// take effect; a letter/digit there can only arise behind a `\` (already
+// escaped), so it is never a hazard.
+function extendsAutolink(text: string): boolean {
+  if (text.length === 0 || !isAsciiPunctuation(text[0]!) || text[0] === "\\") return false;
+  for (const ch of text) {
+    if (/[\s<>"`\\|]/.test(ch)) return false; // URL stops here — nothing past it is absorbed
+    if (!/[.,;:!?'")\]]/.test(ch)) return true; // a non-trimmed URL char survives — drift
+  }
+  return false; // the whole absorbed run is trimmed back off
 }
 
 function formatInlineNode(node: InlineNode): string {

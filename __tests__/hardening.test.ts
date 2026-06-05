@@ -123,6 +123,11 @@ describe("round-trip after the deep bug hunt", () => {
   it("keeps a bare autolink boundary against following punctuation", () => {
     roundTrips("[red](http://x)\\|\n");
     roundTrips("link https://e.com\\#frag tail\n");
+    // A trim-set char (`:`) followed by a non-trim char (`#`) is absorbed whole
+    // unless the boundary is escaped (fast-check counterexample).
+    roundTrips("https://e.com/p_(x)hr:\\#\n");
+    // A fully-trimmed trailing run (`)`) needs no escape and stays clean.
+    expect(formatOrvi("[ ](https://x) tail\n").formatted).toContain("](https://x) tail");
   });
 
   it("round-trips escaped and code-span pipes in table cells (F3)", () => {
