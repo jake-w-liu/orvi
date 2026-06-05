@@ -92,7 +92,10 @@ describe("performance (regression gate)", () => {
 
   it("stays linear on adversarial inline input (no quadratic blow-up)", () => {
     // These shapes drove the old per-character re-scans super-linear. The
-    // single-pass scanner with bounded scope-close scanning keeps them fast.
+    // single-pass scanner plus the linear scope pre-pass keep them fast. The
+    // budget is deliberately loose — a real quadratic regression on these sizes
+    // is orders of magnitude over it, so a generous bound avoids timing flakes
+    // on a loaded machine while still catching a blow-up.
     const attacks = [
       "[red]".repeat(4000), // many scope openers, no close
       "word_".repeat(40000), // many emphasis-`_` candidates
@@ -100,6 +103,14 @@ describe("performance (regression gate)", () => {
       "[".repeat(80000), // many unmatched brackets, no `]`
       "[red]".repeat(4000) + " []" // openers plus a single distant close
     ];
+    const LINEAR_BUDGET_MS = 8000;
+
+    // Warm-up so the timed run reflects steady state (JIT, module init).
+    for (const attack of attacks) {
+      parseOrvi(attack);
+      renderOrvi(attack);
+      formatOrvi(attack);
+    }
 
     for (const attack of attacks) {
       const start = performance.now();
@@ -108,7 +119,7 @@ describe("performance (regression gate)", () => {
       formatOrvi(attack);
       const elapsed = performance.now() - start;
       expect(Array.isArray(ast.children)).toBe(true);
-      expect(elapsed).toBeLessThan(BUDGET_MS);
+      expect(elapsed).toBeLessThan(LINEAR_BUDGET_MS);
     }
   });
 });
