@@ -6,6 +6,7 @@
     { "include": "#comments" },
     { "include": "#fenced-code" },
     { "include": "#headings" },
+    { "include": "#blockquote" },
     { "include": "#semantic" },
     { "include": "#component-tags" },
     { "include": "#inline-scopes" },
@@ -19,6 +20,14 @@
         {
           "name": "comment.line.double-slash.ov",
           "match": "^\\s*//.*$"
+        }
+      ]
+    },
+    "blockquote": {
+      "patterns": [
+        {
+          "name": "markup.quote.ov",
+          "match": "^\\s*>.*$"
         }
       ]
     },

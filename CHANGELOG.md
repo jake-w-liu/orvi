@@ -5,6 +5,22 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 1.4.0
+
+Additive minor implementing **Orvi language spec `0.3`** (a backwards-compatible
+superset of `0.2`). The parser now also accepts `orvi: 0.3`; a document that uses
+no `>` lines renders byte-for-byte identically.
+
+- **Blockquotes** — a run of `>`-prefixed lines is a blockquote. One `>` (and an
+  optional following space) is stripped per line and the residual is parsed
+  recursively, so a quote may contain paragraphs, lists, code blocks, components,
+  and nested `> >` quotes. There is no lazy continuation (every line carries its
+  `>`; a line without `>` ends the quote), and nesting is depth-capped. Renders
+  `<blockquote class="orvi-quote">`; the formatter canonicalizes each level to
+  `> ` and escapes a literal leading `>` in paragraph text. New `BlockquoteNode`
+  AST type (additive to the `BlockNode` union — no existing export changed) and
+  `.orvi-quote` style.
+
 ## 1.3.0
 
 Additive minor implementing **Orvi language spec `0.2`** (a backwards-compatible

@@ -9,11 +9,11 @@ const DEFAULT_MAX_NESTING_DEPTH = 8;
 // document never nests inline marks anywhere near this deep) and keeps the
 // renderer/formatter from recursing without limit.
 const MAX_INLINE_DEPTH = 24;
-const DEFAULT_SUPPORTED_VERSION = "0.2";
-// Spec versions this parser accepts. 0.2 is a backward-compatible superset of
-// 0.1 (it only adds inline constructs), so a document marked `orvi: 0.1` keeps
-// validating.
-const SUPPORTED_VERSIONS = new Set(["0.1", "0.2"]);
+const DEFAULT_SUPPORTED_VERSION = "0.3";
+// Spec versions this parser accepts. Each is a backward-compatible superset of
+// the previous (0.2 adds inline constructs, 0.3 adds blockquotes), so a document
+// marked with an older version keeps validating.
+const SUPPORTED_VERSIONS = new Set(["0.1", "0.2", "0.3"]);
 const METADATA_KEYS = new Set(["orvi", "title", "lang", "dir"]);
 // Placeholder location for inline-modifier probes that never surface a
 // diagnostic (the scope-close scan only needs the boolean validity result).
@@ -170,6 +170,10 @@ class OrviParser {
                 this.index += 1;
                 continue;
             }
+            if (trimmed.startsWith(">")) {
+                children.push(this.parseBlockquote(depth));
+                continue;
+            }
             if (isListLine(trimmed)) {
                 children.push(this.parseList());
                 continue;
@@ -177,6 +181,31 @@ class OrviParser {
             children.push(this.parseParagraph());
         }
         return { children, closed: stopTag === undefined };
+    }
+    // A blockquote is a run of contiguous `>`-prefixed lines. One `>` (and an
+    // optional following space) is stripped per line, then the residual is parsed
+    // recursively — so a quote may contain paragraphs, lists, code, callouts, and
+    // nested `> >` quotes. A blank line (no `>`) ends the quote; no lazy
+    // continuation. Depth is capped to bound adversarial `>>>>…`.
+    parseBlockquote(depth) {
+        const start = this.current();
+        const collected = [];
+        while (!this.isEnd()) {
+            const match = /^\s*> ?(.*)$/.exec(this.current().text);
+            if (!match)
+                break;
+            collected.push({ text: match[1], line: this.current().line });
+            this.index += 1;
+        }
+        if (depth >= this.options.maxNestingDepth) {
+            this.error("ORVI_MAX_NESTING_DEPTH", `Blockquote nesting exceeds max depth ${this.options.maxNestingDepth}.`, start);
+            const text = collected.map((line) => line.text.trim()).filter(Boolean).join("\n");
+            const children = text
+                ? [{ type: "paragraph", loc: loc(start), children: this.parseInline(text, start.line, 1, false) }]
+                : [];
+            return { type: "blockquote", loc: loc(start), children };
+        }
+        return { type: "blockquote", loc: loc(start), children: this.parseNestedLines(collected, depth + 1) };
     }
     parseComponent(open, line, parent, depth) {
         const { args, options } = tokenizeOptions(open.rawArgs);
@@ -873,6 +902,8 @@ class OrviParser {
         if (isListLine(trimmed))
             return true;
         if (/^([a-z][a-z0-9-]*):(?:\s*(.*))?$/i.test(trimmed) && constants_1.SEMANTIC_NAMES.has(trimmed.split(":")[0]))
+            return true;
+        if (trimmed.startsWith(">"))
             return true;
         // A table that begins on the next line ends the current block (so a
         // paragraph immediately before a table is not absorbed into it). Skipped

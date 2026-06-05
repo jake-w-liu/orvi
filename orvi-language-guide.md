@@ -327,6 +327,23 @@ contain at least three dashes per cell.
 | Bob   | Design  | Active  |
 ```
 
+### 4.6.1 Blockquotes
+
+> Added in `orvi-lang` 1.4 (spec `0.3`).
+
+Lines beginning with `>` form a blockquote. The content after `>` is parsed
+normally, so a quote can hold paragraphs, lists, code, and nested quotes:
+
+```orvi
+> A quote can span
+> multiple lines.
+>
+> > And nest with `> >`.
+```
+
+Every line must carry its `>` (no lazy continuation); a line without `>` ends
+the quote.
+
 ### 4.7 Comments
 
 ```orvi
