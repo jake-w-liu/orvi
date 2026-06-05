@@ -5,6 +5,60 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 1.3.0
+
+Additive minor implementing **Orvi language spec `0.2`** (a backwards-compatible
+superset of `0.1`). A document marked `orvi: 0.1` keeps validating; the parser
+now also accepts `orvi: 0.2`. The new grammar only adds inline constructs, so a
+document that uses none of the new characters renders byte-for-byte identically.
+
+Markdown-parity additions ("if you can write it in Markdown, Orvi should feel
+identical — never a wall"):
+
+- **Backslash escaping** — `\*`, `` \` ``, `\[`, … render the literal character.
+  A backslash before a non-punctuation character stays literal (CommonMark rule).
+- **Inline code spans** — `` `code` `` renders `<code class="orvi-code-inline">`;
+  the content is verbatim (no inner markup) and HTML-escaped. New `.orvi-code-inline`
+  style. New AST node `inlineCode`.
+- **Single-asterisk emphasis** — `*italic*` is an alias of `_italic_` (both
+  `<em>`). Emphasis now uses Markdown-style flanking, so `2 * 3 * 4` and
+  `a _ b _ c` stay literal. `EmphasisNode` gains an optional `marker` field so
+  the formatter re-emits the original delimiter.
+- **Hard line breaks** — a line ending in a backslash becomes `<br>`. New AST
+  node `hardBreak`.
+- **Bare autolinks** — a bare `http(s)://…` URL becomes a link (trailing sentence
+  punctuation trimmed, balanced parens kept). Only `http`/`https` are autolinked
+  (never bare emails or `javascript:`). `LinkNode` gains an optional `auto` flag
+  so the formatter re-emits the bare URL.
+- **Table column alignment** — `:---`, `:--:`, `---:` divider cells set per-column
+  alignment, rendered with `.orvi-align-left|center|right` classes. `TableNode`
+  gains an optional `aligns` array. (Previously these colon markers parsed but
+  were silently dropped.)
+
+Correctness, security, and robustness fixes from a full audit:
+
+- **Linear inline parsing** — the inline scanner is single-pass; adversarial
+  bracket/asterisk/underscore inputs that were super-linear (e.g.
+  `'[red]'.repeat(4000)`) now parse in linear time.
+- **`walk()` is iterative** — the public traversal helper no longer recurses, so
+  a deep transformer-built AST cannot overflow the stack.
+- **Render-time class validation** — an invalid `callout`/`badge` `type` or
+  `card bg` can no longer inject extra CSS class tokens; it falls back to the
+  default.
+- **Block-boundary fixes** — a paragraph immediately before a table is no longer
+  absorbed into it, and a single-cell `| Note |` over a bare `---` is parsed as a
+  paragraph plus a thematic break (the `---` is not eaten).
+- **Formatter round-trip** — literal inline-significant characters are re-escaped,
+  and a badge whose text would re-parse as options now emits an
+  `ORVI_FORMAT_BADGE_VALUE_DROPPED` warning instead of silently changing content.
+- **`orvi serve` hardening** — live reload survives editor atomic-rename saves
+  (watches the directory), the server reports `EADDRINUSE` cleanly, the file
+  watcher has an error handler, the SSE stream sends a keep-alive heartbeat, and
+  `orvi.config.js` is re-read per request so edits take effect without a restart.
+
+No public JS export was added or removed (the new AST nodes are matched inside
+existing switch statements), so this remains a minor.
+
 ## 1.2.0
 
 Additive minor — existing behavior and the rendered output of existing input

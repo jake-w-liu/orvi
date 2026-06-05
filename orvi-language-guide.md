@@ -134,8 +134,33 @@ Markdown-like for maximum familiarity:
 
 Regular paragraph text.
 
-**bold**, _italic_, ~~strikethrough~~
+**bold**, _italic_, *also italic*, ~~strikethrough~~, and `inline code`
 ```
+
+### 4.1.2 Inline Code, Escaping, and Line Breaks
+
+> Inline code, single-`*` emphasis, backslash escaping, hard breaks, and bare
+> autolinks were added in `orvi-lang` 1.3 (spec `0.2`).
+
+```orvi
+Use `code spans` for literal text; nothing inside them is interpreted.
+
+Escape a literal mark with a backslash: \*not italic\*, \`not code\`, \[not a scope].
+
+End a line with a backslash for a hard line break,\
+like this.
+
+Bare links autolink: visit https://example.com for details.
+```
+
+- `` `code` `` renders verbatim, HTML-escaped, with no inner markup.
+- `\` before any punctuation renders the literal character; before anything else
+  it stays a literal backslash.
+- `*italic*` is the same as `_italic_`. Emphasis uses Markdown flanking, so
+  `2 * 3 * 4` stays literal.
+- A line ending in `\` is a hard break (`<br>`); a plain wrap is a soft space.
+- A bare `http://` or `https://` URL becomes a link (bare emails and other
+  schemes are not autolinked).
 
 ### 4.1.1 Top-Level Metadata
 
@@ -198,6 +223,10 @@ is everything up to the first `)`; a URL containing `)` must be percent-encoded.
 The renderer sanitizes the URL the same way it does `btn:` / `img:` targets
 (non-`http(s)` / `mailto` / `tel` schemes are neutralized) and emits
 `<a class="orvi-link" …>`.
+
+A bare `http://` or `https://` URL is autolinked (added in `orvi-lang` 1.3), so
+you can write `See https://example.com.` without brackets. Only `http(s)` URLs
+autolink — bare email addresses and other schemes do not.
 
 ### 4.3 Block Components
 
@@ -287,11 +316,13 @@ Same as Markdown with optional filename annotation:
 
 ### 4.6 Tables
 
-GFM-style tables:
+GFM-style tables. A divider cell may carry a leading and/or trailing colon to
+align the column (`:---` left, `:--:` center, `---:` right). The divider must
+contain at least three dashes per cell.
 
 ```orvi
 | Name  | Role    | Status  |
-|-------|---------|---------|
+| :---- | :----:  | ------: |
 | Alice | Dev     | Active  |
 | Bob   | Design  | Active  |
 ```

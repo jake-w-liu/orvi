@@ -89,8 +89,8 @@ Inline links: see [the Orvi repository](https://github.com/jake-w-liu/orvi), and
   [/tab]
 
   [tab label=Notes]
-    - Each tab is a [tab label=...] block
-    - [tabs] may only contain [tab] children
+    - Each tab is a `[tab label=...]` block
+    - `[tabs]` may only contain `[tab]` children
     - The first tab starts active
   [/tab]
 [/tabs]
