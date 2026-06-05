@@ -154,10 +154,25 @@ export interface TableNode extends BaseNode {
   aligns?: ColumnAlignment[];
 }
 
+export interface ListItemNode extends BaseNode {
+  type: "listItem";
+  /** Full block content: paragraph(s), sub-lists, code, components, quotes. */
+  children: BlockNode[];
+  /**
+   * Task-checkbox state: absent = not a task item; `false` = `[ ]` (unchecked);
+   * `true` = `[x]`/`[X]` (checked).
+   */
+  task?: boolean;
+}
+
 export interface ListNode extends BaseNode {
   type: "list";
   ordered: boolean;
-  items: InlineNode[][];
+  items: ListItemNode[];
+  /** First ordered marker number; absent ⇒ 1. Drives `<ol start>`. */
+  start?: number;
+  /** A blank line separates items or an item's blocks; absent ⇒ tight. */
+  loose?: boolean;
 }
 
 export interface BlockquoteNode extends BaseNode {

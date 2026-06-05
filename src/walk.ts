@@ -1,7 +1,7 @@
-import type { BlockNode, DocumentNode, InlineNode } from "./ast";
+import type { BlockNode, DocumentNode, InlineNode, ListItemNode } from "./ast";
 
 /** Any node that can appear in an Orvi AST. */
-export type OrviNode = DocumentNode | BlockNode | InlineNode;
+export type OrviNode = DocumentNode | BlockNode | ListItemNode | InlineNode;
 
 /**
  * Depth-first pre-order traversal of an Orvi AST. The visitor is called on
@@ -47,7 +47,9 @@ function childNodes(node: OrviNode): OrviNode[] {
     case "table":
       return [...(node.headers ?? []).flat(), ...(node.rows ?? []).flat(2)];
     case "list":
-      return (node.items ?? []).flat();
+      return node.items ?? [];
+    case "listItem":
+      return node.children ?? [];
     case "text":
     case "inlineCode":
     case "hardBreak":

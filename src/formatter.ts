@@ -7,12 +7,13 @@ import {
   DocumentNode,
   InlineModifier,
   InlineNode,
+  ListNode,
   OrviDiagnostic,
   SemanticNode
 } from "./ast";
 import { SEMANTIC_NAMES } from "./constants";
 import { parseOrvi } from "./parser";
-import { walk } from "./walk";
+import { OrviNode, walk } from "./walk";
 
 export interface FormatOptions {
   indent?: string;
@@ -29,9 +30,17 @@ export function formatOrvi(source: string, options: FormatOptions = {}): FormatR
   const ast = parseOrvi(source);
   const indent = options.indent ?? "  ";
   const metadata = formatMetadata(ast.metadata);
-  const body = [metadata, formatBlocks(ast.children, 0, indent).trimEnd()].filter(Boolean).join("\n\n");
+  // Normalize lists (merge adjacent same-type lists; propagate looseness) so the
+  // formatted output is a fixed point in a single pass. Diagnostics below run on
+  // the original AST so the loss is still reported.
+  const body = [metadata, formatBlocks(normalizeBlocks(ast.children), 0, indent).trimEnd()].filter(Boolean).join("\n\n");
   const formatted = options.finalNewline === false ? body : `${body}\n`;
-  const diagnostics = [...ast.diagnostics, ...formatLossDiagnostics(source), ...badgeLossDiagnostics(ast)];
+  const diagnostics = [
+    ...ast.diagnostics,
+    ...formatLossDiagnostics(source),
+    ...badgeLossDiagnostics(ast),
+    ...listLossDiagnostics(ast)
+  ];
 
   return {
     formatted,
@@ -118,6 +127,46 @@ function badgeLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
   return diagnostics;
 }
 
+// Two adjacent lists of the same orderedness always merge into one on
+// re-parse, so an item that contains them (the result of irregular source
+// indentation) cannot round-trip. Warn rather than silently merge them.
+function listLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
+  const diagnostics: OrviDiagnostic[] = [];
+  walk(ast, (node) => {
+    for (const blocks of blockChildArrays(node)) {
+      for (let i = 1; i < blocks.length; i += 1) {
+        const prev = blocks[i - 1];
+        const current = blocks[i];
+        if (prev?.type === "list" && current?.type === "list" && prev.ordered === current.ordered) {
+          diagnostics.push({
+            severity: "warning",
+            code: "ORVI_FORMAT_LIST_AMBIGUOUS_NESTING",
+            message: "The formatter cannot preserve adjacent same-type sub-lists; they would merge into one.",
+            line: current.loc.line,
+            column: current.loc.column,
+            endLine: current.loc.line,
+            endColumn: current.loc.column + 1
+          });
+        }
+      }
+    }
+  });
+  return diagnostics;
+}
+
+function blockChildArrays(node: OrviNode): BlockNode[][] {
+  switch (node.type) {
+    case "document":
+    case "blockquote":
+    case "listItem":
+      return [node.children ?? []];
+    case "component":
+      return [node.children ?? [], ...(node.columns ?? [])];
+    default:
+      return [];
+  }
+}
+
 function badgeWouldLoseContent(node: SemanticNode): boolean {
   const value = node.value ?? "";
   const options = formatOptions(node.options ?? {});
@@ -142,7 +191,7 @@ function formatMetadata(metadata: DocumentMetadata): string {
 }
 
 function formatBlocks(blocks: BlockNode[], depth: number, indent: string): string {
-  return blocks
+  return mergeAdjacentLists(blocks)
     .map((block) => {
       const text = formatBlock(block, indent);
       // A fenced code block's body is verbatim source — only the two fence
@@ -151,6 +200,54 @@ function formatBlocks(blocks: BlockNode[], depth: number, indent: string): strin
       return block.type === "code" ? indentFenceLines(text, depth, indent) : indentLines(text, depth, indent);
     })
     .join("\n\n");
+}
+
+// Two adjacent lists of the same orderedness always re-parse as one (loose)
+// list, so the formatter merges them up front. This keeps `orvi format` a fixed
+// point; the loss is separately flagged by ORVI_FORMAT_LIST_AMBIGUOUS_NESTING.
+function mergeAdjacentLists(blocks: BlockNode[]): BlockNode[] {
+  const out: BlockNode[] = [];
+  for (const block of blocks) {
+    const prev = out[out.length - 1];
+    if (block.type === "list" && prev?.type === "list" && prev.ordered === block.ordered) {
+      out[out.length - 1] = { ...prev, items: [...prev.items, ...block.items], loose: true };
+    } else {
+      out.push(block);
+    }
+  }
+  return out;
+}
+
+// Normalize a block sequence so the formatted output is a fixed point: merge
+// adjacent same-type lists (they re-parse as one) and propagate looseness — a
+// list whose item contains a loose sub-list is itself loose, because the
+// sub-list's blank line makes the item loose on re-parse.
+function normalizeBlocks(blocks: BlockNode[]): BlockNode[] {
+  return mergeAdjacentLists(blocks).map(normalizeBlock);
+}
+
+function normalizeBlock(block: BlockNode): BlockNode {
+  switch (block.type) {
+    case "list": {
+      let loose = block.loose === true;
+      const items = block.items.map((item) => {
+        const children = normalizeBlocks(item.children);
+        if (children.some((child) => child.type === "list" && child.loose === true)) loose = true;
+        return { ...item, children };
+      });
+      return { ...block, items, ...(loose ? { loose: true } : {}) };
+    }
+    case "blockquote":
+      return { ...block, children: normalizeBlocks(block.children) };
+    case "component":
+      return {
+        ...block,
+        children: normalizeBlocks(block.children),
+        ...(block.columns ? { columns: block.columns.map(normalizeBlocks) } : {})
+      };
+    default:
+      return block;
+  }
 }
 
 function formatBlock(block: BlockNode, indent: string): string {
@@ -169,13 +266,7 @@ function formatBlock(block: BlockNode, indent: string): string {
     case "table":
       return formatTable(block.headers, block.rows, block.aligns);
     case "list":
-      return block.items
-        .map((item, index) => {
-          const marker = block.ordered ? `${index + 1}.` : "-";
-          const content = formatInline(item);
-          return content ? `${marker} ${content}` : marker;
-        })
-        .join("\n");
+      return formatList(block, indent);
     case "blockquote": {
       // Prefix every line of the formatted body with `> ` (a bare `>` for a
       // blank line). Nested quotes compose to the canonical `> > ` per level.
@@ -207,6 +298,33 @@ function formatComponent(node: ComponentNode, indent: string): string {
 
   const body = formatBlocks(node.children, 1, indent);
   return [open, body, `[/${node.name}]`].filter(Boolean).join("\n");
+}
+
+// Format a (possibly nested) list. The body of each item is its block children
+// indented to the marker's content column — regenerated from the marker width,
+// never copied from the source — which is what makes the round-trip idempotent.
+// Items (and an item's blocks) are separated by a blank line iff the list is
+// loose, which reproduces loose/tight exactly. A code block's body is left
+// verbatim (only its fence lines are indented).
+function formatList(node: ListNode, indent: string): string {
+  const separator = node.loose ? "\n\n" : "\n";
+  const items = node.items.map((item, index) => {
+    const marker = node.ordered ? `${(node.start ?? 1) + index}.` : "-";
+    const box = item.task !== undefined ? ` [${item.task ? "x" : " "}]` : "";
+    const prefix = `${marker}${box} `;
+    const pad = " ".repeat(prefix.length);
+    // Every line (including a code block's body) is indented to the content
+    // column: the parser dedents an item's content by exactly this amount, so
+    // re-indenting it is symmetric and idempotent. (Unlike component nesting,
+    // where the code body keeps its source indentation and only fences move.)
+    const body = mergeAdjacentLists(item.children)
+      .map((child) => indentLines(formatBlock(child, indent), 1, pad))
+      .join(separator);
+    if (body === "") return `${marker}${box}`; // empty item: marker only
+    // The first line carries the marker prefix instead of the indent pad.
+    return body.startsWith(pad) ? prefix + body.slice(pad.length) : prefix + body;
+  });
+  return items.join(separator);
 }
 
 function formatCode(language: string | undefined, filename: string | undefined, value: string): string {
