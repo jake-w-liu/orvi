@@ -447,7 +447,10 @@ export class OrviParser {
     while (!this.isEnd()) {
       const line = this.current();
       const trimmed = line.text.trim();
-      if (trimmed === "" || !trimmed.includes("|") || this.isBlockBoundary(line)) {
+      // Don't apply the table-ahead lookahead here: a body row followed by
+      // another `---|---` divider row must stay part of this table, not start
+      // a new one.
+      if (trimmed === "" || !trimmed.includes("|") || this.isBlockBoundary(line, false)) {
         break;
       }
       const rowCells = splitTableRow(line.text);
@@ -635,18 +638,9 @@ export class OrviParser {
       if (end > textStart) appendText(value.slice(textStart, end), textStart);
     };
 
-    // Perf guards: skip all `[` work when no `]` exists; track whether any `[]`
-    // scope-close remains ahead of the cursor (monotonic pointer); cap total
-    // scope-close scanning so deeply-nested unclosed input stays linear.
+    // Skip all `[` work when no `]` exists at all.
     const hasBracketClose = value.includes("]");
-    const scopeClosePositions = allIndexes(value, "[]");
-    let scopeClosePtr = 0;
-    const scopeCloseAhead = (from: number): boolean => {
-      while (scopeClosePtr < scopeClosePositions.length && scopeClosePositions[scopeClosePtr]! < from) {
-        scopeClosePtr += 1;
-      }
-      return scopeClosePtr < scopeClosePositions.length;
-    };
+    const lastScopeClose = hasBracketClose ? value.lastIndexOf("[]") : -1;
     const modMemo = new Map<string, InlineModifier[] | undefined>();
     const parseMods = (raw: string, at: SourceLocation): InlineModifier[] | undefined => {
       if (modMemo.has(raw)) return modMemo.get(raw);
@@ -654,33 +648,43 @@ export class OrviParser {
       modMemo.set(raw, parsed);
       return parsed;
     };
-    const scopeScanBudget = { remaining: value.length * 2 + 1000 };
-    const findScopeClose = (start: number): number => {
-      let scopeDepth = 1;
-      let i = start;
-      while (i < value.length) {
-        if ((scopeScanBudget.remaining -= 1) <= 0) return -1;
-        if (value.startsWith("[]", i)) {
-          scopeDepth -= 1;
-          if (scopeDepth === 0) return i;
-          i += 2;
+    // One linear pre-pass matches each `[mods]` scope opener to its `[]` close,
+    // mirroring the main loop's tokenization (it skips backslash escapes and
+    // inline-code spans, since a `[` inside those is not a scope opener). Using
+    // a stack means a valid scope is matched independently of how many unclosed
+    // openers precede it, and the whole thing is O(n) — no per-opener rescans.
+    const scopeMatch = new Map<number, number>();
+    if (hasBracketClose) {
+      const openers: number[] = [];
+      let scan = 0;
+      while (scan < value.length) {
+        const c = value[scan]!;
+        if (c === "\\") {
+          scan += value[scan + 1] !== undefined && isEscapablePunctuation(value[scan + 1]!) ? 2 : 1;
           continue;
         }
-        if (value[i] === "[") {
-          const bracketClose = value.indexOf("]", i + 1);
-          if (bracketClose > i + 1) {
-            const raw = value.slice(i + 1, bracketClose).trim();
-            if (parseMods(raw, ZERO_LOC)) {
-              scopeDepth += 1;
-              i = bracketClose + 1;
-              continue;
-            }
+        if (c === "`") {
+          const codeClose = value.indexOf("`", scan + 1);
+          scan = codeClose >= 0 ? codeClose + 1 : scan + 1;
+          continue;
+        }
+        if (value.startsWith("[]", scan)) {
+          const opener = openers.pop();
+          if (opener !== undefined) scopeMatch.set(opener, scan);
+          scan += 2;
+          continue;
+        }
+        if (c === "[") {
+          const bracketClose = value.indexOf("]", scan + 1);
+          if (bracketClose > scan + 1 && parseMods(value.slice(scan + 1, bracketClose).trim(), ZERO_LOC)) {
+            openers.push(scan);
+            scan = bracketClose + 1;
+            continue;
           }
         }
-        i += 1;
+        scan += 1;
       }
-      return -1;
-    };
+    }
 
     while (index < value.length) {
       const ch = value[index]!;
@@ -793,8 +797,7 @@ export class OrviParser {
           const rawModifiers = value.slice(index + 1, bracketClose).trim();
           const modifiers = parseMods(rawModifiers, { line, column: column + index + 1 });
           if (modifiers) {
-            const closeAhead = scopeCloseAhead(index);
-            const scopeClose = closeAhead ? findScopeClose(bracketClose + 1) : -1;
+            const scopeClose = scopeMatch.get(index) ?? -1;
             if (scopeClose >= 0) {
               flushText(index);
               nodes.push({
@@ -835,7 +838,7 @@ export class OrviParser {
           }
           // Looked like an attempted scope (a `[]` close exists ahead) but the
           // modifiers are invalid — report it.
-          if (scopeCloseAhead(index)) {
+          if (lastScopeClose >= index) {
             this.parseInlineModifiers(rawModifiers, { line, column: column + index + 1 }, true);
           }
           index += 1;
@@ -1003,7 +1006,7 @@ export class OrviParser {
     return looksLikeTable(this.current().text, this.lines[this.index + 1]!.text);
   }
 
-  private isBlockBoundary(line: SourceLine): boolean {
+  private isBlockBoundary(line: SourceLine, checkTableAhead = true): boolean {
     const trimmed = line.text.trim();
     if (trimmed === "" || trimmed.startsWith("//")) return true;
     if (trimmed.startsWith("```")) return true;
@@ -1013,9 +1016,12 @@ export class OrviParser {
     if (isListLine(trimmed)) return true;
     if (/^([a-z][a-z0-9-]*):(?:\s*(.*))?$/i.test(trimmed) && SEMANTIC_NAMES.has(trimmed.split(":")[0]!)) return true;
     // A table that begins on the next line ends the current block (so a
-    // paragraph immediately before a table is not absorbed into it).
-    const next = this.lines[this.index + 1];
-    if (next && looksLikeTable(line.text, next.text)) return true;
+    // paragraph immediately before a table is not absorbed into it). Skipped
+    // inside parseTable's own row loop, where a divider-shaped row is data.
+    if (checkTableAhead) {
+      const next = this.lines[this.index + 1];
+      if (next && looksLikeTable(line.text, next.text)) return true;
+    }
     return false;
   }
 
@@ -1182,11 +1188,38 @@ function stripQuotes(value: string): string {
   return value;
 }
 
+// Split a table row on `|`, but treat a `|` inside an inline-code span or after
+// a backslash as cell content (not a delimiter). Cell text is kept verbatim —
+// parseInline resolves the escapes — so `\|` and `` `a|b` `` survive intact.
 function splitTableRow(row: string): string[] {
-  let value = row.trim();
-  if (value.startsWith("|")) value = value.slice(1);
-  if (value.endsWith("|")) value = value.slice(0, -1);
-  return value.split("|").map((cell) => cell.trim());
+  const value = row.trim();
+  const cells: string[] = [];
+  let current = "";
+  let inCode = false;
+  for (let i = 0; i < value.length; i += 1) {
+    const char = value[i]!;
+    if (char === "\\" && i + 1 < value.length) {
+      current += char + value[i + 1];
+      i += 1;
+      continue;
+    }
+    if (char === "`") {
+      inCode = !inCode;
+      current += char;
+      continue;
+    }
+    if (char === "|" && !inCode) {
+      cells.push(current);
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  cells.push(current);
+  // Drop the empty leading/trailing cell created by optional outer pipes.
+  if (cells.length > 1 && cells[0]!.trim() === "" && value.startsWith("|")) cells.shift();
+  if (cells.length > 1 && cells[cells.length - 1]!.trim() === "" && value.endsWith("|")) cells.pop();
+  return cells.map((cell) => cell.trim());
 }
 
 function isDividerCell(cell: string): boolean {
@@ -1236,6 +1269,16 @@ function findEmphasisClose(value: string, start: number, marker: string): number
   while (index < value.length) {
     const candidate = value.indexOf(marker, index);
     if (candidate < 0) return -1;
+    // A backslash-escaped marker (odd run of preceding backslashes) is literal
+    // and cannot close the emphasis, so the formatter's re-escaping round-trips.
+    let backslashes = 0;
+    while (candidate - 1 - backslashes >= 0 && value[candidate - 1 - backslashes] === "\\") {
+      backslashes += 1;
+    }
+    if (backslashes % 2 === 1) {
+      index = candidate + 1;
+      continue;
+    }
     const prev = candidate > 0 ? value[candidate - 1]! : "";
     const next = candidate + 1 < value.length ? value[candidate + 1]! : "";
     if (prev !== "" && !/\s/.test(prev) && !/[A-Za-z0-9_]/.test(next)) return candidate;
@@ -1251,15 +1294,6 @@ function isEscapablePunctuation(ch: string): boolean {
   return /^[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]$/.test(ch);
 }
 
-function allIndexes(value: string, needle: string): number[] {
-  const out: number[] = [];
-  let index = value.indexOf(needle);
-  while (index >= 0) {
-    out.push(index);
-    index = value.indexOf(needle, index + needle.length);
-  }
-  return out;
-}
 
 // A bare autolink may start only at a word boundary and only with an http(s)
 // scheme (mailto/tel/bare-domain/email autolinking is intentionally excluded).
@@ -1271,7 +1305,9 @@ function canStartAutolink(value: string, index: number): boolean {
 }
 
 function matchAutolink(value: string, index: number): string {
-  const match = /^https?:\/\/[^\s<>"`]+/i.exec(value.slice(index));
+  // Exclude `|` (and `\`): a bare URL never contains a raw pipe, and stopping at
+  // it keeps an adjacent literal `|` from being swallowed (round-trip safety).
+  const match = /^https?:\/\/[^\s<>"`\\|]+/i.exec(value.slice(index));
   if (!match) return "";
   let url = match[0];
   // Trailing punctuation is usually sentence punctuation, not part of the URL.
