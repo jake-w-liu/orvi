@@ -1,8 +1,7 @@
 # Orvi
 
 [![Verify](https://github.com/jake-w-liu/orvi/actions/workflows/verify.yml/badge.svg)](https://github.com/jake-w-liu/orvi/actions/workflows/verify.yml)
-[![npm](https://img.shields.io/npm/v/orvi-lang.svg)](https://www.npmjs.com/package/orvi-lang)
-[![node](https://img.shields.io/node/v/orvi-lang.svg)](https://www.npmjs.com/package/orvi-lang)
+[![Release](https://img.shields.io/github/v/release/jake-w-liu/orvi?sort=semver)](https://github.com/jake-w-liu/orvi/releases)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Orvi is a strict, human-writable markup language that keeps Markdown-like text
@@ -28,9 +27,9 @@ backwards-compatible superset of the earlier specs;
 - **In VS Code:** install [`jake-w-liu.orvi-language`](https://marketplace.visualstudio.com/items?itemName=jake-w-liu.orvi-language)
   (`ext install jake-w-liu.orvi-language`) — syntax highlighting, diagnostics,
   completions, and a preview panel, with the Orvi runtime bundled.
-- **CLI / library:** `npm install orvi-lang` (the CLI binary is `orvi`; also
-  `npx orvi-lang build doc.ov`). Published with provenance from
-  `.github/workflows/publish-npm.yml`.
+- **CLI / library:** install the latest GitHub Release tarball
+  (`npm install https://github.com/jake-w-liu/orvi/releases/latest/download/orvi-lang.tgz`);
+  the CLI binary is `orvi`.
 
 Sample documents to read or render live in `examples/` (`getting-started.ov`,
 `dashboard.ov`, `welcome.ov`). The GitHub Pages site renders each one and serves

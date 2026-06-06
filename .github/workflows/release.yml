@@ -1,0 +1,91 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, for example v2.0.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Resolve tag
+        id: ref
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag must look like v1.2.3; got $TAG" >&2
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.tag }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve and check version
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$PKG_VERSION" != "${{ steps.ref.outputs.version }}" ]; then
+            echo "Tag ${{ steps.ref.outputs.tag }} does not match package.json version $PKG_VERSION." >&2
+            exit 1
+          fi
+
+      - name: Verify
+        run: npm run verify
+
+      - name: Pack GitHub release tarball
+        id: pack
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP" --json > "$RUNNER_TEMP/pack.json"
+          TARBALL="$(node -e "const [{ filename }] = require(process.env.RUNNER_TEMP + '/pack.json'); console.log(filename)")"
+          TARBALL_PATH="$RUNNER_TEMP/$TARBALL"
+          STABLE_TARBALL="$RUNNER_TEMP/orvi-lang.tgz"
+          cp "$TARBALL_PATH" "$STABLE_TARBALL"
+          echo "tarball=$TARBALL_PATH" >> "$GITHUB_OUTPUT"
+          echo "stable_tarball=$STABLE_TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog section
+        run: node scripts/extract-changelog.mjs "${{ steps.ref.outputs.version }}" > release-notes.md
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.ref.outputs.tag }}"
+          TITLE="orvi-lang ${{ steps.ref.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TITLE" --notes-file release-notes.md
+          else
+            gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file release-notes.md
+          fi
+          gh release upload "$TAG" "${{ steps.pack.outputs.tarball }}" "${{ steps.pack.outputs.stable_tarball }}" --clobber

@@ -51,21 +51,24 @@ describe("release and deployment workflows", () => {
     expect(extensionPackage.scripts.package).toBe("npm run prepare-runtime && vsce package");
   });
 
-  it("wires a token-gated npm publish workflow without Azure", () => {
-    const workflow = read(".github/workflows/publish-npm.yml");
+  it("wires a pure GitHub release workflow without npm registry publishing or Azure", () => {
+    expect(() => read(".github/workflows/publish-npm.yml")).toThrow();
+
+    const workflow = read(".github/workflows/release.yml");
     expect(workflow).toContain("workflow_dispatch");
-    expect(workflow).toContain("registry-url: https://registry.npmjs.org");
     expect(workflow).toContain("npm ci");
     expect(workflow).toContain("npm run verify");
-    expect(workflow).toContain("secrets.NPM_TOKEN");
-    expect(workflow).toContain("Missing required repository secret: NPM_TOKEN");
-    expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
-    expect(workflow).toContain("npm publish --provenance --access public");
-    expect(workflow).toContain("id-token: write");
+    expect(workflow).toContain("npm pack");
+    expect(workflow).toContain("orvi-lang.tgz");
+    expect(workflow).toContain("gh release upload");
+    expect(workflow).not.toContain("NPM_TOKEN");
+    expect(workflow).not.toContain("npm publish");
+    expect(workflow).not.toContain("registry-url: https://registry.npmjs.org");
+    expect(workflow).not.toContain("id-token: write");
     expect(workflow).not.toContain("azure");
 
-    // Tag-driven release: `v*` tags publish, the tag must match package.json,
-    // and a GitHub Release is cut with the matching CHANGELOG.md section.
+    // Tag-driven release: `v*` tags build a GitHub Release asset, the tag must
+    // match package.json, and the release notes come from CHANGELOG.md.
     expect(workflow).toMatch(/tags:\s*\n\s*-\s*["']?v\*/);
     expect(workflow).toContain("does not match package.json version");
     expect(workflow).toContain("contents: write");
@@ -149,9 +152,10 @@ describe("release and deployment workflows", () => {
     expect(releaseRunbook).toContain("There is no Azure-backed automation in this repo.");
     expect(releaseRunbook).toContain("github-linguist");
     expect(releaseRunbook).toContain("true native rendering");
-    expect(releaseRunbook).toContain(".github/workflows/publish-npm.yml");
-    expect(releaseRunbook).toContain("NPM_TOKEN");
-    expect(releaseRunbook).toContain("npm publish --provenance --access public");
+    expect(releaseRunbook).toContain(".github/workflows/release.yml");
+    expect(releaseRunbook).toContain("npm pack");
+    expect(releaseRunbook).toContain("orvi-lang.tgz");
+    expect(releaseRunbook).toContain("no `NPM_TOKEN` requirement");
   });
 });
 

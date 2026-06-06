@@ -2,50 +2,54 @@
 
 This runbook tracks the release paths that are already wired in this repository.
 
-## npm package (`orvi-lang`)
+## GitHub package release (`orvi-lang`)
 
-**Published:** <https://www.npmjs.com/package/orvi-lang> (`npm install orvi-lang`,
-`npx orvi-lang`, global CLI command `orvi`), with build provenance from GitHub
-Actions. The unscoped name `orvi` is rejected by npm's name-similarity guard (too
-close to `ora` / `mri`), and the `@orvi` org name is unavailable, so the package
-is `orvi-lang`. The package metadata, `bin` (`orvi`), `exports` map (`./parser`,
-`./renderer`, `./formatter`, `./artifact`, `./prettier-plugin`, `./react`,
-`./orvi-base.css` subpaths), `files` allowlist, and `repository` field live in
-the root `package.json`.
+**Canonical distribution:** GitHub Releases. The package tarball attached to the
+latest release installs through npm without using the npm registry:
 
-Re-publishing a new version:
+```sh
+npm install https://github.com/jake-w-liu/orvi/releases/latest/download/orvi-lang.tgz
+```
 
-- Owner: `jake-w-liu`. An npm automation/granular token with publish rights for
-  `orvi-lang` must be saved as the `NPM_TOKEN` repository secret.
-- Bump the version first (`npm version patch|minor|major`, or pass the version as
-  the workflow input), and add the matching `## <version>` section to
-  `CHANGELOG.md`.
+The unscoped npm name `orvi` is rejected by npm's name-similarity guard (too
+close to `ora` / `mri`), and the `@orvi` org name is unavailable, so package
+metadata still uses `orvi-lang`. The package metadata, `bin` (`orvi`), `exports`
+map (`./parser`, `./renderer`, `./formatter`, `./artifact`,
+`./prettier-plugin`, `./react`, `./orvi-base.css` subpaths), `files` allowlist,
+and `repository` field live in the root `package.json`.
 
-Tag-driven release (preferred): commit the version bump, then push a tag
-`v<version>` (e.g. `git tag v0.2.4 && git push origin v0.2.4`).
-`.github/workflows/publish-npm.yml` triggers on `v*` tags: it checks that the
-tag matches `package.json`'s version, runs `npm run verify` (which rebuilds
-`dist/`), verifies `NPM_TOKEN`, runs `npm publish --provenance --access public`,
-then creates a GitHub Release for the tag with the matching `CHANGELOG.md`
-section (extracted by `scripts/extract-changelog.mjs`).
+Releasing a new version:
 
-Manual `workflow_dispatch` is still available: it optionally runs
-`npm version <input>` first, then the same verify + publish (it does not create
-a Git tag or GitHub Release — use the tag path for that). `--access public` is
-the default for unscoped packages and harmless here; `--provenance` needs the
-workflow's `id-token: write` permission and the `repository` field (both in
-place); the GitHub Release step needs `contents: write` (also in place).
+- Bump the version first (`npm version patch|minor|major --no-git-tag-version`)
+  and add the matching `## <version>` section to `CHANGELOG.md`.
+- Commit the version bump, then push a tag `v<version>` (for example,
+  `git tag v2.0.0 && git push origin main v2.0.0`).
 
-Manual publish:
+`.github/workflows/release.yml` triggers on `v*` tags. It checks that the tag
+matches `package.json`'s version, runs `npm ci`, runs `npm run verify` (which
+rebuilds `dist/`), runs `npm pack`, then creates or updates the GitHub Release
+with the matching `CHANGELOG.md` section (extracted by
+`scripts/extract-changelog.mjs`). It uploads both the versioned npm tarball
+(`orvi-lang-<version>.tgz`) and a stable alias (`orvi-lang.tgz`) for
+`/releases/latest/download/` installs.
+
+Manual `workflow_dispatch` is available for an existing tag. Pass the tag name
+(for example, `v2.0.0`) to create or refresh its GitHub Release. This is useful
+when a tag exists but the release needs to be regenerated.
+
+Manual package build:
 
 ```sh
 npm ci
 npm run verify        # rebuilds dist/ and runs the full suite
-npm publish           # add --provenance only from CI with OIDC
+npm pack              # creates orvi-lang-<version>.tgz
 ```
 
-`prepublishOnly`/`prepare` are intentionally not defined; build `dist/` first
-(via `npm run build` or `npm run verify`) before any manual `npm publish`.
+## npm registry
+
+`orvi-lang` also exists on <https://www.npmjs.com/package/orvi-lang>, but npm
+registry publishing is manual-only and is not part of GitHub Actions. The repo
+intentionally has no `NPM_TOKEN` requirement and no `npm publish` workflow.
 
 ## VS Code extension distribution
 

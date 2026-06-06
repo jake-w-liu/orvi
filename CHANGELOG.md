@@ -5,6 +5,18 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 2.0.1
+
+Patch release for release infrastructure.
+
+- **GitHub-only releases:** replace the npm-publish-dependent release workflow
+  with a GitHub Release workflow that verifies the tag, runs the full suite,
+  builds an npm-compatible tarball with `npm pack`, and uploads both
+  `orvi-lang-<version>.tgz` and the stable `orvi-lang.tgz` asset.
+- **Release docs:** document GitHub Releases as the canonical distribution path
+  and keep npm registry publishing manual-only.
+- **Package metadata:** sync `package-lock.json` with the 2.x package metadata.
+
 ## 2.0.0
 
 Major release implementing **Orvi language spec `0.4`** — richer lists. The only

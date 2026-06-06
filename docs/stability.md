@@ -113,5 +113,5 @@ vulnerabilities per `SECURITY.md`.
 `orvi-lang` is currently maintained by a single author (`jake-w-liu`). That is a
 known bus-factor risk for a `1.0` project; additional maintainers are welcome —
 open an issue. The release process is documented in `docs/release.md` and is
-fully scripted (tag-driven npm publish with provenance + GitHub Release), so it
-does not depend on any one person's local setup.
+fully scripted for GitHub Releases, so it does not depend on any one person's
+local setup or npm registry access.
