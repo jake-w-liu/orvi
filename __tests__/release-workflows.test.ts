@@ -22,7 +22,9 @@ describe("release and deployment workflows", () => {
     const siteBuilder = read("scripts/build-site.mjs");
 
     expect(workflow).toContain("actions/configure-pages@");
-    expect(workflow).toContain("actions/upload-pages-artifact@");
+    expect(workflow).toContain("tar -h -C .site -cf");
+    expect(workflow).toContain("actions/upload-artifact@v7");
+    expect(workflow).toContain("name: github-pages");
     expect(workflow).toContain("actions/deploy-pages@");
     expect(workflow).toContain("npm run site:build");
     expect(workflow).toContain("deployments: write");

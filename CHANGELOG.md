@@ -5,6 +5,14 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 2.0.4
+
+Patch release for the GitHub Pages artifact path.
+
+- **Pages runtime cleanup:** replace `actions/upload-pages-artifact` with an
+  explicit `.site` `artifact.tar` plus `actions/upload-artifact@v7`, removing
+  the remaining internal Node 20 artifact-action warning from Pages deploys.
+
 ## 2.0.3
 
 Patch release for GitHub Actions runtime cleanup.

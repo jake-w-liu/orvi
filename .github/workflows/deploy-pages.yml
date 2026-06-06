@@ -53,10 +53,16 @@ jobs:
           ORVI_PAGES_CNAME: ${{ vars.ORVI_PAGES_CNAME }}
         run: npm run site:build
 
+      - name: Archive Pages artifact
+        run: tar -h -C .site -cf "$RUNNER_TEMP/artifact.tar" .
+
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          path: .site
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          if-no-files-found: error
+          retention-days: 1
 
   deploy:
     needs: build
