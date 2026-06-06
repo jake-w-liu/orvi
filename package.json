@@ -1,8 +1,9 @@
 {
   "name": "orvi-lang",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Orvi markup parser, HTML renderer, and CLI.",
   "license": "MIT",
+  "private": true,
   "sideEffects": false,
   "engines": {
     "node": ">=20"
@@ -17,6 +18,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/jake-w-liu/orvi.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm-publish-disabled.invalid"
   },
   "homepage": "https://github.com/jake-w-liu/orvi#readme",
   "bugs": {
@@ -68,6 +72,7 @@
   "files": [
     "dist",
     "src/orvi-base.css",
+    "scripts/block-npm-publish.mjs",
     "schemas",
     "orvi-spec-v0.1.md",
     "orvi-spec-v0.2.md",
@@ -97,6 +102,7 @@
     "playground:test": "node --test playground/playground.test.mjs",
     "obsidian:build": "npm run build && node integrations/obsidian-orvi/build.mjs",
     "site:build": "npm run build && node dist/cli.js build examples/welcome.ov -o examples/welcome.html && node scripts/build-site.mjs",
+    "prepublishOnly": "node scripts/block-npm-publish.mjs",
     "verify": "npm run check && npm run lint && npm run css:sync:check && npm run finetune:corpus:check && npm test && npm run playground:test && npm run build && npm run runtime:sync:check && npm run format:check",
     "vscode:package": "npm --prefix vscode/orvi run package --"
   },

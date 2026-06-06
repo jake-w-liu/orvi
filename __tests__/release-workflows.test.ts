@@ -3,6 +3,15 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 describe("release and deployment workflows", () => {
+  it("uses maintained first-party GitHub Action majors", () => {
+    const workflows = workflowPaths.map(read).join("\n");
+
+    expect(workflows).not.toContain("actions/checkout@v4");
+    expect(workflows).not.toContain("actions/setup-node@v4");
+    expect(workflows.match(/actions\/checkout@v6/g)?.length ?? 0).toBeGreaterThan(0);
+    expect(workflows.match(/actions\/setup-node@v6/g)?.length ?? 0).toBeGreaterThan(0);
+  });
+
   it("deploys the playground and rendered Orvi files through GitHub Pages", () => {
     const workflow = read(".github/workflows/deploy-pages.yml");
     const siteBuilder = read("scripts/build-site.mjs");
@@ -58,8 +67,14 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("workflow_dispatch");
     expect(workflow).toContain("npm ci");
     expect(workflow).toContain("npm run verify");
+    expect(workflow).toContain("ORVI_REQUIRE_BROWSER");
     expect(workflow).toContain("npm pack");
     expect(workflow).toContain("orvi-lang.tgz");
+    expect(workflow).toContain("npm run vscode:package");
+    expect(workflow).toContain("orvi-language.vsix");
+    expect(workflow).toContain("npm run obsidian:build");
+    expect(workflow).toContain("versions.json");
+    expect(workflow).toContain("obsidian-orvi-plugin.zip");
     expect(workflow).toContain("gh release upload");
     expect(workflow).not.toContain("NPM_TOKEN");
     expect(workflow).not.toContain("npm publish");
@@ -78,10 +93,17 @@ describe("release and deployment workflows", () => {
     const rootPackage = JSON.parse(read("package.json")) as {
       name?: string;
       bin?: Record<string, string>;
+      private?: boolean;
+      publishConfig?: { registry?: string };
       repository?: { url?: string };
       files?: string[];
+      scripts?: Record<string, string>;
     };
     expect(rootPackage.name).toBe("orvi-lang");
+    expect(rootPackage.private).toBe(true);
+    expect(rootPackage.publishConfig?.registry).toBe("https://npm-publish-disabled.invalid");
+    expect(rootPackage.scripts?.prepublishOnly).toBe("node scripts/block-npm-publish.mjs");
+    expect(read("scripts/block-npm-publish.mjs")).toContain("npm registry publishing is disabled");
     expect(rootPackage.bin).toMatchObject({ orvi: "dist/cli.js" });
     expect(rootPackage.repository?.url).toContain("github.com/jake-w-liu/orvi");
     expect(rootPackage.files).toEqual(expect.arrayContaining(["dist"]));
@@ -139,6 +161,7 @@ describe("release and deployment workflows", () => {
     expect(workflow).toContain("manifest.json");
     expect(workflow).toContain("main.js");
     expect(workflow).toContain("styles.css");
+    expect(workflow).toContain("versions.json");
     expect(workflow).toContain("actions/upload-artifact@");
     expect(workflow).toContain("scripts/set-obsidian-version.mjs");
     expect(workflow).not.toContain("azure");
@@ -155,9 +178,23 @@ describe("release and deployment workflows", () => {
     expect(releaseRunbook).toContain(".github/workflows/release.yml");
     expect(releaseRunbook).toContain("npm pack");
     expect(releaseRunbook).toContain("orvi-lang.tgz");
-    expect(releaseRunbook).toContain("no `NPM_TOKEN` requirement");
+    expect(releaseRunbook).toContain("orvi-language.vsix");
+    expect(releaseRunbook).toContain("obsidian-orvi-plugin.zip");
+    expect(releaseRunbook).toContain("private: true");
+    expect(releaseRunbook).toContain("prepublishOnly");
+    expect(releaseRunbook).toContain("publishConfig.registry");
+    expect(releaseRunbook).toContain("`NPM_TOKEN` requirement");
   });
 });
+
+const workflowPaths = [
+  ".github/workflows/deploy-pages.yml",
+  ".github/workflows/package-obsidian.yml",
+  ".github/workflows/package-vscode.yml",
+  ".github/workflows/publish-open-vsx.yml",
+  ".github/workflows/release.yml",
+  ".github/workflows/verify.yml"
+];
 
 function read(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");

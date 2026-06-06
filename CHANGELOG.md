@@ -5,6 +5,25 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 2.0.2
+
+Patch release for GitHub-only distribution hardening.
+
+- **npm registry disabled by design:** mark the root package `private: true`,
+  add a `prepublishOnly` blocker, and point `publishConfig.registry` at an
+  invalid host so accidental `npm publish` attempts fail. GitHub Release
+  tarballs created by `npm pack` remain the supported install path.
+- **Complete GitHub Release assets:** the tag release workflow now uploads the
+  npm-compatible package tarballs, the stable `orvi-lang.tgz` alias, the VS Code
+  `orvi-language.vsix`, and an `obsidian-orvi-plugin.zip` bundle.
+- **Obsidian bundle fix:** include `versions.json` in both the standalone
+  Obsidian package artifact and the GitHub Release zip, matching the documented
+  community-store layout.
+- **Release verification:** require the browser render smoke during release
+  verification with `ORVI_REQUIRE_BROWSER=1`.
+- **Workflow maintenance:** update first-party GitHub Actions from
+  `actions/checkout@v4` / `actions/setup-node@v4` to `@v6`.
+
 ## 2.0.1
 
 Patch release for release infrastructure.

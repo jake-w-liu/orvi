@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
@@ -42,6 +42,7 @@ jobs:
           cp integrations/obsidian-orvi/manifest.json obsidian-orvi-dist/
           cp integrations/obsidian-orvi/main.js obsidian-orvi-dist/
           cp integrations/obsidian-orvi/styles.css obsidian-orvi-dist/
+          cp integrations/obsidian-orvi/versions.json obsidian-orvi-dist/
           cp -r integrations/obsidian-orvi/runtime obsidian-orvi-dist/runtime
 
       - name: Upload plugin bundle

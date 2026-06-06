@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to release, for example v2.0.0
+        description: Existing tag to release, for example v2.0.2
         required: true
         type: string
 
@@ -39,12 +39,12 @@ jobs:
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.ref.outputs.tag }}
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
@@ -61,6 +61,8 @@ jobs:
           fi
 
       - name: Verify
+        env:
+          ORVI_REQUIRE_BROWSER: "1"
         run: npm run verify
 
       - name: Pack GitHub release tarball
@@ -73,6 +75,26 @@ jobs:
           cp "$TARBALL_PATH" "$STABLE_TARBALL"
           echo "tarball=$TARBALL_PATH" >> "$GITHUB_OUTPUT"
           echo "stable_tarball=$STABLE_TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Install extension dependencies
+        working-directory: vscode/orvi
+        run: npm ci
+
+      - name: Pack VS Code extension
+        run: npm run vscode:package -- --out "$RUNNER_TEMP/orvi-language.vsix"
+
+      - name: Pack Obsidian plugin bundle
+        id: obsidian
+        run: |
+          npm run obsidian:build
+          mkdir -p "$RUNNER_TEMP/obsidian-orvi-dist"
+          cp integrations/obsidian-orvi/manifest.json "$RUNNER_TEMP/obsidian-orvi-dist/"
+          cp integrations/obsidian-orvi/main.js "$RUNNER_TEMP/obsidian-orvi-dist/"
+          cp integrations/obsidian-orvi/styles.css "$RUNNER_TEMP/obsidian-orvi-dist/"
+          cp integrations/obsidian-orvi/versions.json "$RUNNER_TEMP/obsidian-orvi-dist/"
+          cp -r integrations/obsidian-orvi/runtime "$RUNNER_TEMP/obsidian-orvi-dist/runtime"
+          (cd "$RUNNER_TEMP/obsidian-orvi-dist" && zip -qr "$RUNNER_TEMP/obsidian-orvi-plugin.zip" .)
+          echo "zip=$RUNNER_TEMP/obsidian-orvi-plugin.zip" >> "$GITHUB_OUTPUT"
 
       - name: Extract changelog section
         run: node scripts/extract-changelog.mjs "${{ steps.ref.outputs.version }}" > release-notes.md
@@ -88,4 +110,9 @@ jobs:
           else
             gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file release-notes.md
           fi
-          gh release upload "$TAG" "${{ steps.pack.outputs.tarball }}" "${{ steps.pack.outputs.stable_tarball }}" --clobber
+          gh release upload "$TAG" \
+            "${{ steps.pack.outputs.tarball }}" \
+            "${{ steps.pack.outputs.stable_tarball }}" \
+            "$RUNNER_TEMP/orvi-language.vsix" \
+            "${{ steps.obsidian.outputs.zip }}" \
+            --clobber

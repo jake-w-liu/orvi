@@ -24,9 +24,11 @@ backwards-compatible superset of the earlier specs;
 
 - **In the browser, no install:** the [Orvi Playground](https://jake-w-liu.github.io/orvi/playground/)
   (editor + live preview).
-- **In VS Code:** install [`jake-w-liu.orvi-language`](https://marketplace.visualstudio.com/items?itemName=jake-w-liu.orvi-language)
-  (`ext install jake-w-liu.orvi-language`) — syntax highlighting, diagnostics,
-  completions, and a preview panel, with the Orvi runtime bundled.
+- **In VS Code:** install the `orvi-language.vsix` asset from the latest
+  [GitHub Release](https://github.com/jake-w-liu/orvi/releases), or install
+  [`jake-w-liu.orvi-language`](https://marketplace.visualstudio.com/items?itemName=jake-w-liu.orvi-language)
+  from the Marketplace — syntax highlighting, diagnostics, completions, and a
+  preview panel, with the Orvi runtime bundled.
 - **CLI / library:** install the latest GitHub Release tarball
   (`npm install https://github.com/jake-w-liu/orvi/releases/latest/download/orvi-lang.tgz`);
   the CLI binary is `orvi`.
@@ -192,20 +194,20 @@ CLI/runtime, so users do not need a separate global `orvi` command for normal
 editor use.
 
 ```sh
-cd vscode/orvi
 npm ci
-npm run package
+npm --prefix vscode/orvi ci
+npm run vscode:package -- --out orvi-language.vsix
 ```
 
 The packaged `.vsix` can be installed with:
 
 ```sh
-code --install-extension vscode/orvi/orvi-language-0.1.7.vsix
+code --install-extension orvi-language.vsix
 ```
 
-Distribution is Azure-free: package the VSIX with `npm run vscode:package` or the
-`.github/workflows/package-vscode.yml` artifact, then attach it to a GitHub
-Release. Open VSX publishing is wired through
+Distribution is Azure-free: every tagged GitHub Release includes a stable
+`orvi-language.vsix` asset. The `.github/workflows/package-vscode.yml` workflow
+can also package a one-off VSIX artifact. Open VSX publishing is wired through
 `.github/workflows/publish-open-vsx.yml` after `OVSX_PAT` and the `jake-w-liu`
 namespace are configured. There is no VS Code Marketplace automation (it would
 require an Azure DevOps token).
@@ -222,10 +224,11 @@ npm run obsidian:build
 ```
 
 Then copy `manifest.json`, `main.js`, `styles.css`, `versions.json`, and
-`runtime/` into a vault at `.obsidian/plugins/orvi/`. The
-`.github/workflows/package-obsidian.yml` workflow builds and uploads that
-bundle as an artifact (no Azure); `scripts/set-obsidian-version.mjs` bumps
-`manifest.json` and `versions.json` together for a release.
+`runtime/` into a vault at `.obsidian/plugins/orvi/`. Every tagged GitHub
+Release includes `obsidian-orvi-plugin.zip`; the
+`.github/workflows/package-obsidian.yml` workflow can also build and upload that
+bundle as a one-off artifact (no Azure). `scripts/set-obsidian-version.mjs`
+bumps `manifest.json` and `versions.json` together for a release.
 
 ## Benchmarks
 

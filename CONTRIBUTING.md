@@ -72,4 +72,7 @@ API — the extension points are `parseOrvi` (AST) and `renderOrvi` (HTML).
 See `docs/release.md` for the package and editor release runbooks. Package
 releases are GitHub-only: `.github/workflows/release.yml` verifies the tag,
 builds an npm-compatible tarball with `npm pack`, and uploads it to the GitHub
-Release. npm registry publishing is manual-only.
+Release. npm registry publishing is intentionally disabled: there is no
+`npm publish` workflow or `NPM_TOKEN`, and the root package is marked
+`private: true` with a `prepublishOnly` blocker and an invalid
+`publishConfig.registry`.
