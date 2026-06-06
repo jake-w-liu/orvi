@@ -59,7 +59,7 @@ the VS Code extension.
 
 ## Stability (post-1.0)
 
-`orvi-lang` is `1.0` and under SemVer — read [`docs/stability.md`](docs/stability.md)
+`orvi-lang` is `2.x` and under SemVer — read [`docs/stability.md`](docs/stability.md)
 before changing anything user-visible. In short: the public exports and the
 `orvi`/`ORVI_*` CLI surface are pinned by tests; a backwards-incompatible change
 (removal, renamed export, changed default, non-fix change to rendered HTML or to
@@ -69,6 +69,7 @@ API — the extension points are `parseOrvi` (AST) and `renderOrvi` (HTML).
 
 ## Releasing
 
-See `docs/release.md` for the npm and VS Code release runbooks. npm publishes
-go through `.github/workflows/publish-npm.yml` (gated on the `NPM_TOKEN`
-secret), with build provenance.
+See `docs/release.md` for the package and editor release runbooks. Package
+releases are GitHub-only: `.github/workflows/release.yml` verifies the tag,
+builds an npm-compatible tarball with `npm pack`, and uploads it to the GitHub
+Release. npm registry publishing is manual-only.

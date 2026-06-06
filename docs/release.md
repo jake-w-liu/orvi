@@ -23,7 +23,7 @@ Releasing a new version:
 - Bump the version first (`npm version patch|minor|major --no-git-tag-version`)
   and add the matching `## <version>` section to `CHANGELOG.md`.
 - Commit the version bump, then push a tag `v<version>` (for example,
-  `git tag v2.0.0 && git push origin main v2.0.0`).
+  `git tag v2.0.1 && git push origin main v2.0.1`).
 
 `.github/workflows/release.yml` triggers on `v*` tags. It checks that the tag
 matches `package.json`'s version, runs `npm ci`, runs `npm run verify` (which
@@ -34,7 +34,7 @@ with the matching `CHANGELOG.md` section (extracted by
 `/releases/latest/download/` installs.
 
 Manual `workflow_dispatch` is available for an existing tag. Pass the tag name
-(for example, `v2.0.0`) to create or refresh its GitHub Release. This is useful
+(for example, `v2.0.1`) to create or refresh its GitHub Release. This is useful
 when a tag exists but the release needs to be regenerated.
 
 Manual package build:

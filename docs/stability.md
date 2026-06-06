@@ -64,15 +64,15 @@ internals, and anything reachable only by deep-importing past the exports map.
 ## Language spec version
 
 The Orvi *language* is versioned separately from the package. A document's
-`orvi:` metadata names the spec it targets — currently `0.1` (see
-`orvi-spec-v0.1.md`). The renderer accepts `orvi: 0.1`; an unknown spec version
-produces a diagnostic but still renders on a best-effort basis. A future spec
-revision (`0.2`, `1.0`, …) will be additive where possible and called out in
-both `orvi-spec-v0.1.md`'s successor and `CHANGELOG.md`.
+`orvi:` metadata names the spec it targets — currently `0.4` (see
+`orvi-spec-v0.4.md`). The renderer accepts `orvi: 0.1` through `orvi: 0.4`;
+an unknown spec version produces a diagnostic but still renders on a best-effort
+basis. Future spec revisions will be additive where possible and called out in
+the matching `orvi-spec-v*.md` file and `CHANGELOG.md`.
 
 ## Extension model
 
-Orvi `1.0` has **no plugin or extension API** — this is deliberate. The
+Orvi has **no plugin or extension API** — this is deliberate. The
 extension points are the published functions:
 
 - Need custom output? `parseOrvi(source)` gives you the AST; `walk(ast, visit)`
@@ -111,7 +111,7 @@ vulnerabilities per `SECURITY.md`.
 ## Maintainership
 
 `orvi-lang` is currently maintained by a single author (`jake-w-liu`). That is a
-known bus-factor risk for a `1.0` project; additional maintainers are welcome —
+known bus-factor risk for a `2.x` project; additional maintainers are welcome —
 open an issue. The release process is documented in `docs/release.md` and is
 fully scripted for GitHub Releases, so it does not depend on any one person's
 local setup or npm registry access.

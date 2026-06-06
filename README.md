@@ -63,7 +63,7 @@ npm run verify  # full check + test + build + format suite
 ## CLI
 
 ```sh
-npm install -g orvi-lang   # provides the `orvi` command; or use `npx orvi-lang`
+npm install -g https://github.com/jake-w-liu/orvi/releases/latest/download/orvi-lang.tgz
 
 orvi view doc.ov                       # render to a temp file and open it in the browser
 orvi serve doc.ov                      # live preview with hot reload (Ctrl+C to stop)
@@ -81,7 +81,7 @@ commands run via `node dist/cli.js …` after `npm run build`.
 ## Library
 
 ```sh
-npm install orvi-lang
+npm install https://github.com/jake-w-liu/orvi/releases/latest/download/orvi-lang.tgz
 ```
 
 ```ts
@@ -138,10 +138,10 @@ From a clone of this repo, point `--plugin` at the built file
 
 ## Versioning and stability
 
-`orvi-lang` is `1.0` and follows [Semantic Versioning](https://semver.org/):
+`orvi-lang` is `2.x` and follows [Semantic Versioning](https://semver.org/):
 the public API changes incompatibly only in a major release, and removals are
 preceded by a deprecation warning in a prior minor. The full contract — what is
-public, the deprecation policy, the language-spec version (`orvi: 0.1`, which
+public, the deprecation policy, the language-spec version (`orvi: 0.4`, which
 versions independently of the package), the supported Node range, and the
 security and maintainership notes — is in [`docs/stability.md`](docs/stability.md).
 
@@ -156,7 +156,7 @@ additions and removals are deliberate:
 | `orvi-lang/prettier-plugin` | the Prettier plugin |
 | `orvi-lang/orvi-base.css` | the default stylesheet |
 
-Orvi `1.0` has no plugin/extension API by design: consume the AST from
+Orvi has no plugin/extension API by design: consume the AST from
 `parseOrvi`, or post-process the HTML from `renderOrvi`. Keeping the surface
 small is what makes the SemVer guarantee tractable; a plugin API may come in a
 future major if there's demand.
