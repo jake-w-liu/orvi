@@ -5,6 +5,17 @@ follows [Semantic Versioning](https://semver.org/): the public API (see
 `docs/stability.md`) only changes in a backwards-incompatible way in a major
 release, and removals are preceded by a deprecation warning in a prior minor.
 
+## 2.0.3
+
+Patch release for GitHub Actions runtime cleanup.
+
+- **Artifact action maintenance:** update direct `actions/upload-artifact` usage
+  from `v4` to `v7`.
+- **Node 24 action runtime:** set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`
+  across workflows so remaining JavaScript actions, including the Pages artifact
+  path, run on the upcoming GitHub Actions runtime instead of emitting Node 20
+  deprecation warnings.
+
 ## 2.0.2
 
 Patch release for GitHub-only distribution hardening.

@@ -8,8 +8,13 @@ describe("release and deployment workflows", () => {
 
     expect(workflows).not.toContain("actions/checkout@v4");
     expect(workflows).not.toContain("actions/setup-node@v4");
+    expect(workflows).not.toContain("actions/upload-artifact@v4");
     expect(workflows.match(/actions\/checkout@v6/g)?.length ?? 0).toBeGreaterThan(0);
     expect(workflows.match(/actions\/setup-node@v6/g)?.length ?? 0).toBeGreaterThan(0);
+    expect(workflows.match(/actions\/upload-artifact@v7/g)?.length ?? 0).toBeGreaterThan(0);
+    expect(workflows.match(/FORCE_JAVASCRIPT_ACTIONS_TO_NODE24/g)?.length ?? 0).toBe(
+      workflowPaths.length
+    );
   });
 
   it("deploys the playground and rendered Orvi files through GitHub Pages", () => {

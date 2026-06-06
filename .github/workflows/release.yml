@@ -7,12 +7,15 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to release, for example v2.0.2
+        description: Existing tag to release, for example v2.0.3
         required: true
         type: string
 
 permissions:
   contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   release:
