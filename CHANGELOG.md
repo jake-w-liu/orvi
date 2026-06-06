@@ -16,6 +16,9 @@ Patch release for release infrastructure.
 - **Release docs:** document GitHub Releases as the canonical distribution path
   and keep npm registry publishing manual-only.
 - **Package metadata:** sync `package-lock.json` with the 2.x package metadata.
+- **Firefox smoke stability:** keep the optional Firefox rendering smoke from
+  writing `screenshot.png` into the repository root and skip unavailable
+  headless screenshot environments with diagnostics.
 
 ## 2.0.0
 
