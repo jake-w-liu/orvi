@@ -20,6 +20,8 @@ backwards-compatible superset of the earlier specs;
 [Semantic Versioning](https://semver.org/) — see
 [`docs/stability.md`](docs/stability.md).
 
+![Orvi rendered output preview](screenshot.png)
+
 ## Try Orvi
 
 - **In the browser, no install:** the [Orvi Playground](https://jake-w-liu.github.io/orvi/playground/)
