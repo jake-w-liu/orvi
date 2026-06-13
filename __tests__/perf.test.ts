@@ -101,7 +101,10 @@ describe("performance (regression gate)", () => {
       "word_".repeat(40000), // many emphasis-`_` candidates
       "**".repeat(40000), // many strong delimiters
       "[".repeat(80000), // many unmatched brackets, no `]`
-      "[red]".repeat(4000) + " []" // openers plus a single distant close
+      "[red]".repeat(4000) + " []", // openers plus a single distant close
+      " _a".repeat(40000), // space-flanked `_` openers that never close (was O(n^2))
+      " *a ".repeat(40000), // space-flanked `*` openers that never close
+      "*a ".repeat(40000) // leading `*` openers that never close
     ];
     const LINEAR_BUDGET_MS = 8000;
 

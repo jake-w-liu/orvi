@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from "child_process";
 import { createServer, ServerResponse } from "http";
-import { existsSync, mkdtempSync, readFileSync, watch, writeFileSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, statSync, watch, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { basename, dirname, extname, join, resolve } from "path";
 import { defaultCss, OrviColorScheme, OrviDirection, OrviTheme, renderOrvi } from "./renderer";
@@ -52,18 +52,21 @@ const FLAGS_WITH_VALUES = new Set(["-o", "--output", "--config", "--port", "-p"]
 
 const args = process.argv.slice(2);
 const command = args[0];
+// Normalize `--flag=value` / `-o=value` into separate tokens so the value-flag
+// parsers (which match flags by exact token) accept the common `=`-joined form.
+const operands = splitInlineValues(args.slice(1));
 
 try {
   if (command === "build") {
-    build(parseBuildArgs(args.slice(1)));
+    build(parseBuildArgs(operands));
   } else if (command === "view") {
-    view(parseViewArgs(args.slice(1)));
+    view(parseViewArgs(operands));
   } else if (command === "check") {
-    check(parseCheckArgs(args.slice(1)));
+    check(parseCheckArgs(operands));
   } else if (command === "format") {
-    format(parseFormatArgs(args.slice(1)));
+    format(parseFormatArgs(operands));
   } else if (command === "serve") {
-    serve(parseServeArgs(args.slice(1)));
+    serve(parseServeArgs(operands));
   } else if (command === "version" || command === "--version" || command === "-v") {
     console.log(cliVersion());
   } else if (command === "help" || command === "--help" || command === "-h") {
@@ -81,6 +84,13 @@ function build(options: BuildArgs): void {
   const inputPath = resolve(options.input);
   const html = renderDocument(inputPath, options.config);
   const outputPath = resolve(options.output ?? defaultOutputPath(inputPath));
+  // Never clobber the source. The default output path collides with the input
+  // when the input already ends in `.html`, and an explicit `-o` can also point
+  // back at it. A string compare misses case-insensitive filesystems and
+  // symlinks, so compare by identity (device + inode) for paths that exist.
+  if (isSameFile(outputPath, inputPath)) {
+    throw new Error(`Refusing to overwrite the input file ${inputPath}. Pass -o <output.html> to choose a different path.`);
+  }
   writeFileSync(outputPath, html);
   console.log(`Built ${outputPath}`);
 }
@@ -456,6 +466,36 @@ function loadConfig(inputPath: string, configOverride?: string, reload = false):
 function defaultOutputPath(inputPath: string): string {
   const extension = extname(inputPath);
   return extension ? inputPath.slice(0, -extension.length) + ".html" : `${inputPath}.html`;
+}
+
+// True when two paths refer to the same file. Identical strings short-circuit;
+// otherwise compare device + inode so case-insensitive filesystems, symlinks,
+// and hardlinks are caught. A path that does not exist can never collide.
+function isSameFile(a: string, b: string): boolean {
+  if (a === b) return true;
+  try {
+    const statA = statSync(a);
+    const statB = statSync(b);
+    return statA.dev === statB.dev && statA.ino === statB.ino;
+  } catch {
+    return false;
+  }
+}
+
+// Expand `--flag=value` / `-o=value` into separate `--flag` `value` tokens. Only
+// `-`-prefixed tokens are split, and only on the first `=`, so positional values
+// that contain `=` are left intact.
+function splitInlineValues(values: string[]): string[] {
+  const result: string[] = [];
+  for (const value of values) {
+    const equals = value.startsWith("-") ? value.indexOf("=") : -1;
+    if (equals > 0) {
+      result.push(value.slice(0, equals), value.slice(equals + 1));
+    } else {
+      result.push(value);
+    }
+  }
+  return result;
 }
 
 function cliVersion(): string {

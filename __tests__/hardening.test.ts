@@ -204,3 +204,51 @@ describe("escaped ] in link labels (F4) and round-trip edge cases", () => {
     roundTrips("| h |\n| --- |\n| a \\` b \\| c |\n");
   });
 });
+
+describe("list marker followed by non-ASCII whitespace (B1)", () => {
+  // A list marker followed by a character that JS `\s` matches but the marker
+  // regex's `[ \t]` does not (NBSP, line/paragraph separators, ideographic
+  // space, …) used to dispatch to parseList, match no marker, and loop forever
+  // allocating empty lists until the heap was exhausted.
+  const exotic = [0x00a0, 0x000b, 0x000c, 0x1680, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000, 0xfeff];
+
+  it.each(exotic)("terminates and treats a marker + U+%s whitespace as a paragraph", (code) => {
+    const ws = String.fromCharCode(code);
+    const ast = parseOrvi(`-${ws}foo`);
+    expect(Array.isArray(ast.children)).toBe(true);
+    expect(ast.children[0]?.type).toBe("paragraph");
+
+    const ordered = parseOrvi(`1.${ws}foo`);
+    expect(ordered.children[0]?.type).toBe("paragraph");
+  });
+
+  it("terminates for the same input nested inside a block and a blockquote", () => {
+    expect(parseOrvi(`[card]\n- foo\n[/card]`).children[0]?.type).toBe("component");
+    expect(parseOrvi(`> - foo`).children[0]?.type).toBe("blockquote");
+  });
+
+  it("still parses genuine list lines (ASCII space and tab)", () => {
+    expect(parseOrvi("- foo").children[0]?.type).toBe("list");
+    expect(parseOrvi("-\tfoo").children[0]?.type).toBe("list");
+    expect(parseOrvi("1. foo").children[0]?.type).toBe("list");
+    expect(parseOrvi("- [x] done").children[0]?.type).toBe("list");
+  });
+});
+
+describe("single-marker emphasis with no close stays linear (B2)", () => {
+  it("keeps the correct AST for adversarial emphasis input", () => {
+    // Every `_`/`*` opens but none closes; the result is literal text, and the
+    // scan must not be re-run per opener (was O(n^2)).
+    expect(parseOrvi(" _a _a _a").children[0]?.type).toBe("paragraph");
+    const inline = (parseOrvi(" _a _a _a").children[0] as { children: InlineNode[] }).children;
+    expect(inline.every((n) => n.type === "text")).toBe(true);
+  });
+
+  it("does not let the no-close memo drop a later valid emphasis", () => {
+    // `__ _foo_`: the first `_` finds an adjacent close (index+1) which must NOT
+    // be cached as 'no close remaining', or the real `_foo_` would be lost.
+    const html = renderOrvi("__ _foo_").html;
+    expect(html).toContain("<em>foo</em>");
+    expect(renderOrvi("*x* *y*").html).toBe("<main class=\"orvi-document\">\n<p><em>x</em> <em>y</em></p>\n</main>");
+  });
+});

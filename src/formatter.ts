@@ -39,7 +39,8 @@ export function formatOrvi(source: string, options: FormatOptions = {}): FormatR
     ...ast.diagnostics,
     ...formatLossDiagnostics(source),
     ...badgeLossDiagnostics(ast),
-    ...listLossDiagnostics(ast)
+    ...listLossDiagnostics(ast),
+    ...optionLossDiagnostics(ast)
   ];
 
   return {
@@ -148,6 +149,31 @@ function listLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
             endColumn: current.loc.column + 1
           });
         }
+      }
+    }
+  });
+  return diagnostics;
+}
+
+// An option value with whitespace must be quoted, but Orvi quotes are verbatim
+// (no escaping), so a value that ALSO contains both quote characters cannot be
+// represented and quoteIfNeeded falls back to a lossy form. Warn rather than
+// silently alter the document.
+function optionLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
+  const diagnostics: OrviDiagnostic[] = [];
+  walk(ast, (node) => {
+    if (node.type !== "component") return;
+    for (const [key, value] of Object.entries(node.options ?? {})) {
+      if (/\s/.test(value) && value.includes('"') && value.includes("'")) {
+        diagnostics.push({
+          severity: "warning",
+          code: "ORVI_FORMAT_OPTION_VALUE_DROPPED",
+          message: `The formatter cannot preserve option '${key}': a value containing whitespace and both quote characters is unrepresentable.`,
+          line: node.loc.line,
+          column: node.loc.column,
+          endLine: node.loc.line,
+          endColumn: node.loc.column + 1
+        });
       }
     }
   });
@@ -538,7 +564,19 @@ function formatOptions(options: ComponentOptions): string {
 }
 
 function quoteIfNeeded(value: string): string {
-  return /\s/.test(value) ? JSON.stringify(value) : value;
+  // A value with no whitespace is a bare token. Otherwise it must be quoted —
+  // but Orvi option quotes are VERBATIM: the parser does no backslash
+  // de-escaping (see scanOptionTokens/stripQuotes), so JSON.stringify would
+  // corrupt backslashes and control characters (`C:\path dir` -> `C:\\path dir`)
+  // and compound on every pass, breaking idempotency. Wrap in a quote character
+  // the value does not already contain.
+  if (!/\s/.test(value)) return value;
+  if (!value.includes('"')) return `"${value}"`;
+  if (!value.includes("'")) return `'${value}'`;
+  // Whitespace plus both quote characters is unrepresentable; the loss is
+  // surfaced by optionLossDiagnostics. Fall back to double quotes (lossy) rather
+  // than throw, so formatting still produces output.
+  return `"${value}"`;
 }
 
 function clampHeadingDepth(depth: number): number {

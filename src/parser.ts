@@ -444,7 +444,12 @@ export class OrviParser {
     const opening = this.current();
     const trimmed = opening.text.trim();
     const meta = trimmed.slice(3).trim();
-    const [languagePart, filenamePart] = meta.split("|").map((part) => part.trim());
+    // Split on the FIRST `|` only — everything after it is the filename, which may
+    // itself contain `|` (a legal path character on POSIX). Splitting on every
+    // pipe and taking element [1] would silently truncate such filenames.
+    const pipe = meta.indexOf("|");
+    const languagePart = (pipe < 0 ? meta : meta.slice(0, pipe)).trim();
+    const filenamePart = pipe < 0 ? "" : meta.slice(pipe + 1).trim();
     const languageToken = languagePart ? languagePart.split(/\s+/)[0] : "";
     const language = languageToken && /^[\w.+#-]+$/.test(languageToken) ? languageToken : undefined;
     const filename = filenamePart || undefined;
@@ -528,7 +533,12 @@ export class OrviParser {
     // so the first item always matches listIndent and the loop makes progress —
     // otherwise a mismatch would return an empty list without advancing.
     const firstMarker = matchListMarker(start.text);
-    const listIndent = firstMarker ? firstMarker.indent : indentWidth(start.text);
+    // Defence in depth: parseList is only entered when isListLine() matched, but
+    // if the predicate and matchListMarker ever disagree, the loop below would
+    // break without consuming the line and parseBlocks would re-dispatch here
+    // forever. Falling back to a paragraph guarantees the parser always advances.
+    if (!firstMarker) return this.parseParagraph();
+    const listIndent = firstMarker.indent;
     const ordered = isOrderedListLine(start.text);
     const items: ListItemNode[] = [];
     let startNumber: number | undefined;
@@ -767,6 +777,11 @@ export class OrviParser {
 
     let index = 0;
     let textStart = 0;
+    // Once findEmphasisClose reports no valid close for a marker, none exists in
+    // the rest of this run — the result is monotonic in the search start — so we
+    // record it and never re-scan. This keeps adversarial input like
+    // `*a *a *a …` (every `*` opens, none closes) linear instead of O(n²).
+    const noEmphasisClose: Record<string, boolean> = {};
     const flushText = (end: number): void => {
       if (end > textStart) appendText(value.slice(textStart, end), textStart);
     };
@@ -906,18 +921,25 @@ export class OrviParser {
       // Emphasis: _…_ or *…* (single marker). `**` is handled above, so a `*`
       // reaching here is a lone marker.
       if ((ch === "_" || ch === "*") && canOpenEmphasis(value, index)) {
-        const close = findEmphasisClose(value, index + 1, ch);
-        if (close > index + 1) {
-          flushText(index);
-          nodes.push({
-            type: "emphasis",
-            loc: { line, column: column + index },
-            marker: ch,
-            children: this.parseInline(value.slice(index + 1, close), line, column + index + 1, false, depth + 1)
-          });
-          index = close + 1;
-          textStart = index;
-          continue;
+        if (!noEmphasisClose[ch]) {
+          const close = findEmphasisClose(value, index + 1, ch);
+          if (close > index + 1) {
+            flushText(index);
+            nodes.push({
+              type: "emphasis",
+              loc: { line, column: column + index },
+              marker: ch,
+              children: this.parseInline(value.slice(index + 1, close), line, column + index + 1, false, depth + 1)
+            });
+            index = close + 1;
+            textStart = index;
+            continue;
+          }
+          // `-1` means no valid close remains anywhere after here for this marker;
+          // cache it so later openers skip the end-of-string scan. An adjacent
+          // close (`close === index + 1`) returns on the first scan step and is
+          // not cached — it does not prove later closes are absent.
+          if (close === -1) noEmphasisClose[ch] = true;
         }
         index += 1;
         continue;
@@ -1385,7 +1407,12 @@ function looksLikeTable(headerLine: string, dividerLine: string): boolean {
 
 function isListLine(trimmed: string): boolean {
   // A bullet/number marker, either alone (an empty item) or followed by content.
-  return /^[-*](\s+(.+))?$/.test(trimmed) || /^\d+\.(\s+(.+))?$/.test(trimmed);
+  // The whitespace class after the marker must match matchListMarker's `[ \t]+`
+  // exactly: `\s` also matches exotic whitespace (NBSP, U+2028, U+3000, …) that
+  // matchListMarker rejects, so such a line would dispatch to parseList, find no
+  // marker, return an empty list WITHOUT advancing, and parseBlocks would
+  // re-dispatch the same line forever (infinite loop / heap exhaustion).
+  return /^[-*]([ \t]+(.+))?$/.test(trimmed) || /^\d+\.([ \t]+(.+))?$/.test(trimmed);
 }
 
 function isOrderedListLine(text: string): boolean {

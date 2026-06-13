@@ -82,6 +82,14 @@ describe("ordered start", () => {
     const list = parseOrvi("1. a\n2. b").children[0] as ListNode;
     expect(list.start).toBeUndefined();
   });
+
+  it("renders <ol start=\"0\"> for a zero-based list (B7)", () => {
+    // `node.start && …` would treat the stored 0 as falsy and drop the attribute.
+    const list = parseOrvi("0. apples\n0. oranges").children[0] as ListNode;
+    expect(list.start).toBe(0);
+    expect(renderOrvi("0. apples\n0. oranges").html).toContain('<ol class="orvi-list" start="0">');
+    roundTrips("0. apples\n0. oranges\n");
+  });
 });
 
 describe("task lists", () => {

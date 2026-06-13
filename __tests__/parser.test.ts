@@ -71,6 +71,17 @@ badge: Plain | Text`);
     ]);
   });
 
+  it("keeps a pipe inside a code-fence filename (B5)", () => {
+    // The filename is everything after the FIRST `|`; splitting on every pipe
+    // and taking element [1] truncated names that contain a pipe.
+    const ast = parseOrvi("```python | src/a|b.py\nx\n```");
+    expect(ast.diagnostics).toEqual([]);
+    expect(ast.children[0]).toMatchObject({ type: "code", language: "python", filename: "src/a|b.py" });
+
+    // A plain filename (no embedded pipe) is unaffected.
+    expect(parseOrvi("```js | app.js\nx\n```").children[0]).toMatchObject({ filename: "app.js" });
+  });
+
   it("recognizes single-column tables when the divider width matches the header", () => {
     const ast = parseOrvi(`| Item |
 | --- |

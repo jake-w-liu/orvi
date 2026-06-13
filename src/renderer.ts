@@ -230,7 +230,10 @@ function renderList(node: ListNode, ctx: RenderContext, loc = ""): string {
   const items = node.items ?? [];
   const hasTask = items.some((item) => item.task !== undefined);
   const className = `orvi-list${hasTask ? " orvi-task-list" : ""}`;
-  const start = node.ordered && node.start && node.start > 1 ? ` start="${node.start}"` : "";
+  // Test for presence explicitly: `node.start && …` would treat a stored
+  // `start: 0` (a valid `<ol start="0">`) as falsy and drop it. Mirror the
+  // parser's own `startNumber !== 1` rule.
+  const start = node.ordered && node.start !== undefined && node.start !== 1 ? ` start="${node.start}"` : "";
   const body = items.map((item) => renderListItem(item, ctx, node.loose === true)).join("");
   return `<${tag} class="${className}"${start}${loc}>${body}</${tag}>`;
 }

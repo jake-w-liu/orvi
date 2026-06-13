@@ -1,5 +1,6 @@
 import { formatOrvi } from "../src/formatter";
 import { renderOrvi } from "../src/renderer";
+import { parseOrvi } from "../src/parser";
 
 describe("formatOrvi", () => {
   it("formats block structure and nested components canonically", () => {
@@ -154,5 +155,45 @@ badge: One | Two | type=warning
       ])
     );
     expect(result.formatted).toContain("// code comment is preserved");
+  });
+
+  // Orvi option quotes are verbatim (the parser does no backslash de-escaping),
+  // so the formatter must not quote with JSON.stringify — that corrupts
+  // backslashes/control chars and compounds on every pass.
+  describe("option value quoting (B3)", () => {
+    // Format once, then parse the formatted output and read back the tab label.
+    const label = (source: string): string => {
+      const ast = parseOrvi(formatOrvi(source).formatted);
+      const tabs = ast.children[0] as { children: { options: { label: string } }[] };
+      return tabs.children[0]!.options.label;
+    };
+
+    it("preserves a backslash in an option value and stays idempotent", () => {
+      const source = '[tabs]\n[tab label="C:\\path dir"]\nbody\n[/tab]\n[/tabs]\n';
+      const once = formatOrvi(source).formatted;
+      expect(once).toBe(formatOrvi(once).formatted); // idempotent
+      expect(label(source)).toBe("C:\\path dir"); // value not corrupted
+    });
+
+    it("preserves a literal tab in an option value", () => {
+      const source = '[tabs]\n[tab label="x\ty z"]\nbody\n[/tab]\n[/tabs]\n';
+      const once = formatOrvi(source).formatted;
+      expect(once).toBe(formatOrvi(once).formatted);
+      expect(label(source)).toBe("x\ty z");
+    });
+
+    it("uses single quotes when the value contains a double quote", () => {
+      const source = '[tabs]\n[tab label=\'say "hi" now\']\nbody\n[/tab]\n[/tabs]\n';
+      expect(label(source)).toBe('say "hi" now');
+      expect(formatOrvi(source).formatted).toContain("label='say \"hi\" now'");
+    });
+
+    it("warns rather than silently corrupting an unrepresentable value (whitespace + both quotes)", () => {
+      // Adjacent quoted segments concatenate to one token whose value contains a
+      // space and both quote characters.
+      const source = '[tab x="a b"\'c\']\ny\n[/tab]\n';
+      const codes = formatOrvi(source).diagnostics.map((d) => d.code);
+      expect(codes).toContain("ORVI_FORMAT_OPTION_VALUE_DROPPED");
+    });
   });
 });

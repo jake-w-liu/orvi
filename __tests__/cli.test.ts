@@ -159,6 +159,47 @@ describe("Orvi CLI", () => {
     expect(missing.stderr).toContain("Config file not found");
   });
 
+  it("refuses to overwrite the input file when the default output path collides (B4)", () => {
+    // A `.html`-named source has a default output path equal to itself; building
+    // it used to silently destroy the source.
+    const inputPath = join(workspace, "report.html");
+    const source = "# Report\n\nbody\n";
+    writeFileSync(inputPath, source);
+
+    const result = runOrvi(["build", inputPath]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Refusing to overwrite the input file");
+    expect(readFileSync(inputPath, "utf8")).toBe(source); // source preserved
+  });
+
+  it("refuses to overwrite the input file when -o points back at it (B4)", () => {
+    const inputPath = join(workspace, "self.ov");
+    const source = "# Self\n";
+    writeFileSync(inputPath, source);
+
+    const result = runOrvi(["build", inputPath, "-o", inputPath]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Refusing to overwrite the input file");
+    expect(readFileSync(inputPath, "utf8")).toBe(source);
+  });
+
+  it("accepts the -o=value / --output=value equals syntax (B6)", () => {
+    const inputPath = join(workspace, "doc.ov");
+    writeFileSync(inputPath, "# Doc\n");
+
+    const eqPath = join(workspace, "eq.html");
+    const shortResult = runOrvi(["build", inputPath, `-o=${eqPath}`]);
+    expect(shortResult.status).toBe(0);
+    expect(readFileSync(eqPath, "utf8")).toContain("<h1>Doc</h1>");
+
+    const longPath = join(workspace, "long.html");
+    const longResult = runOrvi(["build", inputPath, `--output=${longPath}`]);
+    expect(longResult.status).toBe(0);
+    expect(readFileSync(longPath, "utf8")).toContain("<h1>Doc</h1>");
+  });
+
   it("renders a viewable HTML file with `orvi view --no-open`", () => {
     const inputPath = join(workspace, "viewable.ov");
     writeFileSync(inputPath, "# Viewable\n\n[green bold] rendered []\n");
