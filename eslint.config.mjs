@@ -11,8 +11,8 @@ const sharedRules = {
 
 // Lints the shipped TypeScript library (src/, type-checked) plus the build
 // scripts (syntactic only). Generated output, fixtures, the bundled
-// VS Code/Obsidian runtimes, the playground, and tests have their own checks
-// (tsc, jest, prettier) and are out of scope here.
+// VS Code/Obsidian runtimes, the playground, fuzz harnesses, and tests have
+// their own checks (tsc, jest, prettier) and are out of scope here.
 export default tseslint.config(
   {
     ignores: [
@@ -24,6 +24,7 @@ export default tseslint.config(
       "vscode/",
       "integrations/",
       "benchmarks/",
+      "fuzz/",
       "__tests__/",
       "fixtures/",
       "**/*.html",

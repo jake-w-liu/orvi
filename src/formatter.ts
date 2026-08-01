@@ -18,6 +18,12 @@ import { OrviNode, walk } from "./walk";
 export interface FormatOptions {
   indent?: string;
   finalNewline?: boolean;
+  /**
+   * Original source text. When provided (as `formatOrvi` always does), the
+   * formatter can report losses that exist only in the raw text — comment lines
+   * and unrecognized metadata keys. Omit when formatting a hand-built AST.
+   */
+  source?: string;
 }
 
 export interface FormatResult {
@@ -26,8 +32,25 @@ export interface FormatResult {
   diagnostics: OrviDiagnostic[];
 }
 
+/**
+ * Parse `source` and format it. Equivalent to
+ * `formatOrviFromAst(parseOrvi(source), { ...options, source })`. Prefer
+ * `formatOrviFromAst` when you already have an AST (parse once, then render
+ * and/or format).
+ */
 export function formatOrvi(source: string, options: FormatOptions = {}): FormatResult {
-  const ast = parseOrvi(source);
+  return formatOrviFromAst(parseOrvi(source), { ...options, source });
+}
+
+/**
+ * Format an already-parsed document. Avoids a second parse when the caller
+ * already holds the AST (e.g. after `parseOrvi` + `renderToHtml`).
+ *
+ * Pass `options.source` when you still have the original text so comment-line
+ * and unrecognized-metadata drop warnings are reported; AST-only losses
+ * (badges, adjacent lists, unrepresentable options) are always checked.
+ */
+export function formatOrviFromAst(ast: DocumentNode, options: FormatOptions = {}): FormatResult {
   const indent = options.indent ?? "  ";
   const metadata = formatMetadata(ast.metadata);
   // Normalize lists (merge adjacent same-type lists; propagate looseness) so the
@@ -37,10 +60,8 @@ export function formatOrvi(source: string, options: FormatOptions = {}): FormatR
   const formatted = options.finalNewline === false ? body : `${body}\n`;
   const diagnostics = [
     ...ast.diagnostics,
-    ...formatLossDiagnostics(source),
-    ...badgeLossDiagnostics(ast),
-    ...listLossDiagnostics(ast),
-    ...optionLossDiagnostics(ast)
+    ...(options.source !== undefined ? sourceFormatLossDiagnostics(options.source) : []),
+    ...astFormatLossDiagnostics(ast)
   ];
 
   return {
@@ -52,20 +73,21 @@ export function formatOrvi(source: string, options: FormatOptions = {}): FormatR
 
 const KNOWN_METADATA_KEYS = new Set(["orvi", "title", "lang", "dir"]);
 
-function formatLossDiagnostics(source: string): OrviDiagnostic[] {
+function sourceFormatLossDiagnostics(source: string): OrviDiagnostic[] {
   const diagnostics: OrviDiagnostic[] = [];
   const lines = source.replace(/\r\n?/g, "\n").split("\n");
 
   diagnostics.push(...metadataLossDiagnostics(lines));
 
   let inCode = false;
-  lines.forEach((text, index) => {
+  for (let index = 0; index < lines.length; index += 1) {
+    const text = lines[index] ?? "";
     const trimmed = text.trim();
     if (trimmed.startsWith("```")) {
       inCode = !inCode;
-      return;
+      continue;
     }
-    if (inCode || !trimmed.startsWith("//")) return;
+    if (inCode || !trimmed.startsWith("//")) continue;
 
     const column = text.indexOf("//") + 1;
     diagnostics.push({
@@ -77,7 +99,7 @@ function formatLossDiagnostics(source: string): OrviDiagnostic[] {
       endLine: index + 1,
       endColumn: column + trimmed.length
     });
-  });
+  }
 
   return diagnostics;
 }
@@ -106,13 +128,15 @@ function metadataLossDiagnostics(lines: string[]): OrviDiagnostic[] {
   return diagnostics;
 }
 
-// A badge whose text contains a `|` immediately followed by a `key=value`
-// token would, when re-emitted, be re-parsed as options (the parser treats the
-// last `|` as the option separator) — truncating the text. Rather than emit a
-// silently-different document, warn so callers know the source can't round-trip.
-function badgeLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
+// Single walk over the AST for every loss that is visible on the node tree:
+// unround-trippable badges, adjacent same-type lists, and unrepresentable
+// option values. Prefer this over three separate walks for large documents.
+function astFormatLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
   const diagnostics: OrviDiagnostic[] = [];
   walk(ast, (node) => {
+    // A badge whose text contains a `|` immediately followed by a `key=value`
+    // token would, when re-emitted, be re-parsed as options (the parser treats the
+    // last `|` as the option separator) — truncating the text.
     if (node.type === "semantic" && node.name === "badge" && badgeWouldLoseContent(node)) {
       diagnostics.push({
         severity: "warning",
@@ -124,16 +148,28 @@ function badgeLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
         endColumn: node.loc.column + "badge".length
       });
     }
-  });
-  return diagnostics;
-}
 
-// Two adjacent lists of the same orderedness always merge into one on
-// re-parse, so an item that contains them (the result of irregular source
-// indentation) cannot round-trip. Warn rather than silently merge them.
-function listLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
-  const diagnostics: OrviDiagnostic[] = [];
-  walk(ast, (node) => {
+    // An option value with whitespace must be quoted, but Orvi quotes are
+    // verbatim (no escaping), so a value that ALSO contains both quote
+    // characters cannot be represented and quoteIfNeeded falls back to a lossy form.
+    if (node.type === "component") {
+      for (const [key, value] of Object.entries(node.options ?? {})) {
+        if (/\s/.test(value) && value.includes('"') && value.includes("'")) {
+          diagnostics.push({
+            severity: "warning",
+            code: "ORVI_FORMAT_OPTION_VALUE_DROPPED",
+            message: `The formatter cannot preserve option '${key}': a value containing whitespace and both quote characters is unrepresentable.`,
+            line: node.loc.line,
+            column: node.loc.column,
+            endLine: node.loc.line,
+            endColumn: node.loc.column + 1
+          });
+        }
+      }
+    }
+
+    // Two adjacent lists of the same orderedness always merge into one on
+    // re-parse, so an item that contains them cannot round-trip.
     for (const blocks of blockChildArrays(node)) {
       for (let i = 1; i < blocks.length; i += 1) {
         const prev = blocks[i - 1];
@@ -149,31 +185,6 @@ function listLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
             endColumn: current.loc.column + 1
           });
         }
-      }
-    }
-  });
-  return diagnostics;
-}
-
-// An option value with whitespace must be quoted, but Orvi quotes are verbatim
-// (no escaping), so a value that ALSO contains both quote characters cannot be
-// represented and quoteIfNeeded falls back to a lossy form. Warn rather than
-// silently alter the document.
-function optionLossDiagnostics(ast: DocumentNode): OrviDiagnostic[] {
-  const diagnostics: OrviDiagnostic[] = [];
-  walk(ast, (node) => {
-    if (node.type !== "component") return;
-    for (const [key, value] of Object.entries(node.options ?? {})) {
-      if (/\s/.test(value) && value.includes('"') && value.includes("'")) {
-        diagnostics.push({
-          severity: "warning",
-          code: "ORVI_FORMAT_OPTION_VALUE_DROPPED",
-          message: `The formatter cannot preserve option '${key}': a value containing whitespace and both quote characters is unrepresentable.`,
-          line: node.loc.line,
-          column: node.loc.column,
-          endLine: node.loc.line,
-          endColumn: node.loc.column + 1
-        });
       }
     }
   });
@@ -574,8 +585,8 @@ function quoteIfNeeded(value: string): string {
   if (!value.includes('"')) return `"${value}"`;
   if (!value.includes("'")) return `'${value}'`;
   // Whitespace plus both quote characters is unrepresentable; the loss is
-  // surfaced by optionLossDiagnostics. Fall back to double quotes (lossy) rather
-  // than throw, so formatting still produces output.
+  // surfaced by astFormatLossDiagnostics. Fall back to double quotes (lossy)
+  // rather than throw, so formatting still produces output.
   return `"${value}"`;
 }
 

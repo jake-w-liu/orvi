@@ -4,6 +4,7 @@ exports.defaultCss = void 0;
 exports.renderOrvi = renderOrvi;
 exports.renderToHtml = renderToHtml;
 const constants_1 = require("./constants");
+const html_1 = require("./html");
 const parser_1 = require("./parser");
 const styles_1 = require("./styles");
 Object.defineProperty(exports, "defaultCss", { enumerable: true, get: function () { return styles_1.defaultCss; } });
@@ -23,6 +24,12 @@ const THEME_COLOR_TOKENS = new Set([
     "pink",
     "cyan"
 ]);
+/**
+ * Parse `source` and render it. Equivalent to
+ * `renderToHtml(parseOrvi(source), options)` plus returning the AST. Prefer
+ * `parseOrvi` + `renderToHtml` (and optionally `formatOrviFromAst`) when you
+ * need more than one pass over the same document.
+ */
 function renderOrvi(source, options = {}) {
     const ast = (0, parser_1.parseOrvi)(source);
     return {
@@ -30,6 +37,7 @@ function renderOrvi(source, options = {}) {
         html: renderToHtml(ast, options)
     };
 }
+/** Render an already-parsed document to HTML (no second parse). */
 function renderToHtml(ast, options = {}) {
     // Sanitize the id prefix to id-safe characters so it can never break out of
     // an attribute, regardless of what a caller passes.
@@ -44,10 +52,10 @@ function renderToHtml(ast, options = {}) {
     if (!options.fullDocument) {
         return body;
     }
-    const title = escapeHtml(options.title ?? ast.metadata.title ?? options.fallbackTitle ?? "Orvi Document");
-    const lang = escapeAttr(options.lang ?? ast.metadata.lang ?? "en");
+    const title = (0, html_1.escapeHtml)(options.title ?? ast.metadata.title ?? options.fallbackTitle ?? "Orvi Document");
+    const lang = (0, html_1.escapeAttr)(options.lang ?? ast.metadata.lang ?? "en");
     const direction = options.dir ?? ast.metadata.dir;
-    const dir = isDirection(direction) ? ` dir="${escapeAttr(direction)}"` : "";
+    const dir = isDirection(direction) ? ` dir="${(0, html_1.escapeAttr)(direction)}"` : "";
     const htmlClass = themeClass(options.colorScheme);
     const htmlClassAttr = htmlClass ? ` class="${htmlClass}"` : "";
     const css = options.includeCss === false
@@ -110,12 +118,12 @@ function renderBlockDefault(node, ctx) {
 function locAttr(node, ctx) {
     if (!ctx.sourceLocations || !node.loc || typeof node.loc.line !== "number")
         return "";
-    return ` data-orvi-loc="${escapeAttr(`${node.loc.line}:${node.loc.column}`)}"`;
+    return ` data-orvi-loc="${(0, html_1.escapeAttr)(`${node.loc.line}:${node.loc.column}`)}"`;
 }
 function renderCode(language, filename, value, loc = "") {
-    const className = language ? ` class="language-${escapeAttr(language)}"` : "";
-    const title = filename ? `<div class="orvi-code-title">${escapeHtml(filename)}</div>\n` : "";
-    return `${title}<pre class="orvi-code"${loc}><code${className}>${escapeHtml(value)}</code></pre>`;
+    const className = language ? ` class="language-${(0, html_1.escapeAttr)(language)}"` : "";
+    const title = filename ? `<div class="orvi-code-title">${(0, html_1.escapeHtml)(filename)}</div>\n` : "";
+    return `${title}<pre class="orvi-code"${loc}><code${className}>${(0, html_1.escapeHtml)(value)}</code></pre>`;
 }
 function renderTable(headers, rows, aligns, loc = "") {
     const alignAttr = (column) => {
@@ -160,7 +168,7 @@ function renderComponent(node, ctx) {
         // parser already flags) can never inject extra class tokens.
         const type = constants_1.CALLOUT_TYPES.has(options.type ?? "") ? options.type : "info";
         const label = `${calloutLabel(type)} callout`;
-        return `<aside class="orvi-callout orvi-callout-${type}" role="note" aria-label="${escapeAttr(label)}"${loc}>${renderChildren(node.children, ctx)}</aside>`;
+        return `<aside class="orvi-callout orvi-callout-${type}" role="note" aria-label="${(0, html_1.escapeAttr)(label)}"${loc}>${renderChildren(node.children, ctx)}</aside>`;
     }
     if (node.name === "card") {
         const bg = constants_1.COLOR_NAMES.has(options.bg ?? "") ? ` orvi-bg-${options.bg}` : "";
@@ -182,7 +190,7 @@ function renderComponent(node, ctx) {
     }
     if (node.name === "tab") {
         const label = options.label ?? "Tab";
-        return `<section class="orvi-tab-standalone" aria-label="${escapeAttr(label)}"${loc}>${renderChildren(node.children, ctx)}</section>`;
+        return `<section class="orvi-tab-standalone" aria-label="${(0, html_1.escapeAttr)(label)}"${loc}>${renderChildren(node.children, ctx)}</section>`;
     }
     return "";
 }
@@ -195,7 +203,7 @@ function renderTab(node, ctx, group, index) {
     const selected = index === 0 ? "true" : "false";
     return [
         `<input class="orvi-tab-input" type="radio" name="${group}" id="${id}"${checked}>`,
-        `<label class="orvi-tab-label" id="${tabId}" role="tab" for="${id}" aria-selected="${selected}" aria-controls="${panelId}">${escapeHtml(label)}</label>`,
+        `<label class="orvi-tab-label" id="${tabId}" role="tab" for="${id}" aria-selected="${selected}" aria-controls="${panelId}">${(0, html_1.escapeHtml)(label)}</label>`,
         `<div class="orvi-tab-panel" id="${panelId}" role="tabpanel" aria-labelledby="${tabId}"${locAttr(node, ctx)}>${renderChildren(node.children, ctx)}</div>`
     ].join("");
 }
@@ -205,14 +213,14 @@ function renderSemantic(node, loc = "") {
     if (node.name === "br")
         return `<br${loc}>`;
     if (node.name === "btn") {
-        return `<a class="orvi-btn" href="${escapeAttr(safeUrl(node.target ?? "#"))}"${loc}>${escapeHtml(node.value ?? "")}</a>`;
+        return `<a class="orvi-btn" href="${(0, html_1.escapeAttr)(safeUrl(node.target ?? "#"))}"${loc}>${(0, html_1.escapeHtml)(node.value ?? "")}</a>`;
     }
     if (node.name === "img") {
-        return `<figure class="orvi-image"${loc}><img src="${escapeAttr(safeUrl(node.value ?? ""))}" alt="${escapeAttr(node.alt ?? "")}"></figure>`;
+        return `<figure class="orvi-image"${loc}><img src="${(0, html_1.escapeAttr)(safeUrl(node.value ?? ""))}" alt="${(0, html_1.escapeAttr)(node.alt ?? "")}"></figure>`;
     }
     const requestedType = (node.options ?? {}).type ?? "info";
     const type = constants_1.CALLOUT_TYPES.has(requestedType) ? requestedType : "info";
-    return `<span class="orvi-badge orvi-badge-${type}"${loc}>${escapeHtml(node.value ?? "")}</span>`;
+    return `<span class="orvi-badge orvi-badge-${type}"${loc}>${(0, html_1.escapeHtml)(node.value ?? "")}</span>`;
 }
 function renderChildren(children, ctx) {
     return (children ?? []).map((child) => renderBlock(child, ctx)).join("\n");
@@ -222,7 +230,7 @@ function renderInline(nodes) {
         .map((node) => {
         switch (node.type) {
             case "text":
-                return escapeHtml(node.value);
+                return (0, html_1.escapeHtml)(node.value);
             case "strong":
                 return `<strong>${renderInline(node.children)}</strong>`;
             case "emphasis":
@@ -230,13 +238,13 @@ function renderInline(nodes) {
             case "strike":
                 return `<del>${renderInline(node.children)}</del>`;
             case "inlineCode":
-                return `<code class="orvi-code-inline">${escapeHtml(node.value)}</code>`;
+                return `<code class="orvi-code-inline">${(0, html_1.escapeHtml)(node.value)}</code>`;
             case "hardBreak":
                 return "<br>";
             case "scope":
-                return `<span class="${escapeAttr((node.modifiers ?? []).map(modifierClass).join(" "))}">${renderInline(node.children)}</span>`;
+                return `<span class="${(0, html_1.escapeAttr)((node.modifiers ?? []).map(modifierClass).join(" "))}">${renderInline(node.children)}</span>`;
             case "link":
-                return `<a class="orvi-link" href="${escapeAttr(safeUrl(node.href ?? "#"))}">${renderInline(node.children)}</a>`;
+                return `<a class="orvi-link" href="${(0, html_1.escapeAttr)(safeUrl(node.href ?? "#"))}">${renderInline(node.children)}</a>`;
             default:
                 return "";
         }
@@ -264,16 +272,6 @@ function gridCount(node) {
 function clampHeadingDepth(depth) {
     const n = Math.floor(depth);
     return Number.isInteger(n) && n >= 1 ? Math.min(n, 6) : 1;
-}
-function escapeHtml(value) {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-}
-function escapeAttr(value) {
-    return escapeHtml(value).replace(/'/g, "&#39;");
 }
 function safeUrl(value) {
     const trimmed = value.trim();

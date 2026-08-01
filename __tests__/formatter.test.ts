@@ -1,5 +1,5 @@
-import { formatOrvi } from "../src/formatter";
-import { renderOrvi } from "../src/renderer";
+import { formatOrvi, formatOrviFromAst } from "../src/formatter";
+import { renderOrvi, renderToHtml } from "../src/renderer";
 import { parseOrvi } from "../src/parser";
 
 describe("formatOrvi", () => {
@@ -195,5 +195,49 @@ badge: One | Two | type=warning
       const codes = formatOrvi(source).diagnostics.map((d) => d.code);
       expect(codes).toContain("ORVI_FORMAT_OPTION_VALUE_DROPPED");
     });
+  });
+});
+
+describe("formatOrviFromAst (parse-once pipeline)", () => {
+  it("matches formatOrvi output when given the same source and AST", () => {
+    const source = `# Title
+
+[grid 2]
+left
+---
+[card bg=blue]
+**right**
+[/card]
+[/grid]
+
+// this comment is dropped
+`;
+    const fromSource = formatOrvi(source);
+    const ast = parseOrvi(source);
+    const fromAst = formatOrviFromAst(ast, { source });
+
+    expect(fromAst.formatted).toBe(fromSource.formatted);
+    expect(fromAst.diagnostics.map((d) => d.code).sort()).toEqual(
+      fromSource.diagnostics.map((d) => d.code).sort()
+    );
+  });
+
+  it("formats without source and still reports AST-level losses", () => {
+    const source = '[tab x="a b"\'c\']\ny\n[/tab]\n';
+    const fromAst = formatOrviFromAst(parseOrvi(source));
+    expect(fromAst.formatted.length).toBeGreaterThan(0);
+    expect(fromAst.diagnostics.map((d) => d.code)).toContain("ORVI_FORMAT_OPTION_VALUE_DROPPED");
+    // Comment/metadata drops need the original source text.
+    expect(fromAst.diagnostics.map((d) => d.code)).not.toContain("ORVI_FORMAT_COMMENT_DROPPED");
+  });
+
+  it("supports parse once then render + format without a second parse", () => {
+    const source = "# Hello\n\n[blue] hi []\n";
+    const ast = parseOrvi(source);
+    const html = renderToHtml(ast, { fullDocument: false });
+    const { formatted } = formatOrviFromAst(ast, { source });
+
+    expect(html).toContain("<h1>Hello</h1>");
+    expect(formatted).toBe(formatOrvi(source).formatted);
   });
 });

@@ -6,7 +6,7 @@ const pluginDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(pluginDir, "..", "..");
 const runtimeDir = join(pluginDir, "runtime");
 
-const runtimeFiles = ["ast.js", "constants.js", "parser.js", "renderer.js", "styles.js"];
+const runtimeFiles = ["ast.js", "constants.js", "html.js", "parser.js", "renderer.js", "styles.js"];
 
 await rm(runtimeDir, { recursive: true, force: true });
 await mkdir(runtimeDir, { recursive: true });

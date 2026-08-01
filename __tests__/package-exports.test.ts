@@ -71,6 +71,7 @@ describe("package exports", () => {
       "OrviParser",
       "defaultCss",
       "formatOrvi",
+      "formatOrviFromAst",
       "parseOrvi",
       "renderOrvi",
       "renderOrviArtifact",

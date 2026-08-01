@@ -11,6 +11,7 @@ import {
   SemanticNode
 } from "./ast";
 import { CALLOUT_TYPES, COLOR_NAMES } from "./constants";
+import { escapeAttr, escapeHtml } from "./html";
 import { parseOrvi } from "./parser";
 import { defaultCss } from "./styles";
 
@@ -111,6 +112,12 @@ interface RenderContext {
   renderNode?: RenderNodeHook;
 }
 
+/**
+ * Parse `source` and render it. Equivalent to
+ * `renderToHtml(parseOrvi(source), options)` plus returning the AST. Prefer
+ * `parseOrvi` + `renderToHtml` (and optionally `formatOrviFromAst`) when you
+ * need more than one pass over the same document.
+ */
 export function renderOrvi(source: string, options: RenderOptions = {}): RenderResult {
   const ast = parseOrvi(source);
   return {
@@ -119,6 +126,7 @@ export function renderOrvi(source: string, options: RenderOptions = {}): RenderR
   };
 }
 
+/** Render an already-parsed document to HTML (no second parse). */
 export function renderToHtml(ast: DocumentNode, options: RenderOptions = {}): string {
   // Sanitize the id prefix to id-safe characters so it can never break out of
   // an attribute, regardless of what a caller passes.
@@ -385,18 +393,6 @@ function gridCount(node: ComponentNode): number {
 function clampHeadingDepth(depth: number): number {
   const n = Math.floor(depth);
   return Number.isInteger(n) && n >= 1 ? Math.min(n, 6) : 1;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function escapeAttr(value: string): string {
-  return escapeHtml(value).replace(/'/g, "&#39;");
 }
 
 function safeUrl(value: string): string {

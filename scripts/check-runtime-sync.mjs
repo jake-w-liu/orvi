@@ -10,7 +10,7 @@ const distDir = join(repoRoot, "dist");
 const runtimeDir = join(repoRoot, "integrations", "obsidian-orvi", "runtime");
 
 // Must match `integrations/obsidian-orvi/build.mjs`.
-const files = ["ast.js", "constants.js", "parser.js", "renderer.js", "styles.js"];
+const files = ["ast.js", "constants.js", "html.js", "parser.js", "renderer.js", "styles.js"];
 
 const stale = [];
 for (const file of files) {

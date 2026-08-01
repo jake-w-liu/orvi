@@ -8,6 +8,7 @@ import { defaultCss, OrviColorScheme, OrviDirection, OrviTheme, renderOrvi } fro
 import { parseOrvi } from "./parser";
 import { OrviDiagnostic } from "./ast";
 import { formatOrvi } from "./formatter";
+import { escapeHtml } from "./html";
 
 interface BuildArgs {
   input: string;
@@ -419,14 +420,6 @@ function withDiagnostics(html: string, diagnostics: OrviDiagnostic[]): string {
     )
     .join("\n")}</pre>`;
   return html.replace("<body>", `<body>${panel}`);
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function assertReadable(path: string): void {

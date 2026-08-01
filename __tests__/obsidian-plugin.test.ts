@@ -181,7 +181,9 @@ describe("Obsidian Orvi plugin scaffold", () => {
     const buildScript = fs.readFileSync(path.join(pluginDir, "build.mjs"), "utf8");
     const readme = fs.readFileSync(path.join(pluginDir, "README.md"), "utf8");
 
-    expect(buildScript).toContain('runtimeFiles = ["ast.js", "constants.js", "parser.js", "renderer.js", "styles.js"]');
+    expect(buildScript).toContain(
+      'runtimeFiles = ["ast.js", "constants.js", "html.js", "parser.js", "renderer.js", "styles.js"]'
+    );
     expect(buildScript).toContain("src\", \"orvi-base.css");
     expect(buildScript).toContain("orvi-obsidian-render .orvi-document");
     expect(readme).toContain("npm run build");
